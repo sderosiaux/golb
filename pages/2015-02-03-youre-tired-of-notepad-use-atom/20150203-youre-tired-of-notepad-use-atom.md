@@ -141,3 +141,5 @@ They are a lot of packages I didn't mentioned. I didn't even talked about the th
 - minimap: a large scrollbar with the code preview inside (à la Visual Studio)
 
 Go grab it: https://atom.io/
+
+2016: Since, I switched to Sublime Text (native, way faster), and Visual Studio Code (a web application also, with wonderful integrations, less hacky).{.info}

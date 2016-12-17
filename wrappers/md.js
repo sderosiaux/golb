@@ -7,6 +7,7 @@ import format from 'date-fns/format'
 import parse from 'date-fns/parse'
 import ShareButtons from 'components/ShareButtons'
 import { Flex, Box } from 'reflexbox'
+import ReadNext from 'components/ReadNext'
 
 module.exports = React.createClass({
   propTypes () {
@@ -15,7 +16,8 @@ module.exports = React.createClass({
     }
   },
   render () {
-    const post = this.props.route.page.data
+    const { route } = this.props
+    const post = route.page.data
     const { title, description, tags } = post;
 
     const fullUrl = `https://www.chteu.com${post.path}`
@@ -48,6 +50,7 @@ module.exports = React.createClass({
         </div>        
         <div dangerouslySetInnerHTML={{ __html: post.body }} />
         <ShareButtons url={fullUrl} title={title} />
+        <ReadNext post={post} pages={route.pages} />
       </div>
     )
   },
