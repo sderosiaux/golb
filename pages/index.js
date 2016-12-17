@@ -3,24 +3,35 @@ import { Link } from 'react-router'
 import { prefixLink } from 'gatsby-helpers'
 import Helmet from 'react-helmet'
 import { config } from 'config'
+import ReadTime from 'react-read-time'
+import format from 'date-fns/format'
+import parse from 'date-fns/parse'
+import { Flex, Box } from 'reflexbox'
 
-export default class Index extends React.Component {
-  render () {
-    return (
-      <div>
-        <Helmet
-          title={config.siteTitle}
-          meta={[
-            {"name": "description", "content": "My blog"},
-            {"name": "keywords", "content": "java, scala"},
-          ]}
-        />
-        <ul>
-          <li>
-            <Link to={prefixLink('/2016/09/07/why-it-s-important-to-log-using-slf4j/')}>Why it's important to log using slf4j ?</Link>
-          </li>
-        </ul>
-      </div>
-    )
-  }
+export default (props) => {
+  const blogs = props.route.pages.filter(page => page.data.layout == 'post')
+                                     .map(page => page.data)
+                                     .sort((a, b) => a.date < b.date)
+
+  return (
+    <div>
+      <Helmet
+        title={config.siteTitle}
+        meta={[
+          {"name": "description", "content": "My blog"},
+          {"name": "keywords", "content": "java, scala"},
+        ]}
+      />
+      <ul>
+        { blogs.map(blog => <li>
+          <Link to={prefixLink(blog.path)}>{blog.title}</Link>
+            <Flex>
+              <Box>{format(blog.date, 'MMM Do, YYYY')}</Box>
+              <Box>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="clock"></span>&nbsp;</Box>
+              <Box><ReadTime content={blog.body} /></Box>
+            </Flex>
+          </li>) }
+      </ul>
+    </div>
+  )
 }

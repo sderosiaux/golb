@@ -17,6 +17,9 @@
   transform: scale(1.2);
 }
 
+.fr { float: right; padding-left: 20px; padding-bottom: 20px; }
+.fl { float: left;  padding-right: 20px; padding-bottom: 20px;}
+
 .summary {
   font-size: 1.51572rem;
   font-weight: 700;
