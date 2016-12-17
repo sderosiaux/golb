@@ -17,7 +17,7 @@ Summary {.summary}
 
 ---
 
-# Change your habits
+# Changing habits
 
 ![vs](vs.png){.fr} I'm used to work on **Visual Studio 2013**, which is a very good IDE.
 
@@ -41,7 +41,8 @@ It's not a true project manager yet but it's getting there. And I'm sure there a
 
 ![atom cthulhu](atom-cthulhu.png){.fr}
 
-Atom is a big plugins/packages manager on its core. It comes automatically with dozen of them that you will need for misc purposes :
+Atom is a big plugins/packages manager on its core. It comes automatically with dozen of them that we will need for misc purposes :
+
 - find and replace
 - go to line
 - syntax highlighting (all the `language-*` packages)
@@ -51,7 +52,7 @@ Atom is a big plugins/packages manager on its core. It comes automatically with 
 - notifications inside Atom
 - snippets management 
 
-As you can see, there are some basic packages in there. If you disabled them, you have a true naked text editor à la Notepad. (see below)
+As we can see, there are some basic packages in there. If we disabled them, we have a true naked text editor à la Notepad. (see below)
 
 Hopefully, this is not the goal. I have 80 installed packages currently.
 
@@ -61,7 +62,7 @@ Each plugin adds a tiny piece of logic. The community is very active, and offers
 
 Most of them are dynamically removed/added on the fly, no need to confirm or restart the editor, that's pretty impressive.
 
-It can be infortunate to disable some of them, such as the `settings-view` one, while you are in the settings. If you do: the whole style is destroyed. You need to edit `.atom/config.cson` and remove the package from the `disabledPackages` array. And hop, the settings are back directly in Atom. 
+It can be infortunate to disable some of them, such as the `settings-view` one, while we are in the settings. If we do: the whole style is destroyed. We need to edit `.atom/config.cson` and remove the package from the `disabledPackages` array. And hop, the settings are back directly in Atom. 
 
 # Experience: A naked Atom
 
@@ -71,14 +72,14 @@ As we said, we can disable everything to have only the core features from Atom i
 
 This is notepad!
 
-- you can edit a file with `File > Open`
+- we can edit a file with `File > Open`
 - some super basic text editor features (delete a line, uppercase/lowercase..)
 - can split panes
 - an Atom theme (still need the settings to access it)
 - help
 - ... that's it.
 
-You can't look for text, no syntax highlighting, no special panel, no toolbar, no options: just a super fast Notepad.
+We can't look for text, no syntax highlighting, no special panel, no toolbar, no options: just a super fast Notepad.
 
 As we see, not everything is in a plugin for some reason (the split pane could have been a plugin, the text editor functions too..).
 
@@ -86,7 +87,7 @@ When it's time to enable back every packages, just clear the `disabledPackages` 
 
 Notice that it's not true JSON, there is no comma, no need of {} for subobjects etc.{.info}
 
-You can find the list of packages at <https://atom.io/packages> or using Atom : `Packages > Settings View > Manage Packages`. 
+We can find the list of packages at <https://atom.io/packages> or using Atom : `Packages > Settings View > Manage Packages`. 
 
 # What about the performances ?
 
@@ -94,23 +95,23 @@ It's very fast when we edit multiple files, they really work hard on that.
 
 There is a package pre-installed to check if Atom loads fast enough: **Timecop**.
 
-It tells you the time the packages needs to load on startup and if some of them are taking more time than expected.
+It tells us the time the packages needs to load on startup and if some of them are taking more time than expected.
 
 But unfortunately, right now, nothing more (no live stats):
 
 ![perf](perf.png)
 
-Beause you can *work* with big files (js bundles, logs), I tried to different types of big files to see how it goes, and it's not that great:
+Because we can *work* with big files (js bundles, logs), I tried to different types of big files to see how it goes, and it's not that great:
 
 - one json extraction on one line, 500k characters (520kB): it was very slow to open it and move inside. (using Notepad++ it was fast enough, native eh?)
 - `jquery.js` source (non minified), 10k lines (278kB): it was very slow to copy/paste inside (about 20s). Editing was fine. It was pretty fast (*2s*) to open the saved file too. So it seems it's only the paste feature that has some difficulties with big buffers.
-- More than 2MB files : you got a nice notification : *Atom can only handle files < 2MB for now. Large file support is being tracked at atom/atom#307.* (the issue was closed in Jun 2015)
+- More than 2MB files : we got a nice notification : *Atom can only handle files < 2MB for now. Large file support is being tracked at atom/atom#307.* (the issue was closed in Jun 2015)
 
 At the process level, with a few dozen of files opened, it took 250MB max (application + 4 background processes).
 
 Notepad++, as a native application, 20MB.
 
-You can see the big cons with web applications on desktop (performances, memory usage).
+We can see the big cons with web applications on desktop (performances, memory usage).
 
 # HTML on Desktop
 
@@ -118,7 +119,7 @@ You can see the big cons with web applications on desktop (performances, memory 
 
 Atom is a web application running on a desktop. It encapsulates a webkit rendering engine.
 
-If you're a *hacker*, you can get the devtools using `View > Developer > Toggle Developer Tools` and see that everything is html/css/js !{.info}
+We can get access the devtools using `View > Developer > Toggle Developer Tools` and see that everything is html/css/js !{.info}
 
 Thanks to this, anybody (that knows javascript) can easily extend the software, write plugins, and be cross-platform.
 
@@ -126,11 +127,11 @@ It has its drawbacks too: it takes a lot of space (that's not really a problem a
 
 Atom is based on [atom-shell](https://github.com/atom/atom-shell) which has been renamed to the famous [Electron](https://github.com/electron/electron) because it is now a general framework to write any kind of desktop web applications.
 
-> Electron lets you write cross-platform desktop applications using JavaScript, HTML and CSS. It is based on NodeJS and Chromium and is used by the Atom editor and many other apps.
+> Electron lets us write cross-platform desktop applications using JavaScript, HTML and CSS. It is based on NodeJS and Chromium and is used by the Atom editor and many other apps.
 
 It's still actively under development, sure they will enhance speed^[Since this writing Feb 2015, they work on it and did a great job] and add powerful features Atom will benefit from.
 
-If you're interested in Atom, check out their blog to learn more things : http://blog.atom.io/
+Interested in Atom? They have a nice blog to learn more things: http://blog.atom.io/
 
 They are a lot of packages I didn't mentioned. I didn't even talked about the themes, the git integration, and about some nice packages to have such as :
 

@@ -29,8 +29,8 @@ Summary {.summary}
 Why do we need something complicated like a logging framework to do something simple as put a message on `stdout`?
 
 - Because not everybody wants to use only `stdout`. Even if that's super practical (this is the [UNIX philosophy](https://www.confluent.io/blog/apache-kafka-samza-and-the-unix-philosophy-of-distributed-data/)), you may want to send them directly into a file, to a http endpoint, or send an email!
-- Because you want granularity: sometimes you want more logs (debug), in production only warnings and errors.
-- Because the dependencies can have their own logging logic too, you need to be able to handle them (you can't block stdout!^[Well you can `System.setOut(...)` but don't!]).
+- Because we want granularity: sometimes we want more logs (debug), in production only warnings and errors.
+- Because the dependencies can have their own logging logic too, we need to be able to handle them (we can't block stdout!^[Well we can with `System.setOut(...)`]).
 
 ## A source without sink
 
@@ -46,11 +46,11 @@ slf4j is just the entry point, it needs an exit.
 It can also redirect the logs from other logging systems and send them to its implementation.
 This is the purpose of the *logging adapters*/*bridges*.
 
-Hence, you can make all your application logs to go through the same pipe even if the origin logging system is different. 
+Hence, we can make all our application logs to go through the same pipe even if the origin logging system is different. 
 
 ## Neutral
 
-You can do all without altering the existing code, but only the project dependencies.
+We can do all without altering the existing code, but only the project dependencies.
 
 We are going to see several logging implementations slf4j can be bound to.
 
@@ -109,16 +109,16 @@ sept. 07, 2016 11:16:53 PM interface scala.App myMethod
 FINER: RETURN
 ```
 
-You'll notice we have the INFO and SEVERE twice but not the FINER: there is already a default console handler logging all INFO.
+Notice we have the INFO and SEVERE twice but not the FINER: there is already a default console handler logging all INFO.
 
 It's configurable through a properties file often named `logging.properties`.
 
-On OSX, you can find the JVM global JUL configuration here: 
+On OSX, we can find the JVM global JUL configuration here: 
 ```
 /Library/Java/JavaVirtualMachines/jdk1.8.0_91.jdk/Contents/Home/jre/lib/logging.properties
 ```
 
-You can use a file of yours by specifying its path in the system properties when you start your program: 
+We can use any file by specifying its path in the system properties when we start our program: 
 ```
 -Djava.util.logging.config.file=src/main/resources/logging.properties
 ```
@@ -147,9 +147,9 @@ java.util.logging.Logger.getGlobal.setLevel(Level.ALL)
 
 Specifying a configuration file is not used as an override of the default but as a full replacement.{.warning}
 
-If you forget something (especially `handlers=`), you might not see any logging.
+If we forget something (especially `handlers=`), we might not see any logging.
 
-You can also use the handler `java.util.logging.FileHandler` (it logs into `$HOME/java0.log` by default). 
+We can also use the handler `java.util.logging.FileHandler` (it logs into `$HOME/java0.log` by default). 
 
 ## JUL's Loggers are managed by LogManagers
 
@@ -165,7 +165,7 @@ It's often used along with log4j that implements a custom LogManager (available 
 
 This way, any manager can have a hand on any `Logger` created in the application. It can change their behavior and where do they read their configuration for instance.
 
-This is what we call a *Logging Adapter* or a *bridge*: you can log using JUL in the code and use log4j features to manipulate and save the logs.
+This is what we call a *Logging Adapter* or a *bridge*: we can log using JUL in the code and use log4j features to manipulate and save the logs.
 
 Don't worry if that does not make much sense, we'll go into more details later. 
 
@@ -271,7 +271,7 @@ Before going further with some other bindings, let's take a look at what happens
 
 Will slf4j with dispatch the messages to all of them ? No.
 
-It will pick one of them, and leave you a small warning about that.
+It will pick one of them, and leave us a small warning about that.
 
 Let's say we add the 2 bindings we know about:
 ```scala
@@ -291,9 +291,9 @@ SLF4J: Actual binding is of type [org.slf4j.impl.SimpleLoggerFactory]
 As we said, *slf4j-api* is looking for the class `org.slf4j.impl.StaticLoggerBinder` to get an implementation, and he finds two.
 That *often* happens in projects because of the dependency graph (when some dependencies depend on a slf4j binding that they should not have exposed).
 
-This message is just a warning, the logging will work. But it's a bad smell that should be fixed, because maybe it won't pick the one you want.
+This message is just a warning, the logging will work. But it's a bad smell that should be fixed, because maybe it won't pick the one we want.
 
-They have to be excluded (see below) and **ONLY** your own program, your application, should import a slf4j binding.
+They have to be excluded (see below) and **ONLY** our own program, our final application, should import a slf4j binding.
 
 ### Second warning: logs loss
 
@@ -414,7 +414,7 @@ org.apache.log4j.LogManager.getLogger(name);
 
 Note that this `LogManager` has nothing to do with the JUL's one.
 
-When you don't have slf4j but just log4j, this is the method you call to get a `Logger`. `slf4j-log4j12` just does the same.
+When we don't have slf4j but just log4j, this is the method we would call to get a `Logger`. `slf4j-log4j12` just does the same.
 
 That's not enough:
 ```xml
@@ -602,7 +602,7 @@ But of course, we can (and should) create a `logback.xml` to customize its behav
 
 Some tips:
 - `debug` : to display some info about the logging system creation on startup (where it looks)
-- `scan` : if some modifications are made on the file, they will be taken into account in live. This is particularly useful in production when you just want to get some debug messages for a short amount of time.
+- `scan` : if some modifications are made on the file, they will be taken into account in live. This is particularly useful in production when we just want to get some debug messages for a short amount of time.
 
 It's also possible to use a custom config file (multi-environment configurations):
 ```xml
@@ -636,7 +636,7 @@ A very nice picture to resume what we just saw (we didn't talked about `slf4j-no
 http://www.slf4j.org/manual.html
  
 
-If your project depends on other projects that are *not* using slf4j, but directly JUL or log4j, it's possible to redirect them to your slf4j.
+If our project depends on other projects that are *not* using slf4j, but directly JUL or log4j, it's possible to redirect them to our slf4j.
 
 This is what bridges are used for.
 
@@ -748,17 +748,17 @@ Some applications can generate a tremendous amount of logs.
 Some precautions should be taken care of:
 
 - **async** logging should always be preferred (another thread will do the effective work to log, not the caller's thread).
-- you should not add level guards (`if (logger.isDebugEnabled)`) before logging, that brings us to the next point:
+- we should not add level guards (`if (logger.isDebugEnabled)`) before logging, that brings us to the next point:
 - do not concat strings manually in the message: slf4j methods have a placeholder syntax such as `log.info("the values are {} and {}", item, item2)`. The `toString()` on the parameters won't be computed if it's not needed ^[It *can* be cpu intensive. Even if it's not, it's just useless to call it if the log level is not enough, that would allocate objects for nothing].
-- In Scala, you take advantage of macros to add level guards automatically, like with [log4s](https://github.com/Log4s/log4s) or [scala-logging](https://github.com/typesafehub/scala-logging). This way, we can use the classic strings interpolation. :)
+- In Scala, we take advantage of macros to add level guards automatically, like with [log4s](https://github.com/Log4s/log4s) or [scala-logging](https://github.com/typesafehub/scala-logging). This way, we can use the classic strings interpolation. :)
 
 Several benchmarks of the bindings (throughput, response time, sync/async): https://logging.apache.org/log4j/2.x/performance.html
 
-![asyn logging throughput](async-throughput-comparison.png)
+![async logging throughput](async-throughput-comparison.png)
 
 It seems the best (the fastest) is log4j2, with the `Async` appender, but checkout the link, it contains much more info.
 
-To be honest, it's not all applications that care generating 20M logs/second. You should go with what you're at ease (the configuration), and be done with it.
+To be honest, it's not all applications that care generating 20M logs/second. We should go with what we're at ease (the configuration), and be done with it.
 
 # The End
 

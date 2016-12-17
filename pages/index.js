@@ -21,6 +21,9 @@ export default (props) => {
           {"name": "description", "content": "My blog"},
           {"name": "keywords", "content": "java, scala"},
         ]}
+        link={[
+           {"rel": "shortcut icon", "type": "image/x-icon", "href": "m.jpg"}
+        ]}
       />
       <ul>
         { blogs.map(blog => <li>

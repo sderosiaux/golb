@@ -15,21 +15,21 @@ Summary {.summary}
 
 # Typing ']' does not work with azerty keyboards
 
-When using an azerty keyboard on Windows, you can run into one issue that is very annoying when you code: not being able to type `]` using `Alt-GR + )`. It won't do a thing.
+When using an azerty keyboard on Windows, we can run into one issue that is very annoying when we code: not being able to type `]` using `Alt-GR + )`. It won't do a thing.
 
 Don't throw your Atom away yet. Everything has an explication.{.warn}
 
-Maybe you will notice what is happening when you hit `]` according to where your cursor is (look at the status bar).
+We can notice what is happening when we hit `]` according to where the cursor is (look at the status bar).
 
 By default, there are predefined shortcuts on this key. To see them, go to `Settings > Keybindings`:
 
 ![atom shortcut](atom-shortcut1.png)
-The shortcut mentioned is: `Ctrl + Alt + [`, to `fold-current-row`, but you are not doing that, you are doing `Alt-GR + ]` right ?
+The shortcut mentioned is: `Ctrl + Alt + [`, to `fold-current-row`, but we are not typing that, we are typing `Alt-GR + ]` right ?
 
 Two things that needs explanations : 
 
 - on Windows, `Alt-GR` = `Ctrl+Alt`
-- when you type `]`, the keyboard mapping truly says that you typed `[`. Disturbing. You can see that in action by enabling `Settings > Key Binding Resolver > Toggle`, then type `Alt-GR + ]`, it will resolve as `Ctrl-Alt-[`.
+- when we type `]`, the keyboard mapping truly says that we typed `[`. Disturbing. We can see that in action by enabling `Settings > Key Binding Resolver > Toggle`, then type `Alt-GR + ]`, it will be resolved to `Ctrl-Alt-[`.
 
 Wanna read more about Alt-GR ? There is a big topic talking about that problem since more than 6 months : https://github.com/atom/atom-keymap/issues/35
 
@@ -41,7 +41,7 @@ There are several ways to fix this behavior, for let us have our `]`.
 
 ## Brutal
 
-You can remove any `keyBindings` using this combinaison by editing your init script `init.coffee` and add :
+We can remove any `keyBindings` using this combinaison by editing our init script `init.coffee` and add :
 
 ```javascript
 atom.keymap.keyBindings = atom.keymap.keyBindings.filter((binding, i) ->
@@ -50,7 +50,7 @@ atom.keymap.keyBindings = atom.keymap.keyBindings.filter((binding, i) ->
 
 It will ensure that `Alt-GR + ]` is always free.
 
-If you know CoffeeScript, have some fun in there, you have access to the whole Atom engine.
+If you know CoffeeScript, it's a nice place to have some fun. We have access to the whole Atom engine.
 
 ## Override
 
@@ -62,7 +62,7 @@ For instance, by adding this mapping into `keymap.cson` (don't forget to restart
 'atom-workspace atom-text-editor:not([mini])': { 'ctrl-alt-=': 'editor:fold-current-row' }
 ```
 
-You will see it in `Settings > Keybindings`. Unfortunately, the original binding is still there and will take precedence when typing `]`.
+We will see it in `Settings > Keybindings`. Unfortunately, the original binding is still there and will take precedence when typing `]`.
 
 It's another long debate : https://www.google.fr/?#q=atom+override+key+binding
 
@@ -83,9 +83,9 @@ More details on how the keymaps are working : https://github.com/atom/atom-keyma
 
 # Going further: custom commands
 
-With Atom, you can also *create* any command you want.
+With Atom, we can also *create* any command we want.
 
-Look for your `init.coffee`, and add something like: 
+Look for `init.coffee`, and add something like: 
 
 ```javascript
 atom.commands.add 'atom-text-editor',
@@ -93,13 +93,15 @@ atom.commands.add 'atom-text-editor',
                        @getModel() editor.insertText(new Date().toLocaleString())
 ```
 
-That defines a new command `user:insert-date` in the scope of the `atom-text-editor` that will insert the current date in the editor, where your cursor is. You just need to bind it to some keys, by editing `keymap.cson`: 
+That defines a new command `user:insert-date` in the scope of the `atom-text-editor` that will insert the current date in the editor, where our cursor is.
+We just need to bind it to some keys, by editing `keymap.cson`: 
 
 ```javascript
 'atom-workspace atom-text-editor:not([mini])': { 'ctrl-alt-=': 'user:insert-date' }
 ```
 
-And you're all set. You have a tons of functions available in the `editor` object, feel free to discover and use them ! If you have the developer tools opened, you can find the editor by doing :
+And we're all set. There are tons of functions available in the `editor` object, feel free to discover and use them !
+Using the devtools, it's possible to grab a reference to the Atom editor:
 
 ```javascript
 atom.workspace.getEditors();
