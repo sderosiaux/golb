@@ -4,7 +4,7 @@ import { prefixLink } from 'gatsby-helpers'
 import { rhythm, scale } from 'utils/typography'
 
 export default ({ pages, post }) => {
-    let posts = pages.filter(p => p.data.layout === 'post')
+    let posts = pages.filter(p => p.data.layout === 'post').sort((a, b) => a.data.date > b.data.date)
     let currentPostIndex = posts.map(p => p.data).indexOf(post)
     let nextPost = posts.slice(currentPostIndex + 1, currentPostIndex + 2)[0]
 
