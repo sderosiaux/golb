@@ -163,7 +163,7 @@ Here is the list of the children with their type:
 - ReactElement : span
 ```
 
-In older version, each space (newline in JSX) were creating a string child `" "`. And we had to use `MyComponent.type` instead of just `MyComponent` reference.{.info}
+In older versions, each newline in JSX were creating a string child `" "`. And we had to use `MyComponent.type` instead of just `MyComponent` reference.{.info}
 
 Only the `<span>` and `<MyComponent>` appear in the rendering.
 ```xml
