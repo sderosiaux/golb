@@ -9,6 +9,8 @@ const GooglePlusIcon = generateShareIcon('google');
 const TwitterIcon  = generateShareIcon('twitter');
 const LinkedinIcon = generateShareIcon('linkedin');
 
+// TODO(sd): Reddit, Pocket
+
 export default ({ url, title }) => <Flex>
         <Box px={0}><TwitterShareButton url={url} className={css.icon}><TwitterIcon size={32} title={title} round={true} /></TwitterShareButton></Box>
         <Box px={0}><LinkedinShareButton url={url} className={css.icon}><LinkedinIcon size={32} title={title} round={true} /></LinkedinShareButton></Box>

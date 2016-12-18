@@ -136,12 +136,12 @@ Here is a small example that renders only children of type `span` or `MyComponen
 ```js
 var ShowOnlySpansOrMyComponent = React.createClass({
   render: function() {
-    var onlySpans = React.Children.map(this.props.children, function(child) {
-      if (child.type === 'span' || child.type === MyComponent.type) {
+    var filtered = React.Children.map(this.props.children, function(child) {
+      if (child.type === 'span' || child.type === MyComponent) {
         return child;
       }
     });
-    return <div>{ onlySpans }</div>;
+    return <div>{ filtered }</div>;
   }
 });
 
@@ -153,20 +153,22 @@ React.render(<ShowOnlySpansOrMyComponent>
              </ShowOnlySpansOrMyComponent>, document.getElementById('container'));
 ```
 
-Here is the list of the children:
+Here is the list of the children with their type:
 
 ```xml
-" you have to " : no type
-ReactElement : span
-" " : no type
-ReactElement : div
-" " : no type
-ReactElement : function (props) // MyComponent's (ReactElement's) constructor
-" " : no type
-ReactElement : span
-" " : no type
+- " you have to " : undefined
+- ReactElement : span
+- ReactElement : div
+- ReactElement : function (props, context, updater) // MyComponent's (ReactClassComponent's) function
+- ReactElement : span
 ```
 
-Only the `<span>` and `<MyComponent>` appear in the rendering.
+In older version, each space (newline in JSX) were creating a string child `" "`. And we had to use `MyComponent.type` instead of just `MyComponent` reference.{.info}
 
-To grab the type of components, we used `MyComponent.type` which is the base `ReactElement` constructor.{.info}
+Only the `<span>` and `<MyComponent>` appear in the rendering.
+```xml
+work
+my component
+now
+```
+
