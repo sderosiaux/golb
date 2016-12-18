@@ -53,11 +53,11 @@ setState({ done: false });
 
 # Why immutability is important ?
 
-When you have to modify an array in your state, you can't just `push` into it: that's won't trigger the re-rendering because React cannot just listen to an array changes.
+When we have to modify an array in our state, we can't just `push` into it: that's won't trigger the re-rendering because React cannot just listen to an array changes.
 
 It was possible with the method `Array.observe(arr, callback)` but it has been deprecated since.{.warn}
 
-That's why you have to call `this.setState({...})` to tell React something has changed.
+That's why we have to call `this.setState({...})` to tell React something has changed.
 
 There are multiple ways to work with it:
 
@@ -144,7 +144,7 @@ Because the component calls a webservice, we must add 2 properties to its state 
 # How to use a third party plugin that updates the DOM directly, such as Highcharts?
 
 Highcharts needs a reference to a DOM element to do its job.
-It turns out that we have access to the DOM reference of we you are rendering in React.
+It turns out that we have access to the DOM reference of we are rendering in React.
 
 This is what the `ref`s in React are used for.
 
@@ -244,7 +244,7 @@ This is WAY faster.
 
 If we know a component does not need to pass through `render()` because its state didn't change (in case its parent re-`render()` itself, that calls `render()` on every of its children by default), we should consider implementing `shouldComponentUpdate`.
 
-That could give you a big performance boost because you just say to React: *don't bother with your virtual DOM, I know what I'm doing, just forget about me!*.
+That could give us a big performance boost because we are just saying to React: *don't bother with your virtual DOM, I know what I'm doing, just forget about me!*.
 
 In a general manner, this method should always be implemented to shortcut the more `render()` we can.
 
@@ -257,7 +257,7 @@ shouldComponentUpdate: function(nextProps) {
 
 There is also a [PureRenderMixin](https://facebook.github.io/react/docs/pure-render-mixin.html) that can help to do that automatically.
 
-You can find out where you could implement them using [react-addons-perf](https://facebook.github.io/react/docs/perf.html), that can give you the time React passed to `render()` components that didn't changed for instance:
+We can find out where we could implement them using [react-addons-perf](https://facebook.github.io/react/docs/perf.html), that gives us the time React passed to `render()` components that didn't changed for instance:
 
 ![perf](perf.png)
 

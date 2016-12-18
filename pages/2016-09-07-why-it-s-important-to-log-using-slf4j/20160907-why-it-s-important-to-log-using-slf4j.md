@@ -28,7 +28,7 @@ Summary {.summary}
 
 Why do we need something complicated like a logging framework to do something simple as put a message on `stdout`?
 
-- Because not everybody wants to use only `stdout`. Even if that's super practical (this is the [UNIX philosophy](https://www.confluent.io/blog/apache-kafka-samza-and-the-unix-philosophy-of-distributed-data/)), you may want to send them directly into a file, to a http endpoint, or send an email!
+- Because not everybody wants to use only `stdout`. Even if that's super practical (this is the [UNIX philosophy](https://www.confluent.io/blog/apache-kafka-samza-and-the-unix-philosophy-of-distributed-data/)), we may want to send them directly into a file, to a http endpoint, or send an email!
 - Because we want granularity: sometimes we want more logs (debug), in production only warnings and errors.
 - Because the dependencies can have their own logging logic too, we need to be able to handle them (we can't block stdout!^[Well we can with `System.setOut(...)`]).
 
