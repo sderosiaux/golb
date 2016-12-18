@@ -163,14 +163,16 @@ var MyContainer = React.createClass({
     return <Intermediate />;
   }
 });
-
+```
+```
 // this component does nothing expect rendering a Child
 var Intermediate = React.createClass({
   render: function() {
     return <Child />;
   }
 });
-
+```
+```
 var Child = React.createClass({
   // we declare we want to read the "text" property of the context
   // and we expect it to be a string
@@ -526,19 +528,18 @@ We need to add a dependency to [`react-redux`](https://github.com/reactjs/react-
 Redux follows the EventEmitter pattern (`subscribe`, `dispatch`).
 
 It adds more features and provides *stores* with an initial state to keep the data outside of the components.
-This way, multiple components can use the same store to get or alter the data through a unified way. (through the named events)
+This way, multiple components can use the same store to get or alter the data through a unified way.
 
 ```js
 import { createStore } from 'redux'
 
-// a "store" that reacts to some events to alter its state
+// a "reducer" that handle some events and return a state
 function counter(state = 0, action) {
   return  action.type === 'INCREMENT' ? state + 1
         : action.type === 'DECREMENT' ? state - 1
         : state;
 }
 
-// createStore adds some functions to our "store", like `.subscribe` and `.dispatch`
 let store = createStore(counter)
 
 store.subscribe(() =>
@@ -549,6 +550,22 @@ store.dispatch({ type: 'INCREMENT' }) // 1
 store.dispatch({ type: 'INCREMENT' }) // 2
 store.dispatch({ type: 'DECREMENT' }) // 1
 ```
+
+`createStore()` creates a store around our reducer, to keep a state, and provides some functions such as `subscribe()` and `dispatch()`, but also `getState()` to have a peek inside.
+
+In React, you would share the store to any component that needs it: this is the exactly what `react-redux` provides, and it's using the famous **context** to do so.
+
+What is powerful with Redux is that there are tons of middlewares that can be plugged to the stores, to enhance them.
+
+A classic example is [redux-logger](https://github.com/evgenyrodionov/redux-logger) that `console.log` every changes made to a store.
+You don't have to modify anything in the code, except the store.
+
+```js
+const logger = createLogger();
+const store = createStore(counter, applyMiddleware(logger));
+```
+
+There are at least [408 middlewares available on npm](https://www.npmjs.com/search?q=redux+middleware).
 
 # Where to register to events notifications
 
@@ -617,7 +634,7 @@ React.render(<ProductList />, document.body);
 
 # ES6 generators and js-csp
 
-A more advanced feature to communicate is to use ES6 generators in combinaison with `js-csp`.
+A more exotic and advanced feature to communicate is to use ES6 generators in combinaison with `js-csp`.
 Be careful, here be dragons: https://github.com/ubolonton/js-csp.
 
 We have a queue of messages and anyone having its reference can put data inside.
@@ -626,8 +643,12 @@ We have a queue of messages and anyone having its reference can put data inside.
 
 # Conclusion
 
-There is not a better solution.
+There is no better solution.
 It depends on the needs, on the application size, on the numbers of components.
 
 For small applications, props and callback are fine. We generally start with those.
-For bigger applications, a framework is necessary to avoid messy code and centralize the events and data.
+
+For bigger applications, some simple tools or a framework is necessary to avoid messy code and centralize the events and data.
+Redux does a great job. MobX does a great job. Both are very different in the usage.
+
+> We should use what we're at ease with and not look back.
