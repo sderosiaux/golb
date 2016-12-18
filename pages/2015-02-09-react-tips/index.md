@@ -125,7 +125,7 @@ var HelloWho = React.createClass({
 React.render(<HelloWho />, document.getElementById('container'));
 ```
 
-Consider using `fetch` now, instead of `jQuery.ajax`.{.info}
+Consider using `fetch` now, which is part of Javascript, instead of `jQuery.ajax`.{.warn}
 
 - The method `componentDidMount` is called when the component is mounted into the DOM: time to call the webservice.
 
