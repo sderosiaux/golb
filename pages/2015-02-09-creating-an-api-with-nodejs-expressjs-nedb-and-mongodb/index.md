@@ -55,7 +55,7 @@ There is an official search engine https://www.npmjs.com/search?q=react but othe
 Recent version of NodeJS understand the modern Javascript (ES6/ES2015/"Harmony").
 With older versions of nodejs, they are available under a experimental flag only: `node --use-strict --harmony server.js`.{.info}
 
-Here is a list of the features ES6 brings: http://es6-features.org/.
+Here is a list of the features ES2015 brings: https://babeljs.io/learn-es2015/.
 
 ## package.json and dependencies
 
