@@ -71,13 +71,62 @@ For instance, an array from which we `delete` something in the middle will be tr
 
 http://jsperf.com/packed-vs-holey-arrays
 
-# HTML/CSS
+## Memory management/variable scoping
+
+We should never global variables.
+
+- It's a bad pattern.
+- We should always declare variables in the smaller scope we can to release them the soonest.
+
+With ES2015, we should only use `let` and not `var` to reduce the scope to the minimum.
+
+We should remove the event listeners we don't use anymore.
+We should watch our closures: they can contain references that will never be released.
+
+## Async JS scripts
+
+Inline `<script>`s and `<script src="main.js"></script>`s block the DOM construction when the browser encounters them: that will delay the initial rendering.
+
+We should put our `<script>` at the end of the `<body>` for the browser to render it first. Moreover, the scripts often references DOM parts (in `<head>` nothing is constructed yet).
+We can add the `async` and `defer` flags on the `<script>` tag to defer its loading. The browser won't block, download them in parallel, and will continue it's parsing and rendering.
+
+
+
+# HTML/DOM
 
 ## Image resizing
 
 We should resize our images exactly as the size we are using on the page. Why give the browser more data it needs? We want to avoid the browser to resize the image itself (it's cpu consuming).
 
 We should consider using `srcset` on `<img>` or use `<picture>` if we want to handle high DPI devices.
+
+## DocumentFragments
+
+When we want to append several items to the DOM, we should consider using `document.createFragment()`.
+
+It's available in all browsers since a while (jQuery uses it when we call `append()` with an array). We can use traditional DOM operations on a fragment (`appendChild`, style etc.). The browser won't do a thing. When it's complete, we can just append it to the DOM in one shot.
+
+## DOM element count
+
+We should not have too many DOM nodes on our pages.
+
+1000 for a mobile application is a good number.
+
+For reference:
+
+Desktop versions:
+- 4000 for twitter.com
+- 2500 for amazon and facebook
+
+Mobile versions:
+- 1000 for m.twitter.com
+- 1700 for m.facebook
+
+
+
+
+
+# CSS
 
 ## Background-size
 
@@ -93,6 +142,46 @@ They slows down a lot the browser rendering.
 If we put some on the background of a page we can scroll, it will be noticeable.
 We should always prefer to use a tiled background image.
 
+## :hover and scrolling
+
+`:hover` effects can cause awful slowdowns in the middle of a scrollable page.
+
+If the user scrolls using its mousewheel on top of those elements, they will trigger their `:hover` state at the same time the scrolling is occurring. If the `:hover` effect is to add some shadow, that will kill the fps and we'll have jank.
+
+A solution is to add a `class` on the container when it's scrolling, and configure the `:hover` rule of the elements inside to not be trigger if it's active: `:not(.scrolling) div:hover`. 
+
+## CSS classes on body
+
+We should consider not adding add classes on `body` or on a top tag if that only affect an item deep in the DOM. This could cause a full repainting from the parent that will be propagated to all its children. We should always try to target the element or a nearest parent.
+
+## Fixed elements
+
+If we have a top header in fixed position on our website, we should consider putting it in its own layer. It often causes performance troubles easily fixable.
+
+Otherwise, scrolling the content below causes the element to be repainted each time. It's easily spottable with the `Show Paint Rectangle` toggle in the DevTools.
+
+## CSS stylesheets
+
+CSS are blocking resources in the browser.
+
+It has to wait for them to be loaded and parsed before rendering anything: to avoid a flickering effect.
+
+We must keep them light, and avoid to load unnecessary css rules.
+We can split our stylesheets by media. The browser is smart, and won't wait for them if it's useless:
+
+```html
+<link href="style.css" rel="stylesheet">
+<link href="print.css" rel="stylesheet" media="print">
+<link href="other.css" rel="stylesheet" media="(min-width: 40em)">
+```
+
+We should avoid using `@import` in stylesheets: this blocks again the browser.
+
+
+
+
+# Resources loading
+
 ## Custom fonts instead of image
 
 We can use nice custom fonts instead of images to draw symbols.
@@ -105,29 +194,31 @@ svgs are being preferred to custom fonts. They are more targeted and very lightw
 
 ## Image lazy loading
 
-We should consider using an image lazy loading plugin to load some images only if the user can see them or if everything else (more important) has been loaded first.
+We should consider using an image lazy loading library to load some images only if the user can see them or if everything else (more important) has been loaded first.
 
 If by default the image is not displayed in the first view at loading time, we can defer its request when the user will scroll into.
 
 If we have a carousel of images, we can consider not loading every images of the carousel at first, but only when the user hovers it, or again, wait for everything else to be loaded. The point is: if the user does not even use the carousel, it's useless to load the other images. 
+
+## Resources caching
+
+We should use the browser cache to avoid sending several times our static resources.
+
+For instance, we can use the `ETag` response header. The browser will then use a `If-None-Match` request header to ask the server the next time.
+
+We can also leverage the `Cache-Control` response header.
+
+https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching?hl=en
+
+
+
+# Events
 
 ## Event listeners
 
 We should not try to bind event listeners on the whole document just to handle some events on a deep child.
 
 We should try to bind listeners on the element we target or a nearest parent. The *compositor* —a thread dedicated to handle inputs and scrolling— will be called for nothing each time the event is triggered on the whole document.
-
-## Memory management/variable scoping
-
-We should never global variables.
-
-- It's a bad pattern.
-- We should always declare variables in the smaller scope we can to release them the soonest.
-
-With ES2015, we should only use `let` and not `var` to reduce the scope to the minimum.
-
-We should remove the event listeners we don't use anymore.
-We should watch our closures: they can contain references that will never be released.
 
 ## Events throttling
 
@@ -145,6 +236,38 @@ Then, `requestAnimationFrame(fn)` will use them when it can.
 
 If we are doing a heavy process in a handlers, we will delay all other events handling, and we will delay the rendering.
 
+## Browser events
+
+We need to understand the events the browser expose when it's accessing our website.
+
+The most known is probably `DOMContentLoaded`.
+It is called when all resources have been requested and parsed but not processed yet.
+
+The event `load` is when all resources has been processed (even images).
+
+The associated event handlers must to be as short and fast as possible.
+
+![](dom-navtiming.png)
+![](img_54f3a1914e8c2.png)
+
+https://developers.google.com/web/fundamentals/performance/critical-rendering-path/measure-crp?hl=en
+
+For the browsers that implements the Performance API, we can get a bunch of metrics with some Javascript: http://googlesamples.github.io/web-fundamentals/samples/performance/critical-rendering-path/measure_crp.html
+
+## Navigation delay
+
+We should never delay the unloading event of our website.
+
+It is triggered when the user is navigating to another page, not just only when the user closes the tab.
+
+Instead of sending a classic ajax request and add some trick to wait (as a empty for loop! people did it), we an use `navigator.sendBeacon`, it exists for that.
+The browser will send them later, even tab closed.
+
+
+
+
+# Animations and transitions
+
 ## requestAnimationFrame() is our best friend
 
 We should never use `setTimeout()` or `setInterval()` to throttle event handlers such as `onscroll` or `onresize`.
@@ -155,19 +278,7 @@ This is useless to compute something that renders something between 2 frames: it
 This is particularly true for animations.
 
 http://www.html5rocks.com/en/tutorials/speed/animations/
-
-## :hover and scrolling
-
-`:hover` effects can cause awful slowdowns in the middle of a scrollable page.
-
-If the user scrolls using its mousewheel on top of those elements, they will trigger their `:hover` state at the same time the scrolling is occurring. If the `:hover` effect is to add some shadow, that will kill the fps and we'll have jank.
-
-A solution is to add a `class` on the container when it's scrolling, and configure the `:hover` rule of the elements inside to not be trigger if it's active: `:not(.scrolling) div:hover`. 
-
-## CSS classes on body
-
-We should consider not adding add classes on `body` or on a top tag if that only affect an item deep in the DOM. This could cause a full repainting from the parent that will be propagated to all its children. We should always try to target the element or a nearest parent. 
-
+ 
 ## Avoid Layout Trashing
 
 When we need to read some positions or sizes from the DOM, like `.offsetTop`, `.offsetWidth`, we must not alternate them with writes on the DOM, like `element.style.width = width`. 
@@ -222,7 +333,7 @@ Note: It has nothing to do with z-index layers.
 
 http://www.html5rocks.com/en/tutorials/speed/layers/
 
-## Animation/Transitions
+## Animation/Transitions in Javascript
 
 We should never animate with Javascript. This is why we have CSS animations/transitions.
 
@@ -254,26 +365,6 @@ From the initial state:
 - apply an inverted `transform` to put it back where it was
 - clear the transform style to trigger the animation
 
-## Fixed elements
-
-If we have a top header in fixed position on our website, we should consider putting it in its own layer. It often causes performance troubles easily fixable.
-
-Otherwise, scrolling the content below causes the element to be repainted each time. It's easily spottable with the `Show Paint Rectangle` toggle in the DevTools.
-
-## Chrome DevTools <3
-
-In Chrome DevTools, we can press `h` on an element to toggle its visibility. This avoids us to add an extra `display: none` manually.
-
-There is a special page when we want to record low-level events, when we are desperate: `chrome://tracing/`.
-
-There is an option to enable the *continuous painting mode*. Combined to the toggle element visibility trick, it can be used to see which element is causing a slowdown (by hiding some element here and there, and see if that's enhance performances). There is also a fps meter available, when we want some numbers, if we are not sure.
-
-## DocumentFragments
-
-When we want to append several items to the DOM, we should consider using `document.createFragment()`.
-
-It's available in all browsers since a while (jQuery uses it when we call `append()` with an array). We can use traditional DOM operations on a fragment (`appendChild`, style etc.). The browser won't do a thing. When it's complete, we can just append it to the DOM in one shot.
-
 ## Reading values from the DOM
 
 Calling `getComputedStyle(`) (or `.css()` in jQuery) is a bad idea.
@@ -286,57 +377,27 @@ Generally, we can store the value somewhere beforehands.
 
 This magic function returns in one call the position and the dimension of an element: height, width, top, left, bottom, right.
 
-## User reaction time
-
-When a user clicks on a button, we have about 100ms before doing any animation: it's the reaction time.
-
-Therefore, we can prepare anything we need (get sizes, positions…) and have an ugly 100ms frame if we need, he won't notice. ;-)
-
 ## Meta viewport
 
 If we want to deal with mobiles (how doesn't?), we should add `<meta name="viewport" content="width=device-width, initial-scale=1.0">` in our `<head>`.
 
 That could enable the GPU rasterization on some phone (Androids).
 
-## DOM element count
+## User reaction time
 
-We should not have too many DOM nodes on our pages.
+When a user clicks on a button, we have about 100ms before doing any animation: it's the reaction time.
 
-1000 for a mobile application is a good number.
+Therefore, we can prepare anything we need (get sizes, positions…) and have an ugly 100ms frame if we need, he won't notice. ;-)
 
-For reference:
 
-Desktop versions:
-- 4000 for twitter.com
-- 2500 for amazon and facebook
 
-Mobile versions:
-- 1000 for m.twitter.com
-- 1700 for m.facebook
 
-## CSS stylesheets
 
-CSS are blocking resources in the browser.
 
-It has to wait for them to be loaded and parsed before rendering anything: to avoid a flickering effect.
 
-We must keep them light, and avoid to load unnecessary css rules.
-We can split our stylesheets by media. The browser is smart, and won't wait for them if it's useless:
 
-```html
-<link href="style.css" rel="stylesheet">
-<link href="print.css" rel="stylesheet" media="print">
-<link href="other.css" rel="stylesheet" media="(min-width: 40em)">
-```
 
-We should avoid using `@import` in stylesheets: this blocks again the browser.
 
-## Async JS scripts
-
-Inline `<script>`s and `<script src="main.js"></script>`s block the DOM construction when the browser encounters them: that will delay the initial rendering.
-
-We should put our `<script>` at the end of the `<body>` for the browser to render it first. Moreover, the scripts often references DOM parts (in `<head>` nothing is constructed yet).
-We can add the `async` and `defer` flags on the `<script>` tag to defer its loading. The browser won't block, download them in parallel, and will continue it's parsing and rendering.
 
 ## Page load time and runtime performance
 
@@ -355,46 +416,20 @@ example.com --> m.example.com --> m.example.com/start
 We should also consider gzipping the content the server sends.
 It can easily reduce by 80%-90% the size of the js/css files (they are text based, gzip crushes them).
 
-## Browser loading events
 
-We need to understand the events the browser expose when it's accessing our website.
 
-The most known is probably `DOMContentLoaded`.
-It is called when all resources have been requested and parsed but not processed yet.
+# Misc
 
-The event `load` is when all resources has been processed (even images).
+## Chrome DevTools <3
 
-The associated event handlers must to be as short and fast as possible.
+In Chrome DevTools, we can press `h` on an element to toggle its visibility. This avoids us to add an extra `display: none` manually.
 
-![](dom-navtiming.png)
-![](img_54f3a1914e8c2.png)
+There is a special page when we want to record low-level events, when we are desperate: `chrome://tracing/`.
 
-https://developers.google.com/web/fundamentals/performance/critical-rendering-path/measure-crp?hl=en
-
-For the browsers that implements the Performance API, we can get a bunch of metrics with some Javascript: http://googlesamples.github.io/web-fundamentals/samples/performance/critical-rendering-path/measure_crp.html
-
+There is an option to enable the *continuous painting mode*. Combined to the toggle element visibility trick, it can be used to see which element is causing a slowdown (by hiding some element here and there, and see if that enhances performances). There is also a fps meter available, when we want some numbers, if we are not sure.
 
 ## Browser extensions
 
 We have to be careful with our browser extensions: they can have a big impact on the loading time!
 
 We should not forget to disable them when we measure something.
-
-## Resources caching
-
-We should use the browser cache to avoid sending several times our static resources.
-
-For instance, we can use the `ETag` response header. The browser will then use a `If-None-Match` request header to ask the server the next time.
-
-We can also leverage the `Cache-Control` response header.
-
-https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching?hl=en
-
-## Navigation delay
-
-We should never delay the unloading event of our website.
-
-It is triggered when the user is navigating to another page, not just only when the user closes the tab.
-
-Instead of sending a classic ajax request and add some trick to wait (as a empty for loop! people did it), we an use `navigator.sendBeacon`, it exists for that.
-The browser will send them later, even tab closed.
