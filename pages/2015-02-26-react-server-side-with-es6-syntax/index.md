@@ -6,6 +6,15 @@ path: "/2015/02/26/react-server-side-with-es6-syntax/"
 language: en
 ---
 
+This article is an artefact. If you want to remember, now is the time.
+
+- React was in version 0.13.0rc1.
+- nodejs was still using *harmony* flags to enable ES2015 features.
+- Babel was not modular yet.
+- We were still using Browserify.
+
+It will definitely bring back some memories !
+
 ---
 Summary {.summary}
 
@@ -243,7 +252,7 @@ This is the base template if we want to start playing with React in nodejs while
 
 Check out this React post about this version 0.13 for more details: http://facebook.github.io/react/blog/2015/01/27/react-v0.13.0-beta-1.html
 
-It brings some memories: January 27, 2015; React v0.13.0 Beta 1{.info}
+It brings back some memories: January 27, 2015; React v0.13.0 Beta 1{.info}
  
 # What does React looks like when it's transpiled to ES5 ?
 
