@@ -1,5 +1,5 @@
 ---
-title: Performance matters
+title: A lot of performance tips
 date: "2015-03-01T23:48:39Z"
 layout: post
 path: "/2015/03/01/perfmatters/"
