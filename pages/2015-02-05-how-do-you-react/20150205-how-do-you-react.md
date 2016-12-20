@@ -1,5 +1,5 @@
 ---
-title: A new way to update the UI
+title: "ReactJS: A new way to build a website"
 description: The React javascript framework just revolutioned the front-end development
 date: "2015-02-05T00:31:57Z"
 layout: post

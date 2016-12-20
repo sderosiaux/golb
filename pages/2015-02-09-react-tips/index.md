@@ -1,5 +1,5 @@
 ---
-title: ReactJS tips
+title: ReactJS tips and tricks
 date: "2015-02-09T02:48:59Z"
 layout: post
 path: "/2015/02/09/react-tips/"

@@ -1,5 +1,5 @@
 ---
-title: React and ES2015 syntax
+title: ReactJS and ES2015/JSX transpilation
 date: "2015-02-26T00:45:29Z"
 layout: post
 path: "/2015/02/26/react-server-side-with-es6-syntax/"

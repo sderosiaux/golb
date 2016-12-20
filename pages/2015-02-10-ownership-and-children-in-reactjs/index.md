@@ -1,5 +1,5 @@
 ---
-title: Ownership and children in ReactJS
+title: Understand the concept of ownership and children in ReactJS
 date: "2015-02-10T01:10:59Z"
 layout: post
 path: "/2015/02/10/ownership-and-children-in-reactjs/"

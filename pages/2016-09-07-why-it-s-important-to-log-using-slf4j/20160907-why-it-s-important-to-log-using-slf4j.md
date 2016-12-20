@@ -1,5 +1,5 @@
 ---
-title: Why it's important to log using slf4j ?
+title: Understand how to work with slf4j in Java
 description: An overview of the slf4j ecosystem
 date: "2016-09-07T22:12:03.284Z"
 layout: post

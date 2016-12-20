@@ -1,5 +1,5 @@
 ---
-title: How to communicate between React components
+title: How to communicate between ReactJS components
 date: "2015-02-12T15:30:57Z"
 layout: post
 path: "/2015/02/12/how-to-communicate-between-react-components/"
