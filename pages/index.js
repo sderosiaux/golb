@@ -6,12 +6,13 @@ import { config } from 'config'
 import ReadTime from 'react-read-time'
 import format from 'date-fns/format'
 import parse from 'date-fns/parse'
+import compareDesc from 'date-fns/compare_desc'
 import { Flex, Box } from 'reflexbox'
 
 export default (props) => {
   const blogs = props.route.pages.filter(page => page.data.layout == 'post')
                                      .map(page => page.data)
-                                     .sort((a, b) => a.date < b.date)
+                                     .sort((a, b) => compareDesc(a.date, b.date))
 
   return (
     <div>
