@@ -8,12 +8,15 @@ language: en
 
 This article is an artefact. If you want to remember, now is the time.
 
+
 - React was in version 0.13.0rc1.
 - nodejs was still using *harmony* flags to enable ES2015 features.
 - Babel was not modular yet.
 - We were still using Browserify.
 
 It will definitely bring back some memories !
+
+Nonetheless, if you want to know more about V8 "Harmony" features, ES2015 features, and React transpilation result, I suggest you to keep reading, it's still valid.{.info}
 
 ---
 Summary {.summary}
@@ -24,7 +27,7 @@ Summary {.summary}
 
 # How to enable ES2015 ? [artefact]
 
-Just for the record, it was known as ES6 or Harmony or ES.next (there is always an ES.next!).{.info}
+Just for the record, it was known as ES6 (or "Harmony" which are V8 unstable features) or ES.next (there is always an ES.next!).{.info}
 
 This paragraph pre-dated the full implementation of ES2015 is nodejs.
 It's talking about things that are not true anymore.
@@ -37,7 +40,9 @@ This is needed because our browsers and nodejs only know the ES5 syntax for now.
 
 Soon, it will be even useless to transpile our programs because some browsers and nodejs has already begun the implementation of some ES2015 features.
 
-For instance, nodejs has already the following (available under a feature flag):
+## Harmony
+
+nodejs has already the following features implemented thanks to V8 (available under a feature flag):
 
 ```
 --harmony_scoping: enable harmony block scoping
@@ -51,11 +56,32 @@ For instance, nodejs has already the following (available under a feature flag):
 --harmony: enable all harmony features (except proxies)
 ```
 
+To see the list of the available unstable V8 "Harmony" features in nodejs, we can always do:
+
+```
+$ node --v8-options | grep "harmony"
+  --es_staging (enable test-worthy harmony features (for internal use only))
+  --harmony (enable all completed harmony features)
+  --harmony_shipping (enable all shipped harmony features)
+  --harmony_default_parameters (nop flag for "harmony default parameters")
+  --harmony_destructuring_assignment (nop flag for "harmony destructuring assignment")
+  ...
+```
+
+To know which V8 version is running:
+
+```
+$ node -p process.versions.v8
+5.1.281.84
+```
+
+## Transpilation automation
+
 It's possible to translate ES2015 source code to ES5 on the fly with browserify (check out [Browserify in depth](https://www.ctheu.com/2015/02/14/browserify-in-depth/)).
 
-In particular, applications using React must be converted anyway, because they rely on the JSX syntax, which is outside of ES2015 standard.
+In particular, applications using React must be converted anyway, because they rely on the JSX syntax, which is outside of ES2015 scope.
 
-For them, we need to use [react-tools](https://www.npmjs.com/package/react-tools) that has a tool can translate JSX to ES5, and [reactify](https://www.npmjs.com/package/reactify) to use with browserify (and can translate ES2015 to ES5 at the same time):
+We need to use [react-tools](https://www.npmjs.com/package/react-tools) that has a tool can translate JSX to ES5, and [reactify](https://www.npmjs.com/package/reactify) to use with browserify (and can translate ES2015 to ES5 at the same time):
 
 ```js
 browserify('app.jsx').transform({ es6: true }, reactify)

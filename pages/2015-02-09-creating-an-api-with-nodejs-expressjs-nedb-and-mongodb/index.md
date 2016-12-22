@@ -52,7 +52,7 @@ There are a lot of libraries available, almost 400,000 in Dec-2016^[124,046 at t
 They are all available using `npm install package-name` (automatically installed with NodeJS, this is its package manager).
 There is an official search engine https://www.npmjs.com/search?q=react but other exist: https://libraries.io/npm.
 
-Recent version of NodeJS understand the modern Javascript (ES6/ES2015/"Harmony").
+Recent version of NodeJS understand the modern Javascript (ES6/ES2015, and V8 "Harmony" unstable features).
 With older versions of nodejs, they are available under a experimental flag only: `node --use-strict --harmony server.js`.{.info}
 
 Here is a list of the features ES2015 brings: https://babeljs.io/learn-es2015/.
