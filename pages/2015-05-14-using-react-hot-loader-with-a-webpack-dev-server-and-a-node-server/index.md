@@ -6,6 +6,25 @@ path: "/2015/05/14/using-react-hot-loader-with-a-webpack-dev-server-and-a-node-s
 language: en
 ---
 
+I was working on a project running its own nodejs HTTP server, with [expressjs](http://expressjs.com/).
+It had a ReactJS front-end, and was using webpack to create some bundles, all good. But it was lacking of Hot Reloading.
+
+Not working with hot reloading nowadays in like being stuck in 2000. *F5*. *Maj+F5*. *Ctrl+R*. 
+
+You lose the current state of the page. You lose **your time** to get it back. You lose **your productivity**. You lose your patience. You start accusing people around, and the ambience quickly sucks.
+
+HR is something we must work with nowadays, front-end side, and back-end side (you don't want to restart the API every time you add something).
+
+It's even more true when you work with websites and web-applications with CSS and JS bundles. You don't want to rebundle the whole things over and over just because you changed a background-color or because you fixed an *undefined is not a function*.
+
+We'll see how to enable HR from an existing application using webpack and expressjs.
+
+---
+
+If you want to know more about how Webpack does HR (low-level), how `webpack-[hot|dev]-middleware` work, I suggest you to read: [Webpack Hot Reloading and React: how ?](http://ctheu.com/2015/12/29/webpack-hot-reloading-and-react-how/).
+
+A previous version of this post was using the `WebpackDevServer` with the `proxy` option. I decided to remove it and present this other solution instead, being simpler.{.info}
+
 ---
 Summary {.summary}
 
@@ -13,37 +32,19 @@ Summary {.summary}
 
 ---
 
-If you want to know more about how how Webpack does HR (low-level), how the webpack-dev and webpack-hot middlewares works, I suggest you to read: [Webpack Hot Reloading and React: how ?](http://ctheu.com/2015/12/29/webpack-hot-reloading-and-react-how/).
-
-# Use case
-
-I worked on a project running its own nodejs HTTP server, with [expressjs](http://expressjs.com/).
-
-It has a ReactJS front-end, and is using webpack to create bundles of resources, all good. But it lacks of Hot Reloading.
-    
-Not working with hot reloading nowadays in like being stuck in 2000. F5. Ctrl+R. 
-
-You lose the current state of the page. You lose your time to get it back. You lose your productivity. You lose your patience. You start accusing people around, and the ambience quickly sucks.
-
-HR is something we must work with nowadays, front-end side, and back-end side (you don't want to restart the API every time you add something).
-
-It's even more true when you work with websites and web-applications with CSS and JS bundles. You don't want to rebundle the whole things over and over just because you changed a background-color or because you fixed an *undefined is not a function*.
-
-Webpack HR can work by starting another HTTP server: *webpack-dev-server* but it can also work by integrating itself into expressjs using middlewares. This is what we are going to use.
-
 # The less, the better
 
 Some background and constraints:
 
-- In production, the front static resources will be served by some nginx.
-- The expressjs server (the api) should not change and still be up on the same port.
-- I don't want reconfigure my public assets paths and all other things that my expressjs is providing.
-- I don't want to change my generated HTML.
-- I want the whole HR thing to be quasi-transparent (behind some environment variable) in my code and affect the less files it can.
+- In production, the front static resources will be served by some nginx not expressjs.
+- The expressjs server (api) should not change and still be up on the same port :3000.
+- The public assets paths and all other things that my expressjs is providing should not changed.
+- The generated HTML should not changed.
+- The whole HR thing to be quasi-transparent and can be disable in a production build (behind some environment variable).
 
 # The existing code
 
-Note that we won't use babel, nor JSX, nor `import`/`export`. Keep it simple!{.info}
+Note that we won't use babel, nor JSX, nor `import`/`export`. We keep it simple but we are still using ES2015 features (Chrome supports them now).{.info}
 
 The expressjs server is running on `localhost:3000`, fairly simple:
 
@@ -54,14 +55,12 @@ const path = require('path')
 const app = express()
 // Read "public/" physical folder as "/". eg: http://localhost:3000/index.html
 app.use(express.static(path.join(__dirname, 'public')))
-app.use('/dist', express.static(path.join(__dirname, 'dist'))) // JS bundles
+app.use('/dist', express.static(path.join(__dirname, 'dist'))) // JS bundles in /dist/bundle.js
 app.get('/api', (req, res) => res.send('Hello World!'))
 app.listen(3000, () => console.log("Listening to localhost:3000"))
 ```
 
-An index and some components (not using JSX nor Babel, because.).
-
-For HR to work, `render` must refer to components defined in other files.{.warn}
+We have an index and some components defined:
 
 ```js
 var React = require('react')
@@ -71,6 +70,8 @@ ReactDOM.render(
     new React.createFactory(require('./Hello.js'))(),
     document.getElementById('app'));
 ```
+
+For HR to work, `render` must refer to components defined in other files.{.warn}
 
 ```js
 var React = require('react')
@@ -88,16 +89,15 @@ module.exports = class Hello extends React.Component {
 }
 ```
 
-Our `index.html`:
+A classic `index.html` SPA:
 ```html
 <body>
-    <img src="hot.jpg" />
     <div id="app"></div>
     <script src="dist/bundle.js"></script>
 </body>
 ```
 
-And our `webpack.config.js`:
+And our initial and minimal `webpack.config.js`:
 
 ```js
 var path = require('path')
@@ -127,9 +127,9 @@ module.exports = {
 
 We'll obviously start by adding the packages to handle HR:
 
-- react-hot-loader: the plugin that catch HR events in the front-end and update the view.
-- webpack-dev-middleware: recompiles the Javascript bundle when a source changes and serves the bundle up-to-date.
-- webpack-hot-middleware: notify the front-end through SSE when the bundle has been recompiled.
+- `react-hot-loader`: the plugin that catch HR events in the front-end and update the view.
+- `webpack-dev-middleware`: recompiles the Javascript bundle when a source changes and serves the bundle up-to-date.
+- `webpack-hot-middleware`: notify the front-end through SSE when the bundle has been recompiled.
 
 ```xml
 $ npm install --save-dev react-hot-loader webpack-dev-middleware webpack-hot-middleware
@@ -200,9 +200,3 @@ Now, we can `node server.js`:
 - we can edit our components and they will be updated in live.
 
 You can checkout the code here: https://github.com/chtefi/blog-react-hot-reloading
-
-# Previous version using WebpackDevServer
-
-A previous version of this post was using the `WebpackDevServer` with the `proxy` option.
-It was creating a new endpoint `localhost:3001` that was used for the HR (and not `localhost:3000`).
-I decided to remove it and present this other solution instead, being way simpler.
