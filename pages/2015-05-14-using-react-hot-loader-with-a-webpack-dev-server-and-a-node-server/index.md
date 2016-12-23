@@ -1,5 +1,5 @@
 ---
-title: "Using react-hot-loader with webpack and expressjs"
+title: "Using react-hot-loader with webpack"
 date: "2015-05-14T01:17:33Z"
 layout: post
 path: "/2015/05/14/using-react-hot-loader-with-a-webpack-dev-server-and-a-node-server/"
@@ -17,7 +17,7 @@ HR is something we must work with nowadays, front-end side, and back-end side (y
 
 It's even more true when you work with websites and web-applications with CSS and JS bundles. You don't want to rebundle the whole things over and over just because you changed a background-color or because you fixed an *undefined is not a function*.
 
-We'll see how to enable HR from an existing application using webpack and expressjs.
+We'll see how to enable HR from an existing application using webpack, expressjs and react-hot-loader. We'll start with the V1, then we'll update our code to use the latest **react-hot-loader V3**, still in [development](https://github.com/gaearon/react-hot-loader/pull/240), but already working (with React functional components!).
 
 ---
 
@@ -200,3 +200,86 @@ Now, we can `node server.js`:
 - we can edit our components and they will be updated in live.
 
 You can checkout the code here: https://github.com/chtefi/blog-react-hot-reloading
+
+# react-hot-loader V3
+
+RHL v3 is working a bit differently, it's more explicit.
+
+Here are what we need to do:
+
+```
+npm install --save-dev react-hot-loader@next
+```
+
+```diff
+   "devDependencies": {
+-    "react-hot-loader": "^1.3.1",
++    "react-hot-loader": "^3.0.0-beta.6",
+```
+
+Our `webpack.config.js`:
+
+```diff
+    entry: [
++       'react-hot-loader/patch',
+        'webpack-hot-middleware/client',
+        './src/index.js',
+    ],
+
+    loaders: [{
+        test: /\.js$/,
+-       loaders: ['react-hot-loader'],
++       loaders: ['react-hot-loader/webpack'],
+        include: path.join(__dirname, 'src'),
+    }]
+```
+
+RHL needs to setup some code before all, so we can use `entry` to do that (but `require`/`import` the file in `index.js` would work too).
+
+
+Most of the changes are in the `index.js` file:
+
+```diff
+ var React = require('react')
+ var ReactDOM = require('react-dom')
+
++var AppContainer = require('react-hot-loader').AppContainer
+ var Hello = require('./Hello.js')
+
+ ReactDOM.render(
+-  new React.createElement(Hello, null),
++  new React.createElement(AppContainer, null, React.createElement(Hello, null)),
++  // ie: <AppContainer><Hello></AppContainer>
++  document.getElementById('app'));
++
++if (module.hot) {
++  module.hot.accept('./Hello', () => {
++    const NextApp = require('./Hello')
++    // you could use `require('./Hello').default` if you're using import/export syntax
++    ReactDOM.render(
++      new React.createElement(AppContainer, null, React.createElement(NextApp, null)),
++      document.getElementById('app')
++    )
++  })
++}
+```
+
+- As it is the *way* to do things now, we import a *container* to wrap our App (higher-order component, HoC).
+- We handle ourself webpack HR API by rerendering the container on changes.
+
+And... it's done! the HR is working.
+
+One of the big advantage is that functional components are now Hot Reloadable too, ie:
+
+```diff
+const Title = (props) => React.createElement("div", null, props.text)
+...     
+     render() {
+-        return React.createElement("div", { style: { backgroundColor: 'orange' }},
+-                                          [ this.state.message || 'loading...' ])
++        return React.createElement("div", null,
++                 React.createElement(Title, { text: this.state.message || 'loading...' }))
++        // <div><Title text={this.state.message || 'loading...'} /></div>
+```
+
+You can change the `title` component, the HR will follow, awesome.
