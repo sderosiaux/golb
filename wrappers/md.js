@@ -8,6 +8,7 @@ import parse from 'date-fns/parse'
 import ShareButtons from 'components/ShareButtons'
 import { Flex, Box } from 'reflexbox'
 import ReadNext from 'components/ReadNext'
+import ReactDisqusThread from 'react-disqus-thread'
 
 module.exports = React.createClass({
   propTypes () {
@@ -48,11 +49,12 @@ module.exports = React.createClass({
             <Box>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="clock"></span>&nbsp;</Box>
             <Box><ReadTime content={post.body} /></Box>          
             <Box flexAuto={true}></Box>
-          <Box><ShareButtons url={fullUrl} title={title} /></Box>
+            <Box><ShareButtons url={fullUrl} title={title} /></Box>
           </Flex>
         </div>        
         <div dangerouslySetInnerHTML={{ __html: post.body }} />
         <ShareButtons url={fullUrl} title={title} />
+        <ReactDisqusThread url={fullUrl} shortname="ctheu" title={title} />        
         <ReadNext post={post} pages={route.pages} />
       </div>
     )
