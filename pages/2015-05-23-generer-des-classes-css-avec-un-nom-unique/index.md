@@ -6,7 +6,7 @@ path: "/2015/05/23/generer-des-classes-css-avec-un-nom-unique/"
 language: fr
 ---
 
-A l'heure où l'on parle de *micro-services*, où l'on cherche à tout *modulariser*, à créer des systèmes à base de DAG, à ne plus rien mettre dans le scope *global* et à utiliser le scope *local* uniquement, histoire de *maîtriser* ce à quoi on a accès et d'éviter des *effets de bord* : on utilise encore un moteur CSS où l'on balance tous les sélecteurs à sa racine, qui utilise donc un scope `global`.
+A l'heure où l'on parle de *micro-services*, où l'on cherche à tout *modulariser*, à créer des systèmes à base de DAG, à ne plus rien mettre dans le scope *global* et à utiliser le scope *local* uniquement, histoire de maîtriser ce à quoi on a accès et d'éviter des *effets de bord* : on utilise encore un moteur CSS où l'on balance tous les sélecteurs à sa racine, qui utilise donc un scope global.
 
 Pour ceux qui utilise le [shadow DOM](http://www.html5rocks.com/en/tutorials/webcomponents/shadowdom-201), ce problème est résolu. Mais quid de ceux qui ne l'utilise pas ?
 
@@ -17,11 +17,13 @@ Summary {.summary}
 
 ---
 
+# Du JSCSS ?
+
 Une partie de ce problème peut être évité en adoptant des normes d'écriture et de nommage telle que la norme **BEM**.
 
 Elles peuvent malgré tout ne pas suffir ou être délicate à utiliser.
 
-Enfin, surtout avec BEM, les noms de classes peuvent être à rallonge, on aimerait bien généraliser le process de minification qu'on utilise sur le contenu des `.js` et des `.css`, sur le nom des classes elles-même ! Mais cela oblige à modifier d'une part le nom de la classe dans le fichier `.css` et également le code `.js` qui l'utilise.
+Avec BEM, les noms de classes peuvent être à rallonge, on aimerait bien généraliser le process de minification qu'on utilise sur le contenu des `.js` et des `.css`, sur le nom des classes elles-même ! Mais cela oblige à modifier d'une part le nom de la classe dans le fichier `.css` et également le code `.js` qui l'utilise.
 
 Il est même maintenant possible de complétement se passer de fichier `.css` et d'utiliser uniquement du style inline.
 
