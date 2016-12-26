@@ -1,5 +1,5 @@
 ---
-title: "How to enhance our code quality ?"
+title: "How to improve our code quality?"
 date: "2016-01-06T21:58:27Z"
 layout: post
 path: "/2016/01/06/how-to-enhance-the-quality-of-your-javascript-code/"
