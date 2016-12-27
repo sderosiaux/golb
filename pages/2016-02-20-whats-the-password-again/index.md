@@ -196,4 +196,4 @@ It follows the same rule as `ssh`: using `.ssh/config` and the set of keys on bo
 
 For a better security, our keys should have a passphrase (that we set to blank in our example).
 
-We should also use `ssh-agent` to avoid tpying it when needed.
+We should also use `ssh-agent` to avoid typing it when needed.
