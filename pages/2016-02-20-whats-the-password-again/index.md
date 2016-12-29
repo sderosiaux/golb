@@ -1,5 +1,5 @@
 ---
-title: "What's the password again?"
+title: "How to not remember any password ?"
 date: "2016-02-20T20:23:05Z"
 layout: post
 path: "/2016/02/20/whats-the-password-again/"
