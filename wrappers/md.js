@@ -37,9 +37,7 @@ module.exports = React.createClass({
             { property: "og:type", content: "article" },
             { property: "og:url", content: fullUrl },
             { property: "og:description", content: description || title },
-          ]}
-          link={[
-            {"rel": "shortcut icon", "type": "image/x-icon", "href": "/m.jpg"}
+            { property: "og:image", content: "https://www.ctheu.com/m.jpg" }
           ]}
         />
         <h1>{post.title}</h1>

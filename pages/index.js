@@ -23,7 +23,7 @@ export default (props) => {
           {"name": "keywords", "content": "java, scala"},
         ]}
         link={[
-           {"rel": "shortcut icon", "type": "image/x-icon", "href": "/m.jpg"}
+           {"rel": "icon", "href": "/m.jpg"}
         ]}
       />
       <ul>
