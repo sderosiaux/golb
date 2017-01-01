@@ -32,7 +32,7 @@ export default (props) => {
         { blogs.map(blog => <li>
           <Link className="title" to={prefixLink(blog.path)}>{blog.title}</Link>
             <Flex>
-              <Box>{format(blog.date, 'MMM Do, YYYY')}</Box>
+              <Box><div style={{width: 150}}>{format(blog.date, 'MMM Do, YYYY')}</div></Box>
               <Box>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="clock"></span>&nbsp;</Box>
               <Box><ReadTime content={blog.body} /></Box>
             </Flex>
