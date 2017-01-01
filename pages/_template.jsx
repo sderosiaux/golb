@@ -23,19 +23,26 @@ module.exports = React.createClass({
     return (
       <div>
         <Headroom wrapperStyle={{marginBottom: rhythm(1)}}>
-          <Container style={{maxWidth: 960,padding: '16px 48px'}}>
-            <Flex>
+          <Container style={{maxWidth: null, padding: '16px 20px'}}>
+            <Flex align="center" col="5" justify="space-between">
               <Box>
-              <Link to={prefixLink('/')} style={{color: 'black',textDecoration: 'none',}}>
-                <Flex>
-                  <Box px={1}><img src={m} height={32} style={{ borderRadius: 100, margin: 0, display: 'block' }} /></Box>
-                  <Box px={1}><span style={{ fontVariant: 'small-caps' }}>Stéphane Derosiaux</span></Box>
-                </Flex>
-              </Link>
+                <div style={{width: 240}}>
+                  <Link to={prefixLink('/')} style={{color: 'black',textDecoration: 'none',}}>
+                    <Flex>
+                      <Box px={1}><img src={m} height={32} style={{ borderRadius: 100, margin: 0, display: 'block' }} /></Box>
+                      <Box px={1}><span style={{ fontVariant: 'small-caps' }}>Stéphane Derosiaux</span></Box>
+                    </Flex>
+                  </Link>
+                </div>
               </Box>
-              <Box px={1}><SocialIcon url="https://twitter.com/ChtefiD" style={{ height: 32, width: 32 }}/></Box>
-              <Box px={1}><SocialIcon url="https://medium.com/@ChtefiD/" style={{ height: 32, width: 32 }}/></Box>
-              <Box px={1}><SocialIcon url="https://github.com/chtefi" style={{ height: 32, width: 32 }}/></Box>
+              <Box px={1}><Link to={prefixLink('/')}>Blog Index</Link></Box>
+              <Box px={1}>
+                <div style={{width: 240, textAlign: "right"}}>
+                  <SocialIcon url="https://twitter.com/ChtefiD" style={{ height: 32, width: 32 }}/>&nbsp;
+                  <SocialIcon url="https://medium.com/@ChtefiD/" style={{ height: 32, width: 32 }}/>&nbsp;
+                  <SocialIcon url="https://github.com/chtefi" style={{ height: 32, width: 32 }}/>
+                </div>
+              </Box>
             </Flex>
           </Container>
         </Headroom>
