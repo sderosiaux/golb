@@ -9,6 +9,8 @@ import parse from 'date-fns/parse'
 import compareDesc from 'date-fns/compare_desc'
 import { Flex, Box } from 'reflexbox'
 
+import "css/index"
+
 export default (props) => {
   const blogs = props.route.pages.filter(page => page.data.layout == 'post')
                                      .map(page => page.data)
@@ -26,9 +28,9 @@ export default (props) => {
            {"rel": "icon", "href": "/m.jpg"}
         ]}
       />
-      <ul>
+      <ul className="index">
         { blogs.map(blog => <li>
-          <Link to={prefixLink(blog.path)}>{blog.title}</Link>
+          <Link className="title" to={prefixLink(blog.path)}>{blog.title}</Link>
             <Flex>
               <Box>{format(blog.date, 'MMM Do, YYYY')}</Box>
               <Box>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="clock"></span>&nbsp;</Box>

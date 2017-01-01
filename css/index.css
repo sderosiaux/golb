@@ -1,0 +1,14 @@
+ul.index li {
+ padding: 10px;
+ margin: 10px;
+
+ overflow: hidden;
+}
+
+ul.index li a {
+    font-size: 22px;    
+}
+
+a {
+    color: #2A5DB0;
+}
