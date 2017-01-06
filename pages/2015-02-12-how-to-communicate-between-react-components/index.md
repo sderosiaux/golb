@@ -6,7 +6,7 @@ path: "/2015/02/12/how-to-communicate-between-react-components/"
 language: en
 ---
 
-As a starter, I already wrote a smaller article about [Ownership and children in ReactJS](http://ctheu.com/2015/02/10/ownership-and-children-in-reactjs/) to differenciate between parent/child relationship and React ownership.
+As a starter, I already wrote a smaller article about [Ownership and children in ReactJS](https://www.ctheu.com/2015/02/10/ownership-and-children-in-reactjs/) to differenciate between parent/child relationship and React ownership.
 
 *How to communicate between React components?* That's a good question, and there are multiple answers.
 It depends of the relationship between the components, and it depends on what we prefer.

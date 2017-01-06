@@ -112,7 +112,7 @@ And the same in CSS for the stylesheet:
 }
 ```
 
-Basically, here is this beautiful design : ![](http://ctheu.com/wp-content/uploads/2015/08/img_55d25fa31b0f7.png)
+Basically, here is this beautiful design : ![](img_55d25fa31b0f7.png)
 
 # Results
 

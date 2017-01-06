@@ -53,7 +53,7 @@ In the DOM hierarchy, the `<div>` is the representation of `<MyContainer>` which
 
 You can see it through the [React Chrome Developer Tools](http://facebook.github.io/react/blog/2014/01/02/react-chrome-developer-tools.html):
 
-![devtools](http://ctheu.com/wp-content/uploads/2015/02/img_54d9434073e95.png)
+![devtools](img_54d9434073e95.png)
 
 - `<MyContainer>` does not have any owner
 - The owner of `<MyChild>` is `<MyContainer>`, not the `<div>` in-between (the owner of the `<div>` is also `<MyContainer>`).

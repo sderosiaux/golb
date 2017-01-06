@@ -176,7 +176,7 @@ val MB_ICONEXCLAMATION = 0x00000030
 u32.MessageBox(null, "Hello there!", "Hi", MB_YESNO | MB_ICONEXCLAMATION)
 ```
 
-![](http://ctheu.com/wp-content/uploads/2016/08/img_57a2799c95f45.png)
+![](img_57a2799c95f45.png)
 
 We should always use `W32APIOptions.UNICODE_OPTIONS` or we'll get some troubles when we call the functions.
 This flag make the function to automatically converts the input/output of the calls.
