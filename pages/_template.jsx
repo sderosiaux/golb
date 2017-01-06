@@ -27,12 +27,12 @@ module.exports = React.createClass({
             <Flex align="center" col="5" justify="space-between">
               <Box>
                 <div style={{width: 240}}>
-                  <Link to={prefixLink('/')} style={{color: 'black',textDecoration: 'none',}}>
+                  <a target="_blank" href="https://twitter.com/ChtefiD" style={{color: 'black',textDecoration: 'none',}}>
                     <Flex>
                       <Box px={1}><img src={m} height={32} style={{ borderRadius: 100, margin: 0, display: 'block' }} /></Box>
                       <Box px={1}><span style={{ fontVariant: 'small-caps' }}>Stéphane Derosiaux</span></Box>
                     </Flex>
-                  </Link>
+                  </a>
                 </div>
               </Box>
               <Box px={1}><Link to={prefixLink('/')}>Blog Index</Link></Box>

@@ -51,9 +51,9 @@ module.exports = React.createClass({
           </Flex>
         </div>        
         <div dangerouslySetInnerHTML={{ __html: post.body }} />
+        <ReadNext post={post} pages={route.pages} />
         <ShareButtons url={fullUrl} title={title} />
         <ReactDisqusThread url={fullUrl} shortname="ctheu" title={title} />        
-        <ReadNext post={post} pages={route.pages} />
       </div>
     )
   },
