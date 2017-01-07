@@ -22,7 +22,6 @@
     "markdown-it-table-of-contents": "latest",
     "markdown-it-task-lists": "^1.4.1",
     "object-assign": "^4.1.0",
-    "react-disqus-thread": "^0.4.0",
     "react-ga": "^2.1.2",
     "react-headroom": "^2.1.2",
     "react-helmet": "^3.2.2",

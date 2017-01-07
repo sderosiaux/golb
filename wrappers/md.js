@@ -8,7 +8,7 @@ import parse from 'date-fns/parse'
 import ShareButtons from 'components/ShareButtons'
 import { Flex, Box } from 'reflexbox'
 import ReadNext from 'components/ReadNext'
-import ReactDisqusThread from 'react-disqus-thread'
+import ReactDisqusThread from 'components/DisqusThread'
 
 module.exports = React.createClass({
   propTypes () {
