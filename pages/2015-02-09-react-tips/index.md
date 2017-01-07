@@ -8,7 +8,7 @@ language: en
 
 React is full of tricks, is based on important principles, and comes with its own downsides and its own complexity.
 Thinking in React is a bit different than thinking in pure Javascript or jQuery.
-Here is some tips.
+Here are some tips.
 
 ---
 Summary {.summary}
