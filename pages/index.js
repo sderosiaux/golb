@@ -20,10 +20,6 @@ export default (props) => {
     <div>
       <Helmet
         title={config.siteTitle}
-        meta={[
-          {"name": "description", "content": "My blog"},
-          {"name": "keywords", "content": "java, scala"},
-        ]}
         link={[
            {"rel": "icon", "href": "/m.jpg"}
         ]}
