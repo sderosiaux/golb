@@ -1,11 +1,18 @@
 
 ## Incompatibilité
 
-Attention à utiliser les bonnes versions d'API compatible avec serveur. Ex: la high level API des Consumers en 0.9 ne fonctionnent pas avec un serveur kafka 0.8. Aucun message de pop si c'est le cas, ça ne fait rien. Attention à bien matcher les Key/Value serializer. [Integer,Integer] d'un côté et de l'autre. Aucun message de pop si ce n'est pas le cas, ça ne fait juste rien, aucun message n'est consommé par exemple (si produit en String,String et consommé en Integer,Integer) 
+Attention à utiliser les bonnes versions d'API compatible avec serveur. Ex: la high level API des Consumers en 0.9 ne fonctionnent pas avec un serveur kafka 0.8.
+Aucun message de pop si c'est le cas, ça ne fait rien.
+
+Attention à bien matcher les Key/Value serializer.
+[Integer,Integer] d'un côté et de l'autre.
+Aucun message de pop si ce n'est pas le cas, ça ne fait juste rien, aucun message n'est consommé par exemple (si produit en String,String et consommé en Integer,Integer).
 
 ## Principe
 
-Les producers push leurs data vers le broker kafka. Les consumers pull les data du broker kafka (Apache Flume fait du push par exemple lui, du broker vers le sink). 
+Les producers push leurs data vers le broker kafka.
+
+Les consumers pull les data du broker kafka (Apache Flume fait du push par exemple lui, du broker vers le sink). 
 
 ## Topic
 
