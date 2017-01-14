@@ -32,3 +32,19 @@ module.exports.postBuild = function(pages, callback) {
   generateSiteMap(pages)
   callback()
 }
+
+exports.modifyWebpackConfig = function(config, env) {
+  if (env == 'build-javascript') {
+    config.merge({
+      resolve: {
+        alias: {
+            'react': 'preact-compat',
+            'react-dom': 'preact-compat'
+        }
+      } 
+    })
+    return config;
+  }
+
+  return config
+}
