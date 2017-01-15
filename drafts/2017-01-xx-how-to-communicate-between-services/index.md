@@ -8,14 +8,18 @@ language: "en"
 
 The title says _micro-services_ but it's more about _services_ on general.
 
-Let's say we have a main application relying on several small services (as a database which is a big service), that each provides a specific business value (think Domain Driven Development).
+Let's say we have a main application relying on several services that each provides a specific business value (à la DDD, each has its bounded context).
 
-We want the main application to query them in parallel or sequentially (if some service requests depends on another service results), and we want our application to be resilient.
-We don't want it to crash or shut it down because we want to update one dependent service or just because one had crashed for some reason (like a database error).
+We want the main application to query them in parallel or sequentially (if some service requests depend on another service results), and we want our application to be resilient.
+We may want to load balance a service, introduce a scheduler/worker system, have some policies (like call limits), handle authorization and authentication. 
 
-We want to be able to detect those issues quickly, provides some solution (like a fallback), and still reply the more quickly we can to the client of the main application.
+Being resilient is a must. We don't want any service to crash. More globally, we don't want to shutdown the stack because we need to update one service, or just because one had crashed for some reason (like a network error).
+We want to be able to detect those issues quickly, provides some solution when possible (a fallback), and still reply the fastest we can to the client of the main application.
+Performance matters.
 
-We are going to implement a simple solution that works for any type of services.
+A few years ago, [Martin Fowler has written a good overview of what is a micro-service architecture, how did we get there coming from the monolithic way](https://martinfowler.com/articles/microservices.html).
+
+Let's see what are the existing pieces of technology available to build a reliable micro-services architecture, and let's try to see what we can do with those.
 
 ---
 Summary {.summary}
@@ -26,14 +30,14 @@ Summary {.summary}
 
 # Types of failures
 
-A developer generally codes the business rules and handle their errors, such as the validation.
-It also happens that some critical areas are protected into `try/catch` because it happened that this code can crash, and we don't want the whole JVM to crash because of that.
+We generally codes the business rules and handle their errors, such as validating some properties to be still get a consistent model.
+It also happens that we surround some critical areas with `try/catch` because it happened that this code can crash, and we don't want the whole JVM to crash because of that.
 
 But what about infrastructure error ?
 Generally, they are poorly handled.
 
-- What if, at first, the database can't be connected to? The application will go into `catch` to log something, then what?
-- What if, at first, the database is able to be connected to, then hours later, the database is down. What is going to happen to the application, to the requests? Are the queries are going to accumulate, but where? how much? Is the whole application is going to explode, crash, and lose all its flying requests?
+- What if, at first, the service can't connect to the database? The application will go into `catch` to log something, then what?
+- What if, at first, the service can connect to the database, then hours later, the database is down. What is going to happen to the application, to the requests? Are the queries are going to accumulate, but where? how much? Is the whole application is going to explode, crash, and lose all its flying requests?
 
 They are a bunch of questions to wonder when an application (or service) is contacting another service.
 A service failure should not crash the calling application/service, and this, recursively, to not crash the whole stack.
@@ -43,16 +47,92 @@ A service failure should not crash the calling application/service, and this, re
 A simple technique, like Apache Flume is using, is to retry until success.
 It never crashes, it's stubborn, it keeps retrying forever, waiting a bit between retries.
 
-It can do that because it has a channel (memory, disk, MoM etc.) where it can store the current events it needs to process. If it accumulates too much, it just drops them.
+It can retry forever because it has a channel (memory, disk, MoM etc.) where it can store the events to process. If it accumulates too much (according to some thresholds), it can just drops them.
 
 In an application, we are often limited by the memory and we don't want to store everything in memory, in case the whole application crashes.
-It's often useful to rely on a MoM such as Kafka, to store the *requests* to the service, only if it's possible to process them async, later.
+It's often useful to rely on a MoM such as Kafka, to store the *requests* to the service, only if it's possible to process them later.
 
-Often, we just need to process them in-sync (especially in a micro-service architecture, MSA) to get a business answer and reply to the customer directly.
+Unfortunately, we often need the response asap (especially in a micro-service architecture, MSA) to reply to the main application and user as fast as we can.
 
-It's standard to use HTTP to communicate with other services, due to the powerful available frameworks and the easiness of the implementations.
+# Communication
 
-## Example
+No matter how we handle the services failures, we must first make them communicate between each other.
+There are many, many techniques and protocols to help us.
+
+## HTTP
+
+The most common and straightforward way is to simply use a HTTP client, and implement a HTTP server on all services. It's exactly how the websites works, the browser being the client.
+It's standard to use HTTP to communicate with other services, due to the powerful available frameworks and the easiness of the implementations. When we get an HTTP answer, we can decide what to do based on the HTTP response code, body, and Content-Type (text, json, xml).
+
+Services are considered as simple HTTP servers, and can respond to HTTP `GET`, `POST` etc. requests. Any HTTP client is able to communicate with them if they respect the communication contract (the exposed routes and parameters). A good and up-to-date documentation is a must for anyone to be able to write a service to interact with any other.
+
+Generally, client-side we can tune the request parameters such as the timeouts, use compression, secured connection, connection pools, to enhance the speed and throughput. The implementations are generally well battle-tested.
+
+Server-side, we can tune the threads pools that accept and process requests (async), the timeouts, the Content-Type it accepts and can return, which protocol it handles (HTTP/2, WebSockets), and of course, the routes.
+
+- A classic library to do HTTP requests is [async-http-client](https://github.com/AsyncHttpClient/async-http-client). It's written in Java but perfectly useable in Scala. Note that it only provides the client side.
+
+- Another way, purely Scala'ish, is to use [akka-http](http://doc.akka.io/docs/akka-http/current/index.html) (previously [spray](http://spray.io/)). It relies on the Actor model provided by Akka which is quite idiomatic in Scala. It provides the [client side](http://doc.akka.io/docs/akka-http/current/scala/http/client-side/connection-level.html) and [server side](http://doc.akka.io/docs/akka-http/current/scala/http/routing-dsl/index.html).
+
+- Twitter has written [Finagle](https://twitter.github.io/finagle/), which is a stack dedicated to RPC communication between JVMs, protocol agnostic. It also created [Twitter Server](https://github.com/twitter/twitter-server) is a framework on top of Finagle. Finally, Twitter made [Finatra](https://github.com/twitter/finatra), built on top of them, to provide a fully-features framework to easily create testable and performant [HTTP services](http://twitter.github.io/finatra/user-guide/build-new-http-server/) (and also [Thrift services](http://twitter.github.io/finatra/user-guide/build-new-thrift-server/)), and
+
+- Airbnb created a stack named [SmartStack](http://nerds.airbnb.com/smartstack-service-discovery-cloud/) which purpose is to stay outside of the services source code. It's composed of [nerve](https://github.com/airbnb/nerve) (track services status, rely on ZK or etcd) and [synapse](https://github.com/airbnb/synapse) (service discovery, rely on HAProxy).
+
+- Netflix has written a bigger stack, composed of many parts any services can use: [Eureka](https://github.com/Netflix/eureka) (service registry client and server), [archaius](https://github.com/Netflix/archaius) (service configuration), [ribbon](https://github.com/Netflix/ribbon) (RPC communication, load balancing, replay, batch, multiple protocols. But they are moving to gRPC), [governator](https://github.com/Netflix/governator) (service lifecycle), [servo](https://github.com/Netflix/servo) (service monitoring), [Hystrix](https://github.com/Netflix/Hystrix) (service resilience, fault tolerance)
+
+## gRPC
+
+[gRPC](http://www.grpc.io/), by Google, provides a performant RPC framework that uses HTTP/2 and [protobuf](https://github.com/google/protobuf).
+
+It handles both server-side (to process request and send response) and client-side (to send request) using protobuf as `Content-Type` (`application/grpc+proto`).
+With protobuf, we can define message _and_ service interfaces using a simple DSL, that will be used to generate code we can call. gRPC handles classic request/response style, but also streaming RPC.
+
+## Zero-copy protocols
+
+It exists some protocols that are ultra-fast because they don't need to pack/unpack and parse the payloads. They directly map the memory to the object. They use the zero-copy kernel strategy to prevent useless data copies and cpu cycles (from kernel context to user context), and they barely do memory allocations, except for the message itself. They also handle schema evolution, up to some constraints.
+
+- [Cap'n Proto](https://capnproto.org) is one of them. We write some interfaces and we generate code stub from it.
+It's mainly written in C++ but a non official Java implementation exists.
+- [flatbuffers](https://github.com/google/flatbuffers), by Google, follows the same strategy, available in multiple languages.
+- [simple-binary-encoding](https://github.com/real-logic/simple-binary-encoding) (SBE), is another implementation of this same principle, more XML oriented. Real Logic (the company behind it, specialized in high performance systems) has also written [Aeron](https://github.com/real-logic/Aeron) that is used by Akka Remote ([Artery](http://doc.akka.io/docs/akka/2.4/scala/remoting-artery.html)) to give you an idea.
+
+## Netty
+
+The base of every communication is either TCP or UDP. As a reminder, they are used at the OSI level 4, the transport layer, giving the ability to deliver messages from one computer to another.
+It's possible to do our own application protocol as we just saw, using Netty as a base framework to handle communication only.
+
+[Netty](http://netty.io/index.html) is a low-level Java framework built on top of Java NIO (which provides non blocking sockets) that can be used to speak *TCP* or *UDP* directly with any payload we want. It will deal with the communication itself and let us deal with the handling, the buffers, the parsing. It provides a lot of features such as zero-copy, thread pools, binary/text-based protocols helpers, already understand some application protocols like HTTP, WebSockets, can deal with compressed data, framing of data. It's a veritable networking swiss-knife designed for high performance in mind.
+
+It's used in all main actors (Akka, Cassandra, Spark, Couchbase, Elasticsearch, Finagle, Play!...) because they all needed to implement their custom protocols.
+
+The fastest protocols are using UDP because of the lack of acknowledgments. It also *provides* packets loss, packets duplications, packets out-of-order arrivals. The application relying on UDP must assume all those constraints and deal with those situations. Packets loss is often acceptable in games, like sending players positions. We can lose one event, they are much more of the same type coming after to correct the situation.
+
+In applications, and particularly services, precautions must be taken. We generally don't want to lose a request nor a response (there is no such concept as *response* in UDP because there is no such concept as *connection* or *conversation*, but we get the idea).
+
+One framework we mentioned can use UDP as protocol: [Aeron](https://github.com/real-logic/Aeron), used in Akka Remote. It can send SBE data through UDP (but not only) for maximum performance (and can pack several messages in the same UDP datagram). Because of the possible loss of messages, Aeron has a layer of checks to detect the related issues.
+
+## Zookeeper, Consul, etcd
+
+The communication we just saw are *direct communication*; meaning a service explicitely calls another service using its address.
+
+It's possible to do *indirect communication* using a third-party service in-between, that will be used as intermediate to store and dispatch any message.
+
+For instance, many systems in the "big data" world rely on Zookeeper.
+
+- [Zookeeper](https://zookeeper.apache.org/) is a distributed database often used to store metadata and configuration. It provides reliable distributed coordination and deals with concurrent reads and updates of the same state, on any of its node. Any application can rely on it, instead of trying to implement such complex operations. It can be used to deal with nodes leadership, locks, service discovery, counters, queues..
+
+For instance, a system, forming a cluster composed of many nodes, can use Zookeeper to *store* messages or commands. A node can react, and pick it up, then start some process (replication, repartition, anything). For instance, [Druid](https://github.com/druid-io/druid) is using it to start tasks on the Druid's workers. The workers subscribes to a path in Zookeeper, waiting for a node (representing a task) to exist. The Druid's Coordinator create a task in there, Zookeeper notify the workers, one worker takes the lead and process the task. Same story to ask the Druid's Historical nodes to load/drop some data. It is also used to manage the leadership between the multiple Overlords and Coordinators (in case of failover).
+
+- [etcd](https://github.com/coreos/etcd) is using gRPC under the hood.
+
+- [Consul](https://www.hashicorp.com/consul.html) is a system from hashicorp.
+
+## Distributed cache: Hazelcast, Hollow
+
+
+
+
+# Example
 
 Create 3 microservices A -> B -> C without any kind of control, just basic HTTP with a standard HTTP client call Make B or C crash.
 -> what happens ?
@@ -64,6 +144,10 @@ Run another B, run another C (redundancy, load balancing, master/backup (they ca
 
 Let's say C is just slow because it timeouts trying to access an external resource : the whole stack become slow (and crash at the end): the system is overloaded for no reason.
 
+# Retryer
+
+https://github.com/rholder/guava-retrying
+
 # What is a circuit breaker ?
 
 - Independent of the language (scala's, and in js for instance https://github.com/yammer/circuit-breaker-js)
@@ -71,7 +155,8 @@ Let's say C is just slow because it timeouts trying to access an external resour
 - Timeout explicit: the service is not crashed but slow
 - It simulate some kind of backpressure: the end service is slow because it's overloaded? the circuit breaker will short-circuit it and the response is will faster, and the end service will have time to recover. (but Add a circuit breaker
 
-- Akka's impl
+- Sentries: https://github.com/erikvanoosten/sentries
+- Akka's implementation
 - Hystrix https://github.com/Netflix/Hystrix/wiki/How-it-Works#circuit-breaker
 
 ## Tuning
@@ -80,6 +165,10 @@ Let's say C is just slow because it timeouts trying to access an external resour
 - Exponential Backoff Monitoring of the circuit breaker opening Change to a GRPC implementation, for the sake of it (or just use that from the beginning, to see..)
 
 ## Monitoring
+
+WeaveScope
+Kamon
+Datadog
 
 
 # Using Hystrix
