@@ -85,7 +85,9 @@ Server-side, we can tune the threads pools that accept and process requests (asy
 [gRPC](http://www.grpc.io/), by Google, provides a performant RPC framework that uses HTTP/2 and [protobuf](https://github.com/google/protobuf).
 
 It handles both server-side (to process request and send response) and client-side (to send request) using protobuf as `Content-Type` (`application/grpc+proto`).
-With protobuf, we can define message _and_ service interfaces using a simple DSL, that will be used to generate code we can call. gRPC handles classic request/response style, but also streaming RPC.
+With protobuf, we can define message _and_ service interfaces using a simple DSL, that will be used to generate code we can call from our codebase. gRPC handles classic request/response style, and also streaming RPC.
+
+gRPC can generate code in many languages, C++, Java, Python, Go etc. but not in Scala! Hopefully, there is [ScalaPB](https://scalapb.github.io/) and its extension to generate gRPC compliant services.
 
 ## Zero-copy protocols
 
