@@ -28,7 +28,7 @@ Summary {.summary}
 
 ---
 
-# Types of failures
+# Types of failure
 
 We generally codes the business rules and handle their errors, such as validating some properties to be still get a consistent model.
 It also happens that we surround some critical areas with `try/catch` because it happened that this code can crash, and we don't want the whole JVM to crash because of that.
@@ -54,7 +54,7 @@ It's often useful to rely on a MoM such as Kafka, to store the *requests* to the
 
 Unfortunately, we often need the response asap (especially in a micro-service architecture, MSA) to reply to the main application and user as fast as we can.
 
-# Communication
+# Types of communication
 
 No matter how we handle the services failures, we must first make them communicate between each other.
 There are many, many techniques and protocols to help us.
@@ -113,21 +113,28 @@ In applications, and particularly services, precautions must be taken. We genera
 
 One framework we mentioned can use UDP as protocol: [Aeron](https://github.com/real-logic/Aeron), used in Akka Remote. It can send SBE data through UDP (but not only) for maximum performance (and can pack several messages in the same UDP datagram). Because of the possible loss of messages, Aeron has a layer of checks to detect the related issues.
 
-## Zookeeper, Consul, etcd
+## Zookeeper, etcd, Consul
 
 The communication we just saw are *direct communication*; meaning a service explicitely calls another service using its address.
 
-It's possible to do *indirect communication* using a third-party service in-between, that will be used as intermediate to store and dispatch any message.
+It's possible to do *indirect communication* using a third-party service in-between (reactive database), that will be used as intermediate to store and dispatch any message.
 
-For instance, many systems in the "big data" world rely on Zookeeper.
+- [Zookeeper](https://zookeeper.apache.org/) is a distributed database (written in Java) often used to store metadata and configuration. It provides reliable distributed coordination (thanks to its Zab consensus protocol). Any application can rely on it, instead of trying to implement complex coordinations operations. It can be used to deal with nodes leadership, locks, service discovery, counters, queues..
 
-- [Zookeeper](https://zookeeper.apache.org/) is a distributed database often used to store metadata and configuration. It provides reliable distributed coordination and deals with concurrent reads and updates of the same state, on any of its node. Any application can rely on it, instead of trying to implement such complex operations. It can be used to deal with nodes leadership, locks, service discovery, counters, queues..
+- [etcd](https://github.com/coreos/etcd) is also a distributed database (more precisely, it's a reliable key-value store, using Raft as consensus protocol) using gRPC under the hood. It's written in Go. We can do anything like a classic key-value store (`get`, `put`, `del`). Clients can also watch for value changes, create locks, leases, and so on. The full gRPC interfaces are described [here](https://github.com/coreos/etcd/blob/master/Documentation/dev-guide/api_reference_v3.md).
 
-For instance, a system, forming a cluster composed of many nodes, can use Zookeeper to *store* messages or commands. A node can react, and pick it up, then start some process (replication, repartition, anything). For instance, [Druid](https://github.com/druid-io/druid) is using it to start tasks on the Druid's workers. The workers subscribes to a path in Zookeeper, waiting for a node (representing a task) to exist. The Druid's Coordinator create a task in there, Zookeeper notify the workers, one worker takes the lead and process the task. Same story to ask the Druid's Historical nodes to load/drop some data. It is also used to manage the leadership between the multiple Overlords and Coordinators (in case of failover).
+- [Consul](https://www.consul.io/) follows the same principle and is at the same time a Service Discovery system, contrary to ZK and etcd where we need to implement raw techniques  based on ephemeral nodes and pings (heart-beats) to know if a service is still alive. Consul scales differently and an agent must be deployed where the services are hosted. This agent will forward details to the Consul servers. It's used to be more reliable and to provide more insights (more inner checks can be done, cpu and memory can be monitored). It's a more complete solution and will also need some automation for deploying and managing the agents configuration.
 
-- [etcd](https://github.com/coreos/etcd) is using gRPC under the hood.
+As an example, an application based on a cluster composed of many nodes, can use Zookeeper or etcd to *store* messages or commands. Any of its node can react, pick up the message, then start some process (replication, repartition, anything). For instance, [Druid](https://github.com/druid-io/druid) is using Zookeeper to start tasks on the Druid's workers. The workers subscribes to a path in Zookeeper, waiting for a node (representing a task) to exist. The Druid's Coordinator create a task in there, Zookeeper notify the workers, one worker takes the lead and process the task. Same story to ask the Druid's Historical nodes to load/drop some data. It is also used to manage the leadership between the multiple Overlords and Coordinators (in case of failover).
 
-- [Consul](https://www.hashicorp.com/consul.html) is a system from hashicorp.
+## MoM/Message Queues and CQRS/Event Sourcing
+
+Another way to communicate between services is by using async messages queues system like Kafka, RabbitMQ, or JMS. We send a message/command and forget it (just waiting for an acknowledgment most of the time).
+
+Using messages queues to send commands and get responses is an application of the [CQRS](https://martinfowler.com/bliki/CQRS.html) pattern (Command Query Responsability Segregation).
+Any service can send a command to another service, then it will eventually get some response from the same or another service: it does not expect an answer.
+
+It's particularly closed to the Event Sourcing model, where we build an *immutable* bus of events any service can register to, and act upon them. It's also designed to keep everything from the beginning: if we want to change any system downstream, we can replay every past events to populate the new systems as if they were just in real-time.
 
 ## Distributed cache: Hazelcast, Hollow
 
