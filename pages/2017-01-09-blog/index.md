@@ -121,7 +121,7 @@ Last but not least, the cost.
 
 The cheaper the better.
 
-The best is be to pay only the custom domain name, and not any hosting service.
+The best is to pay only the custom domain name, and not any hosting service.
 
 ## Conclusion
 

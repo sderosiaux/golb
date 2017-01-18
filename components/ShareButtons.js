@@ -15,5 +15,5 @@ export default ({ url, title }) => <Flex>
         <Box px={0}><TwitterShareButton url={url} className={css.icon}><TwitterIcon size={32} title={title} round={true} /></TwitterShareButton></Box>
         <Box px={0}><LinkedinShareButton url={url} className={css.icon}><LinkedinIcon size={32} title={title} round={true} /></LinkedinShareButton></Box>
         <Box px={0}><GooglePlusShareButton url={url} className={css.icon}><GooglePlusIcon size={32} title={title} round={true} /></GooglePlusShareButton></Box>          
-        <Box px={0}><FacebookShareButton url={url} className={css.icon}><FacebookIcon size={32} title={title} round={true} /></FacebookShareButton></Box>
+        {/*<Box px={0}><FacebookShareButton url={url} className={css.icon}><FacebookIcon size={32} title={title} round={true} /></FacebookShareButton></Box>*/}
     </Flex>
