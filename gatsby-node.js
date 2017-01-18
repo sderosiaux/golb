@@ -34,7 +34,7 @@ module.exports.postBuild = function(pages, callback) {
 }
 
 exports.modifyWebpackConfig = function(config, env) {
-  if (env == 'build-javascript') {
+  if (env == 'AAbuild-javascript') {
     config.merge({
       resolve: {
         alias: {
