@@ -6,7 +6,7 @@ path: "/2017/01/22/how-to-communicate-between-micro-services-part-2-retryers/"
 language: "en"
 ---
 
-[How to communicate between micro-services — Part 1](https://www.ctheu.com/2017/01/18/how-to-communicate-between-micro-services-part-1/)
+_The introduction of this series: [How to communicate between micro-services — Part 1](https://www.ctheu.com/2017/01/18/how-to-communicate-between-micro-services-part-1/)_.
 
 We tend to not write any monolithic application nowadays, that provide all the features at once.
 
