@@ -24,7 +24,7 @@ The resilience depends of the means of communication between the services.
 Let's see what are the existing pieces of technology available today to build a reliable micro-services architecture.
 
 To not make a huge article and stay focused, I think I'll write down a series of articles dedicated to the communication between services.
-This first one talks about general principles and present some softwares and frameworks to get an overview. The subsequent articles will focus on specific frameworks or patterns (like the circuit-breaker) because we want to see some code!{.info}
+This first one talks about general principles and present some softwares and frameworks to get an overview. The subsequent articles will focus on specific frameworks and patterns (like the circuit-breaker) because we want to see some code!{.info}
 
 ---
 Summary {.summary}
@@ -47,7 +47,9 @@ Generally, they are poorly handled.
 They are a bunch of questions to wonder when an application (or service) is contacting another service.
 A service failure should not crash the calling application/service, and this, recursively, to not crash the whole stack.
 
-## Retry, retry
+## Retry or break
+
+- Retryer
 
 A simple technique, like Apache Flume is using, is to retry until success.
 It never crashes, it's stubborn, it keeps retrying forever, waiting a bit between retries.
@@ -58,6 +60,12 @@ In an application, we are often limited by the memory and we don't want to store
 It's often useful to rely on a MoM such as Kafka, to store the *requests* to the service, only if it's possible to process them later.
 
 Unfortunately, we often need the response asap (especially in a micro-service architecture, MSA) to reply to the main application and user as fast as we can.
+
+- Circuit-breaker
+
+A different pattern, instead of retrying forever, is to retry an operation until upon certain conditions, according to the past failures. This is the purpose of the circuit-breaker.
+
+It's a state machine that acts kinda a classic retryer but has memory of the past failures. It's able to provide a direct fallback if it knows some condition is already probably false (like the other service is down), instead of blindly trying to reach it several times. It's based on some thresholds to test if the condition result has changed or not.
 
 ## Fail fast
 
