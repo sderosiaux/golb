@@ -8,7 +8,7 @@ language: "en"
 
 _The introduction of this series: [How to communicate between micro-services — Part 1](https://www.ctheu.com/2017/01/18/how-to-communicate-between-micro-services-part-1/)_.
 
-We tend to not write any monolithic application nowadays, that provide all the features at once.
+We tend to not write any monolithic application nowadays, that provides all the features at once.
 
 We try to think modular and often write dedicated modules in the application itself (with their own _bounded context_), then switch them to dedicated independent services.
 Then, we can release and scale them independently of the rest, and still provide a SLA of 99.999%.
