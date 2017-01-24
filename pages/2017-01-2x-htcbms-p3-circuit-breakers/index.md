@@ -1,8 +1,8 @@
 ---
 title: "HTCBMS — Part 3 — Circuit-breakers"
-date: "2017-01-2xT15:28Z"
+date: "2017-01-24T01:32Z"
 layout: post
-path: "/2017/01/2x/how-to-communicate-between-micro-services-part-3-circuit-breakers/"
+path: "/2017/01/24/how-to-communicate-between-micro-services-part-3-circuit-breakers/"
 language: "en"
 ---
 
@@ -49,7 +49,7 @@ There should not have defaults, because each circuit-breaker is dealing with a p
 
 - Failures threshold: to open the circuit (won't call the service again).
 - Success threshold: to close the circuit (will call the service again).
-- Method call timeout: a call can be consider as a failure if it took too much time.
+- Function call timeout: a call can be consider as a failure if it took too much time.
 - Open to Half-Open delay: to try again to call the service.
 - Failure/Success conditions: we can indicate what is a failure (besides timeouts), more business oriented.
 
@@ -62,6 +62,9 @@ There should not have defaults, because each circuit-breaker is dealing with a p
 We already used the Retryer of [Failsafe](https://github.com/jhalterman/failsafe#retries) in the previous part of this series.
 Let's use their circuit-breaker now, to contact our brittle service.
 
+```scala
+libraryDependencies += "net.jodah" % "failsafe" % "1.0.1"
+```
 ```scala
 CircuitBreaker cb = new CircuitBreaker()
   .withFailureThreshold(2)
@@ -148,40 +151,164 @@ As we saw, Failsafe provides a quite good implementation. We have everything we 
 
 ## Sentries
 
-https://github.com/erikvanoosten/sentries
+In [Sentries](https://github.com/erikvanoosten/sentries), circuit-breakers are more an implementation detail and are hidden behind the _sentry_ concept. They are also simpler than in Failsafe for instance.
+
+A sentry can wrap any function call (it's a Higher Order Function), so any caller will first pass through the sentry before reaching the function code, _if_ the sentry let it pass.
+A sentry is chainable: it's composed by several other sentries that takes only one responsability, it's a flow of sentries. And because it's a flow: the order matters.
+
+```xml
+Sentry Builder -> Sentry with Fail Limit -> Sentry with Rate Limit -> [Code]
+```
+
+If we use `withFailLimit` on a sentry, to trigger a circuit-breaker opening after N failures, this will actually _append_ a `CircuitBreakerSentry` to our sentry. Internally, its state are: _FlowState_ (closed) and _BrokenState_ (opened): there is no concept of half-open.{.info}
+
+If we take a simple example:
+
+```scala
+object ExternalService extends SentrySupport {
+    val client: AsyncHttpClient = new AsyncHttpClient
+    val billingSentry = sentry("billing").withFailLimit(failLimit = 2, retryDelay = 1 second)
+    def getBilling(url: String = "http://localhost:1234/billing") = billingSentry {
+        client.prepareGet(url).execute.get(1000, TimeUnit.MILLISECONDS)
+    }
+}
+println(Try(ExternalService.getBilling()))
+println(Try(ExternalService.getBilling()))
+println(Try(ExternalService.getBilling()))
+```
+```xml
+Failure(java.util.concurrent.TimeoutException)
+Failure(java.util.concurrent.TimeoutException)
+Failure(..CircuitBreakerBrokenException: Making billing unavailable after 2 errors)
+```
+
+Thanks the sentry (and the cb), the 3rd call wasn't made.
+One second later, it would let the call passed, to test them again.
+
+Any call blocked by a sentry will thrown an exception such as `CircuitBreakerBrokenException`, `ConcurrencyLimitExceededException`, `DurationLimitExceededException`, according to which sentry was out of its limits.
+
+Note that a failure is simply because an exception occurred. There is no means to plug in some callback to implement a custom business rule.{.warn}
+
+Sentries provides more features than just circuit-breakers:
+- `withMetrics`: Monitoring only. It provides metrics for successes/failures/sentry blocked.
+- `withTimer`: Monitoring only. It provides the time passed in a function.
+- `withFailLimit`: Breaks if there are more failures than expected. It will call the original function again after some delay.
+- `withAdaptiveThroughput`: Try to ensure a given success ratio instead of prevent all calls if case of failures (like when it's acceptable to have 95% of success and 5% of failures on big volumes).
+- `withConcurrencyLimit`: Breaks if more than `concurrencyLimit` calls the function at the same time.
+- `withRateLimit`: Breaks if the function is called more than expected in a given time.
+- `withDurationLimit`: Breaks if the function takes longer than expected.
+
+The API of Sentries is easy, composable, but lack of some features like declaring a failure according to some custom predicate.
+The good point is the embedded metrics monitoring, exposed through JMX.
+
+![](sentries_jmx.png)
 
 ## Akka
 
-http://doc.akka.io/docs/akka/current/common/circuitbreaker.html
+Akka is not to present anymore. It's quite idiomatic in Scala nowadays.
+It provides a full-featured [circuit-breaker](http://doc.akka.io/docs/akka/current/common/circuitbreaker.html) using an Akka `Scheduler`. It works mostly async-ly but supports sync calls (just by wrapping the call into a `Future` and `Await`ing it).
+
+Its API is quite similar to Failsafe's.
+
+Let's manually trigger the success and the fail to make it go through the states:
 
 ```scala
-val breaker =
-    new CircuitBreaker(system.scheduler,
-      maxFailures = 10,
-      callTimeout = 1 seconds,
-      resetTimeout = 1 seconds).
-      onOpen(println("circuit breaker opened!")).
-      onClose(println("circuit breaker closed!")).
-      onHalfOpen(println("circuit breaker half-open"))
-
-val askFuture = breaker.withCircuitBreaker(db ? GetRequest("key"))
-    askFuture.map(x => "got it: " + x).recover({
-      case t => "error: " + t.toString
-    }).foreach(x => println(x))
-
-
-
-new CircuitBreaker(
-      system.scheduler,
-      maxFailures = breakerConfig.maxFailures,
-      callTimeout = breakerConfig.callTimeout,
-      resetTimeout = breakerConfig.resetTimeout).
-      onOpen(vowpalNotifyMeOnOpen()).
-      onClose(vowpalNotifyMeOnClose())
-
-vowpalbreaker.withCircuitBreaker(
-          multiclassResult) fallbackTo executeAlgorithm(request, v1NoShuffle)
+libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4.16"
 ```
+```scala
+implicit val system = ActorSystem("app")
+implicit val ec = system.dispatcher
+val scheduler = system.scheduler
+
+val cb = CircuitBreaker(scheduler,
+            maxFailures = 3,
+            callTimeout = 1 minute,
+            resetTimeout = 3 seconds)
+
+cb.onClose(log("cb closed"))
+cb.onOpen(log("cb opened"))
+cb.onHalfOpen(log("cb half opened"))
+
+log("1x failure"); cb.fail()
+log("2x failure"); cb.fail()
+log("3x failure"); cb.fail()
+
+// we wait for the half-open state...
+scheduler.scheduleOnce(5 seconds) {
+    log("task...")
+    // cb.fail() — The circuit would be reopened directly from the half-open state!
+    cb.succeed()
+    val fut: Future[Boolean] = cb.withCircuitBreaker { Future { true } }
+    val res: Boolean = cb.withSyncCircuitBreaker { true }
+}
+```
+```xml
+0.770: 1x failure
+0.782: 2x failure
+0.782: 3x failure
+0.784: cb opened
+3.792: cb half opened
+5.794: task...
+5.795: cb closed
+```
+
+The advantage of the Akka circuit-breaker is that it's dealing with Scala and `Future`s directly: it's can be a `Success` or a `Failure`, which the circuit-breaker is using. Thanks to this, we can easily provide a fallback value in case of a failure / circuit-breaker opened.
+
+For instance:
+
+```scala
+val client: AsyncHttpClient = new AsyncHttpClient
+def getBilling(url: String = "http://localhost:1234/billing"): Future[Response] = {
+    Future { blocking { client.prepareGet(url).execute.get(1000, TimeUnit.MILLISECONDS) } }
+}
+...
+val responsesF = Future.sequence((1 to 10).map { _ =>
+    // getBilling can throw a TimeoutException for instance
+    cb.withCircuitBreaker { getBilling().map(_.getStatusCode) }
+      .fallbackTo(Future { 1337 })
+})
+
+val status: Seq[Int] = Await.result(responsesF, Duration.Inf)
+println(status)
+```
+```
+Vector(1337, 1337, 1337, 1337, 1337, 1337, 200, 1337, 1337, 1337
+```
+
+We may wonder why can we find a `200` at the 7th position, because the circuit-breaker should be opened at the 3rd failures!?
+It's because all the function calls were executed at the same time in the loop here; the circuit was still closed because it didn't got any response yet.
+
+We can simulate a _real-word_ simulation by reducing our request timeout and introducing some lag:
+
+```scala
+def getBilling(url: String = "http://localhost:1234/billing"): Future[Response] = {
+  println("getBilling")
+  // 100ms max
+  Future { blocking { client.prepareGet(url).execute.get(100, TimeUnit.MILLISECONDS) } }
+}
+...
+val responsesF = Future.sequence((1 to 10).map { _ =>
+  // we simulate a call every 120ms
+  Thread.sleep(120)
+  cb.withCircuitBreaker { getBilling().map(_.getStatusCode) }
+    .fallbackTo(Future { 1337 })
+})
+```
+```xml
+getBilling
+getBilling
+getBilling
+getBilling
+getBilling
+cb opened
+Vector(1337, 200, 1337, 1337, 1337, 1337, 1337, 1337, 1337, 1337)
+```
+The circuit-breaker is opened at the fifth call (3rd failures in a row) and the function is not called anymore.
+
+As we want see, this circuit-breaker is not really related to Akka and the Actor model and could be used anymore.
+Its only dependency is the Akka Scheduler, which is used to:
+- Control the function invocation time and throw a Failure if it's greater than the `callTimeout`.
+- Switch from the opened state to the half-open state after the given `resetTimeout`.
 
 ## Hystrix
 

@@ -187,6 +187,9 @@ It provides a well battle-tested implementation, fully configurable.
 If we try to connect to our buggy service, a HTTP call retryer would be something like:
 
 ```scala
+libraryDependencies += "com.github.rholder" % "guava-retrying" % "2.0.0"
+```
+```scala
 Retryer<Response> retryer = RetryerBuilder.<Response>newBuilder()
   .retryIfException()
   .withWaitStrategy(WaitStrategies.exponentialWait(2, 10000, TimeUnit.MILLISECONDS))
@@ -240,6 +243,9 @@ It provides much more events to be plugged into (success, failure, max attempts,
 
 Our previous example could be written this way, it's a bit less verbose:
 
+```scala
+libraryDependencies += "net.jodah" % "failsafe" % "1.0.1"
+```
 ```scala
 RetryPolicy retryPolicy = new RetryPolicy()
   .retryOn(throwable -> true)
@@ -374,11 +380,15 @@ There is a non-official retryer available in [akka-stream-contrib](https://githu
 
 It's more complex because:
 - It introduces the notion of _State_ (tupled with a `Try`) to remember which source element must be retry in case of a failure. This complexifies a bit the code because we must deal with tuples.
-- A retry refeeds the stream with the failed states.
+- A retry refeeds the stream with the failed states using a `BidiShape` (bidirectional).
 - It's not configurable (no thresholds) as the other retryers we saw. It just tries forever unless we explicitely return `None` for an element in the retry handler.
 
 If we change a bit our program and ask to contact several urls in our stream for instance, we can do something like:
 
+```
+libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.4.16"
+libraryDependencies += "com.typesafe.akka" %% "akka-stream-contrib" % "0.6"
+```
 ```scala
 implicit val system = ActorSystem()
 implicit val scheduler = system.scheduler
