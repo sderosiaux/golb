@@ -26,7 +26,7 @@ Summary {.summary}
 A circuit-breaker is a finite state machine with 3 states:
 
 - closed: the normal state, the external service or resource is accessible, no problem, as if the circuit-breaker were not there, it's transparent.
-- open: the circuit-breaker knows something is broken and is failing. It provides a direct fallback, it won't even try to make the external call.
+- open (or tripped): the circuit-breaker knows something is broken and is failing. It provides a direct fallback, it won't even try to make the external call.
 - half-open: a very temporary state. The CB detected some failures, it will still test to see if it's really broken or if it was just a temporary failure, and will quickly switch to closed or open.
 
 A CB is highly tunable, thanks to the multiple configurable thresholds (by count, by timeouts).
@@ -206,11 +206,11 @@ The good point is the embedded metrics monitoring, exposed through JMX.
 ## Akka
 
 Akka is not to present anymore. It's quite idiomatic in Scala nowadays.
-It provides a full-featured [circuit-breaker](http://doc.akka.io/docs/akka/current/common/circuitbreaker.html) using an Akka `Scheduler`. It works mostly async-ly but supports sync calls (just by wrapping the call into a `Future` and `Await`ing it).
+It provides a full-featured [circuit-breaker](http://doc.akka.io/docs/akka/current/common/circuitbreaker.html) using a Akka `Scheduler`. It works mostly async-ly but supports sync calls (just by wrapping the call into a `Future` and `Await`ing it).
 
 Its API is quite similar to Failsafe's.
 
-Let's manually trigger the success and the fail to make it go through the states:
+Let's manually trigger the success and the fail to make it go through the different states:
 
 ```scala
 libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4.16"
@@ -252,7 +252,8 @@ scheduler.scheduleOnce(5 seconds) {
 5.795: cb closed
 ```
 
-The advantage of the Akka circuit-breaker is that it's dealing with Scala and `Future`s directly: it's can be a `Success` or a `Failure`, which the circuit-breaker is using. Thanks to this, we can easily provide a fallback value in case of a failure / circuit-breaker opened.
+The advantage of the Akka circuit-breaker is that it's dealing with Scala and `Future`s directly: it's can be a `Success` or a `Failure`, which the circuit-breaker is using.
+Thanks to this, we can easily provide a fallback value in case of a failure / circuit-breaker opened.
 
 For instance:
 
@@ -276,7 +277,8 @@ Vector(1337, 1337, 1337, 1337, 1337, 1337, 200, 1337, 1337, 1337
 ```
 
 We may wonder why can we find a `200` at the 7th position, because the circuit-breaker should be opened at the 3rd failures!?
-It's because all the function calls were executed at the same time in the loop here; the circuit was still closed because it didn't got any response yet.
+
+It is because all the function calls were executed at the same time in the loop here; the circuit was still closed at this moment, because it didn't got any response yet. The async-ness makes it late.{.warn}
 
 We can simulate a _real-word_ simulation by reducing our request timeout and introducing some lag:
 
@@ -312,10 +314,35 @@ Its only dependency is the Akka Scheduler, which is used to:
 
 ## Hystrix
 
-https://github.com/Netflix/Hystrix/wiki/How-it-Works#CircuitBreaker
+[Hystrix](https://github.com/Netflix/Hystrix) by Netflix is a popular choice.
+It's a framework (written in Java) dedicated to application resilience—by wrapping every external service commands. It provides much more than just a circuit-breaker.
+
+Netflix team are experts in the domain of services communication and (volontary) outages! ([Chaos Monkeys](https://github.com/Netflix/SimianArmy/wiki/Chaos-Monkey) anyone?) It's also the one [Spring](https://spring.io/guides/gs/circuit-breaker/) recommends to use.
+
+Someone even translated the circuit-breaker piece to Javascript: [circuit-breaker-js](https://github.com/yammer/circuit-breaker-js).
+
+Its circuit-breaker is part of a more global object: the `HystrixCommand`, which wraps any piece of code that can be executed, generally, doing an external call.
+
+`HystrixCommand`s are the heart of Hystrix:
+- they are all protected by a circuit-breaker, a max timeout, a max concurrency
+- they can have a fallback
+- calls are automatically logged and monitored
+- results can be cached
+- multiple commands can be collapsed into one to improve the throughput.
+
+Hystrix also provides a lot of options to tune the concurrency (threads pools or semaphores).
+Note that their responses are backed by `Observable`s. 
+
+
+
+### Plugins
+
+Hystrix has also a tons of plugins. The main one would be [`hystrix-dashboard`](https://github.com/Netflix/Hystrix/tree/master/hystrix-dashboard) to start a webserver and displays the `HystrixCommand`s metrics.
+
+
+
 http://blog.octo.com/circuit-breaker-un-pattern-pour-fiabiliser-vos-systemes-distribues-ou-microservices-partie-3/
 
-Also in Javascript, a similar implementation exists, [circuit-breaker-js](https://github.com/yammer/circuit-breaker-js).
 
 ## Lagom
 
