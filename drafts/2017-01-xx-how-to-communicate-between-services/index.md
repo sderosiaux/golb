@@ -7,3 +7,9 @@ Run another B, run another C (redundancy, load balancing, master/backup (they ca
 -> Sometimes, it's not enough.
 
 Let's say C is just slow because it timeouts trying to access an external resource : the whole stack become slow (and crash at the end): the system is overloaded for no reason.
+
+
+
+
+
+

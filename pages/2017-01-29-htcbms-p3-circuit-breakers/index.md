@@ -1,18 +1,18 @@
 ---
 title: "HTCBMS — Part 3 — Circuit-breakers"
-date: "2017-01-24T01:32Z"
+date: "2017-01-29T01:32Z"
 layout: post
-path: "/2017/01/24/how-to-communicate-between-micro-services-part-3-circuit-breakers/"
+path: "/2017/01/29/how-to-communicate-between-micro-services-part-3-circuit-breakers/"
 language: "en"
 ---
 
 _The previous part of this series: [How to communicate between micro-services — Part 2 — Retryers](https://www.ctheu.com/2017/01/22/how-to-communicate-between-micro-services-part-2-retryers/)_.
 
-We saw in the previous article the Retryer pattern which is quite simple but can be sufficient to get resilient communications between services.
+We saw in the previous article the Retryer pattern which is quite simple but can be insufficient to be fully resilient.
 
 A smarter pattern is the Circuit-Breaker. It's smarter, because it has memory and a state. It's a *finite state machine*. It avoids useless retries if it already knows they will fail, and can instantly provides a fallback. According to some thresholds, it will try once later to access the service or resource, to see if it's back.
 
-This is a pattern to use when a fallback is possible, like using another service, providing a default value, or something the program can handle without the expected response. If it's not possible and the code need a external answer no matter what, then the Retryer pattern fits better.
+This is a pattern to use when a fallback is possible, like using another service, providing a default value, or something the program can handle without the expected response. If it's not possible and the code need a external answer no matter what (like getting metadata), then the Retryer pattern fits better. 
 
 ---
 Summary {.summary}
@@ -516,7 +516,7 @@ dataObs.subscribe(data => println(data.getCommandMetrics.asScala
 ```
 
 That would output lines like this:
-```
+```xml
 billing:get-billing:HealthCounts[1 / 1 : 100%]|billing:get-number:HealthCounts[2 / 7 : 28%]
 ```
 
@@ -528,9 +528,15 @@ The main plugin of Hystrix is probably [`hystrix-dashboard`](https://github.com/
 It starts a webserver and displays the `HystrixCommand`s metrics with some nice UI, to see what's going on with the commands.
 It helps to discover real-time situations and quickly trigger some recovery.
 
-It rely on the Servlet event-stream from the extension we just saw `hystrix-metrics-event-stream`.
+1. To start the webserver, a simple option is to use Docker:
+```xml
+$ docker run -P -d mlabouardy/hystrix-dashboard:latest
+```
+2. We need to expose our application metrics.
 
-We can start the Servlet quite easily in our application:
+To do that, we need to run the servlet "event-stream" from the extension we just saw: `hystrix-metrics-event-stream`.
+
+We can start it quite easily without any XML crap using Jetty:
 ```scala
 libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.4.0.v20161208"
 ```
@@ -540,21 +546,41 @@ val context2 = new ServletContextHandler(server, "/")
 context2.addServlet(classOf[HystrixMetricsStreamServlet], "/hystrix.stream")
 server.start()
 ...
-server.join()
+server.join() // blocking
 ```
 
-We just have to provide the address of the stream to the dashboard: `http://localhost:8090/hystrix.stream`.
+The webserver homepage looks like (`http://localhost:32768/hystrix/`): 
+
+![Hystrix Dashboard Configuration](hystrix_dashboard_conf.png)
+
+We just have to provide the address of the events stream (SSE). That will listen to it and update in real-time (because SSE) the dashboard:
+
+![Hystrix Dashboard](hystrix_dashboard.png)
+![Hystrix Dashboard Thread pool](hystrix_dashboard_tp.png)
+
+Each number has a tooltip when we hover them, hopefully.
+
+We can see:
+- Each command has its own "widget".
+- Which circuits are opened/closed.
+- The ratio error/total of each command.
+- The "volume" of each command (the circle).
+- The purple number is the thread pool rejected request count.
+- The thread pools activity (by `CommandGroup`)
+
+Anyway, very interesting to monitor the internals and be aware of any suspicious changes.
+
+Hystrix is a complete framework to deal with services communications, it provides a lot of useful features, and is very stable and mature, thanks to the experience of Netflix's teams.
+
+A few resources to check:
+- [Application Resilience Engineering and Operations at Netflix with Hystrix](https://speakerdeck.com/benjchristensen/application-resilience-engineering-and-operations-at-netflix-with-hystrix-javaone-2013): 148 slides!
+- [hystrix-play](https://github.com/knutwalker/hystrix-play): Integration of Hystrix's in a Play! application, provide the DashboardStream for monitoring.
 
 
 # Lagom
 
+Let's tackle the newcomer, by the Lightbend team: Lagom, and see how it deals with circuit-breakers.
+
 http://www.lagomframework.com/documentation/1.2.x/java/ServiceClients.html#circuit-breakers
 
-
-# Monitoring
-
-Kamon
-Metrics (Dropwizard) with Scala support through https://github.com/erikvanoosten/metrics-scala
-
-Datadog
-WeaveScope
+Stay tune! This is a work in progress.
