@@ -55,9 +55,7 @@ There should not have defaults, because each circuit-breaker is dealing with a p
 
 - State transitions: we can generally monitor those state changes. We must be aware when a circuit is opened.
 
-# Implementations
-
-## Failsafe
+# Failsafe
 
 We already used the Retryer of [Failsafe](https://github.com/jhalterman/failsafe#retries) in the previous part of this series.
 Let's use their circuit-breaker now, to contact our brittle service.
@@ -149,7 +147,7 @@ circuit-breaker: OPEN
 
 As we saw, Failsafe provides a quite good implementation. We have everything we need and the API is quite clear.
 
-## Sentries
+# Sentries
 
 In [Sentries](https://github.com/erikvanoosten/sentries), circuit-breakers are more an implementation detail and are hidden behind the _sentry_ concept. They are also simpler than in Failsafe for instance.
 
@@ -203,7 +201,7 @@ The good point is the embedded metrics monitoring, exposed through JMX.
 
 ![](sentries_jmx.png)
 
-## Akka
+# Akka
 
 Akka is not to present anymore. It's quite idiomatic in Scala nowadays.
 It provides a full-featured [circuit-breaker](http://doc.akka.io/docs/akka/current/common/circuitbreaker.html) using a Akka `Scheduler`. It works mostly async-ly but supports sync calls (just by wrapping the call into a `Future` and `Await`ing it).
@@ -252,7 +250,7 @@ scheduler.scheduleOnce(5 seconds) {
 5.795: cb closed
 ```
 
-The advantage of the Akka circuit-breaker is that it's dealing with Scala and `Future`s directly: it's can be a `Success` or a `Failure`, which the circuit-breaker is using.
+The advantage of the Akka circuit-breaker is that it's dealing with Scala and `Future`s directly: it can be a `Success` or a `Failure`, that the circuit-breaker is relying to.
 Thanks to this, we can easily provide a fallback value in case of a failure / circuit-breaker opened.
 
 For instance:
@@ -264,9 +262,9 @@ def getBilling(url: String = "http://localhost:1234/billing"): Future[Response] 
 }
 ...
 val responsesF = Future.sequence((1 to 10).map { _ =>
-    // getBilling can throw a TimeoutException for instance
+    // getBilling can throw a TimeoutException
     cb.withCircuitBreaker { getBilling().map(_.getStatusCode) }
-      .fallbackTo(Future { 1337 })
+      .fallbackTo(Future.successful(1337))
 })
 
 val status: Seq[Int] = Await.result(responsesF, Duration.Inf)
@@ -276,9 +274,9 @@ println(status)
 Vector(1337, 1337, 1337, 1337, 1337, 1337, 200, 1337, 1337, 1337
 ```
 
-We may wonder why can we find a `200` at the 7th position, because the circuit-breaker should be opened at the 3rd failures!?
+We may wonder why can we find a `200` at the 7th position, because the circuit-breaker should be opened at the 3rd failure!?
 
-It is because all the function calls were executed at the same time in the loop here; the circuit was still closed at this moment, because it didn't got any response yet. The async-ness makes it late.{.warn}
+All the function calls were executed at the same time in the loop here; the circuit was still closed at the call time, because no response was back yet.{.warn}
 
 We can simulate a _real-word_ simulation by reducing our request timeout and introducing some lag:
 
@@ -293,7 +291,7 @@ val responsesF = Future.sequence((1 to 10).map { _ =>
   // we simulate a call every 120ms
   Thread.sleep(120)
   cb.withCircuitBreaker { getBilling().map(_.getStatusCode) }
-    .fallbackTo(Future { 1337 })
+    .fallbackTo(Future.successful(1337))
 })
 ```
 ```xml
@@ -312,53 +310,248 @@ Its only dependency is the Akka Scheduler, which is used to:
 - Control the function invocation time and throw a Failure if it's greater than the `callTimeout`.
 - Switch from the opened state to the half-open state after the given `resetTimeout`.
 
-## Hystrix
+# Hystrix
 
 [Hystrix](https://github.com/Netflix/Hystrix) by Netflix is a popular choice.
-It's a framework (written in Java) dedicated to application resilience—by wrapping every external service commands. It provides much more than just a circuit-breaker.
+It's a framework (written in Java) dedicated to applications resilience, by wrapping every commands into a `HystrixCommand`, that provides much more than just a circuit-breaker.
 
-Netflix team are experts in the domain of services communication and (volontary) outages! ([Chaos Monkeys](https://github.com/Netflix/SimianArmy/wiki/Chaos-Monkey) anyone?) It's also the one [Spring](https://spring.io/guides/gs/circuit-breaker/) recommends to use.
-
+Netflix team are experts in the domain of services communication and (voluntary) outages! ([Chaos Monkeys](https://github.com/Netflix/SimianArmy/wiki/Chaos-Monkey) anyone?) It's also the one [Spring](https://spring.io/guides/gs/circuit-breaker/) recommends to use.
 Someone even translated the circuit-breaker piece to Javascript: [circuit-breaker-js](https://github.com/yammer/circuit-breaker-js).
 
-Its circuit-breaker is part of a more global object: the `HystrixCommand`, which wraps any piece of code that can be executed, generally, doing an external call.
-
 `HystrixCommand`s are the heart of Hystrix:
-- they are all protected by a circuit-breaker, a max timeout, a max concurrency
-- they can have a fallback
-- calls are automatically logged and monitored
-- results can be cached
-- multiple commands can be collapsed into one to improve the throughput.
+- They are all protected by a circuit-breaker, a max timeout, a max concurrency threshold.
+- They can have a fallback.
+- Calls are automatically logged and monitored.
+- Results can be cached.
+- Multiple commands can be collapsed into one to improve the throughput.
 
-Hystrix also provides a lot of options to tune the concurrency (threads pools or semaphores).
-Note that their responses are backed by `Observable`s. 
+Hystrix also provides a lot of options to tune the concurrency of the commands (with threads pools or semaphores).
+Note that the responses are backed by `Observable`s, it's better to know how to use them.
+
+Small downside: I find the framework quite verbose. It's not that easy to navigate around all the classes and helpers to know which one to use.{.info}
+
+## Commands
+
+Here is an example of a `GetBilling` command with more properties than it should have, but it's simply to feel the power:
+
+```scala
+libraryDependencies += "com.netflix.hystrix" % "hystrix-core" % "1.5.9"
+```
+```scala
+class GetBillingCommand(billingUrl: String) extends HystrixCommand[Response](
+    HystrixCommand.Setter
+      .withGroupKey(HystrixCommandGroupKey.Factory.asKey("billing"))
+      .andCommandKey(HystrixCommandKey.Factory.asKey("get-billing"))
+      .andCommandPropertiesDefaults(
+          HystrixCommandProperties.Setter()
+
+          // allow 2 concurrent access only
+          .withExecutionIsolationStrategy(ExecutionIsolationStrategy.SEMAPHORE)
+          .withExecutionIsolationSemaphoreMaxConcurrentRequests(2)
+
+          // throw a HystrixTimeoutException if the function call takes more than 200ms
+          .withExecutionTimeoutEnabled(true)       // default true
+          .withExecutionTimeoutInMilliseconds(200) // default 1000
+
+          // the circuit-breaker (and rolling metrics) work in a window split in buckets
+          // - we ask a window of 10s split into 100 buckets (0.1s each)
+          .withMetricsRollingStatisticalWindowInMilliseconds(10000) // default 10s
+          .withMetricsRollingStatisticalWindowBuckets(100)          // 1 bucket=100ms, default 10
+
+          // by default, circuit-breaker are enabled
+          // - open it if 10% of the requests failed in the window
+          // - let it open during at least 1s before retrying
+          // - 10 requests in 10sec must be executed to matter
+          .withCircuitBreakerEnabled(true)                   // default true
+          .withCircuitBreakerErrorThresholdPercentage(10)    // default 50(%)
+          .withCircuitBreakerSleepWindowInMilliseconds(1000) // default 5000ms
+          .withCircuitBreakerRequestVolumeThreshold(10)      // default 20
+    )) {
+
+    override def run(): Response = {
+        client.prepareGet(billingUrl).execute
+    }
+
+    override def getFallback: Response = {
+        new Response.ResponseBuilder().build() // dummy response
+    }
+
+    override def getCacheKey: String = "get-billing"
+}
+
+// Most commands needs a context to store cached values, requests, stats...
+val context = HystrixRequestContext.initializeContext()
+
+val response: Response = new GetBillingCommand("http://service:8081/billing").execute
+val responseF: JFuture[Response] = new GetBillingCommand("http://service:8081/billing").queue
+// responseF.cancel(true)
+
+...
+
+println("Requests => " + HystrixRequestLog.getCurrentRequest().getExecutedCommandsAsString)
+// Requests => GetBillingCommand[TIMEOUT, FALLBACK_SUCCESS][232ms],
+//             GetBillingCommand[TIMEOUT, FALLBACK_SUCCESS, RESPONSE_FROM_CACHE][0ms]x22
+
+context.close() // avoid a memory leak
+
+```
+
+A lot of general things to note:
+
+- The `Setter` things are the way to build up things in Hystrix. They follow a builder pattern (ok, without the `.build()`) to provide a fluent interface to configure objects:
+![Hystrix fluent interface Setters](hystrix_setters.PNG)
+- The `GroupKey` is the way to group commands (to display them together for instance).
+- The `CommandKey` is the "name" of the command. It defaults to the class name, so it's optional.
+- All the properties have already a default value, no need to override every one of them.
+- A `HystrixRequestContext` must be initialized when a request occurs. All threads later will refer to the current context to store some data (we can see it as a static global variable, omg).
+- `HystrixRequestLog` can be queried to get some stats about the commands played in the current context.
+- A command must override the `run()` method. This is the code that will be executed (or short-circuited), that can fail or timeout.
+- A command can override the `getFallback` method in case `run()` fails or is short-circuited. When no fallback is provided and a failure occurs, an exception is thrown:
+```xml
+Exception in thread "main" com.netflix.hystrix.exception.HystrixRuntimeException:
+GetBillingCommand short-circuited and no fallback available.
+```
+- A fallback can issue another `HystrixCommand` (like calling another _failable_ service): we can cascade them as we want.
+- A `cacheKey` can be provided for Hystrix to cache the first response and return it directly on next calls. The values are kept in the current `HystrixRequestContext`, which has normally a short-life: the one of the request. eg: If during a request, you retrieve a username through `GetUserNameCommand`, and another part of the application calls it again 0.005ms later, you don't expect it to change, so you cache it.
+- A command instance is cancellable if it was `queue()`.
+
+---
+
+There are more options on the circuit-breaker than the other solutions:
+- We can limit the concurrency with a "semaphore" (its implementation in Hystrix is not a blocking one, and just rely on a `AtomicInteger` and a `tryAcquire: Boolean`).
+- We can limit the max time the command takes (enabled by default! and if `execution.isolation.thread.interruptOnTimeout` is `true`) before it throws a `HystrixTimeoutException`.
+- The circuit-breaker limits work on a time (`RollingStatisticalWindowInMilliseconds`) and volume basis (`RequestVolumeThreshold`). There is a balance to find between them to ensure the circuit-breaker will be triggered or not.
+
+## Archaius
+
+With [Archaius](https://github.com/Netflix/archaius) (which is the configuration manager embedded in Hystrix), it's possible to make the config available through JMX, and to modify it on the fly:
+
+![Archaius config through JMX](archaius_jmx.png)
+
+Archaius can also regularly poll any configuration storage (MySQL, Zookeeper, DynamoDB..) and notify the applications a property has changed. This is the purpose of Archaius's `DynamicProperty`:
+
+```scala
+implicit def fnToRun[A](fn: => Unit): Runnable = new Runnable { override def run() = fn }
+
+val key = "hystrix.command.default.circuitBreaker.enabled"
+val prop: DynamicBooleanProperty = DynamicPropertyFactory.getInstance()
+                                  .getBooleanProperty(key, true, println(s"changed! ${prop.get}"))
+ConfigurationManager.getConfigInstance.setProperty(key, true)
+ConfigurationManager.getConfigInstance.setProperty(key, false)
+// changed! true
+// changed! false
+```
+
+It's quite powerful to have a dynamic centralized configuration database to be able to interact with the services on-the-fly.
+
+For instance, it's possible to manually open the circuit-breakers (if they have not force the default config value) with `hystrix.command.default.circuitBreaker.forceOpen` or disable the fallbacks `hystrix.command.default.fallback.enabled`, disable the caches, and so on. This can be useful for tests or during deployments.
+
+All default Hystrix properties are detailed [here](https://github.com/Netflix/Hystrix/wiki/Configuration).
+
+## Monitoring
+
+It's possible to get commands metrics with the contrib extension [hystrix-metrics-event-stream](https://github.com/Netflix/Hystrix/tree/master/hystrix-contrib/hystrix-metrics-event-stream), that originally exposes them through a Servlet.
+But we can just use a part of it and expose them wherever we want, as shown in the code below.
+
+```scala
+libraryDependencies += "com.netflix.hystrix" % "hystrix-metrics-event-stream" % "1.5.9"
+libraryDependencies += "javax.servlet" % "javax.servlet-api" % "3.1.0"
+```
+```scala
+new HystrixMetricsPoller(new MetricsAsJsonPollerListener {
+    def handleJsonMetric(json: String) = println(json)
+}, 1000).start()
+```
+
+This will print metrics of all commands and thread pools (by command groups) every 1000ms:
+
+```js
+{  
+   "type": "HystrixCommand",
+   "name": "GetBillingCommand",
+   "group": "billing",
+   "currentTime": 1485640874974,
+   "isCircuitBreakerOpen": true,
+   "errorPercentage": 100,
+   "errorCount": 1,
+   "requestCount": 1,
+   ...
+}
+{  
+   "type": "HystrixThreadPool",
+   "name": "billing",
+   "currentTime": 1485640874980,
+   "currentActiveCount": 0,
+   "currentCompletedTaskCount": 1,
+   "currentCorePoolSize": 10,
+   ...
+}
+```
+
+We can create dashboards and some alerting from those metrics if we send them into a proper monitoring system.
+
+---
+
+But `HystrixMetricsPoller` is actually deprecated, and internally, the plugin is using the new dedicated class available in the core package: `HystrixDashboardStream`.
+It's better because it relies on Observable, handles backpressure (drop), and we can just do whatever we want with them!
+
+Here is a sample (with Scala Observables please):
+```
+libraryDependencies += "io.reactivex" %% "rxscala" % "0.26.5"
+```
+```
+import rx.lang.scala.JavaConverters._
+import collection.JavaConverters._
+
+// the interval is stored in the Archaius config, as expected
+ConfigurationManager.getConfigInstance.setProperty(
+    "hystrix.stream.dashboard.intervalInMilliseconds", 1000)
+
+// the "Dashboard" stream is the Hystrix metrics stream
+val dataObs = HystrixDashboardStream.getInstance().observe().asScala
+dataObs.subscribe(data => println(data.getCommandMetrics.asScala
+    .map(c => s"${c.getCommandGroup}:${c.getCommandKey}:${c.getHealthCounts}")
+    .mkString("|")
+))
+```
+
+That would output lines like this:
+```
+billing:get-billing:HealthCounts[1 / 1 : 100%]|billing:get-number:HealthCounts[2 / 7 : 28%]
+```
+
+Hopefully, we can just get any metrics from the data, and output in our monitoring system or into Kafka for instance.
+
+## Dashboards
+
+The main plugin of Hystrix is probably [`hystrix-dashboard`](https://github.com/Netflix/Hystrix/tree/master/hystrix-dashboard), developed by Netflix.
+It starts a webserver and displays the `HystrixCommand`s metrics with some nice UI, to see what's going on with the commands.
+It helps to discover real-time situations and quickly trigger some recovery.
+
+It rely on the Servlet event-stream from the extension we just saw `hystrix-metrics-event-stream`.
+
+We can start the Servlet quite easily in our application:
+```scala
+libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.4.0.v20161208"
+```
+```scala
+val server = new Server(new InetSocketAddress("0.0.0.0", 8090))
+val context2 = new ServletContextHandler(server, "/")
+context2.addServlet(classOf[HystrixMetricsStreamServlet], "/hystrix.stream")
+server.start()
+...
+server.join()
+```
+
+We just have to provide the address of the stream to the dashboard: `http://localhost:8090/hystrix.stream`.
 
 
-
-### Plugins
-
-Hystrix has also a tons of plugins. The main one would be [`hystrix-dashboard`](https://github.com/Netflix/Hystrix/tree/master/hystrix-dashboard) to start a webserver and displays the `HystrixCommand`s metrics.
-
-
-
-http://blog.octo.com/circuit-breaker-un-pattern-pour-fiabiliser-vos-systemes-distribues-ou-microservices-partie-3/
-
-
-## Lagom
+# Lagom
 
 http://www.lagomframework.com/documentation/1.2.x/java/ServiceClients.html#circuit-breakers
 
 
-
-# Tests
-
-http://blog.octo.com/circuit-breaker-un-pattern-pour-fiabiliser-vos-systemes-distribues-ou-microservices-partie-3/
-
-can we test each impl??
-
-
 # Monitoring
-
 
 Kamon
 Metrics (Dropwizard) with Scala support through https://github.com/erikvanoosten/metrics-scala
