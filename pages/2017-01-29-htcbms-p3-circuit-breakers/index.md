@@ -399,7 +399,7 @@ context.close() // avoid a memory leak
 A lot of general things to note:
 
 - The `Setter` things are the way to build up things in Hystrix. They follow a builder pattern (ok, without the `.build()`) to provide a fluent interface to configure objects:
-![Hystrix fluent interface Setters](hystrix_setters.PNG)
+![Hystrix fluent interface Setters](hystrix_setters.png)
 - The `GroupKey` is the way to group commands (to display them together for instance).
 - The `CommandKey` is the "name" of the command. It defaults to the class name, so it's optional.
 - All the properties have already a default value, no need to override every one of them.
