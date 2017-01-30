@@ -199,7 +199,7 @@ Sentries provides more features than just circuit-breakers:
 The API of Sentries is easy, composable, but lack of some features like declaring a failure according to some custom predicate.
 The good point is the embedded metrics monitoring, exposed through JMX.
 
-![](sentries_jmx.png)
+![](sentries_jmx_.png)
 
 # Akka
 
@@ -399,7 +399,7 @@ context.close() // avoid a memory leak
 A lot of general things to note:
 
 - The `Setter` things are the way to build up things in Hystrix. They follow a builder pattern (ok, without the `.build()`) to provide a fluent interface to configure objects:
-![Hystrix fluent interface Setters](hystrix_setters.png)
+![Hystrix fluent interface Setters](hystrix_setters_.png)
 - The `GroupKey` is the way to group commands (to display them together for instance).
 - The `CommandKey` is the "name" of the command. It defaults to the class name, so it's optional.
 - All the properties have already a default value, no need to override every one of them.
@@ -426,7 +426,7 @@ There are more options on the circuit-breaker than the other solutions:
 
 With [Archaius](https://github.com/Netflix/archaius) (which is the configuration manager embedded in Hystrix), it's possible to make the config available through JMX, and to modify it on the fly:
 
-![Archaius config through JMX](archaius_jmx.png)
+![Archaius config through JMX](archaius_jmx_.png)
 
 Archaius can also regularly poll any configuration storage (MySQL, Zookeeper, DynamoDB..) and notify the applications a property has changed. This is the purpose of Archaius's `DynamicProperty`:
 
@@ -551,12 +551,12 @@ server.join() // blocking
 
 The webserver homepage looks like (`http://localhost:32768/hystrix/`): 
 
-![Hystrix Dashboard Configuration](hystrix_dashboard_conf.png)
+![Hystrix Dashboard Configuration](hystrix_dashboard_conf_.png)
 
 We just have to provide the address of the events stream (SSE). That will listen to it and update in real-time (because SSE) the dashboard:
 
-![Hystrix Dashboard](hystrix_dashboard.png)
-![Hystrix Dashboard Thread pool](hystrix_dashboard_tp.png)
+![Hystrix Dashboard](hystrix_dashboard_.png)
+![Hystrix Dashboard Thread pool](hystrix_dashboard_tp_.png)
 
 Each number has a tooltip when we hover them, hopefully.
 
