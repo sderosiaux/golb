@@ -271,10 +271,73 @@ All the options are also listed on the [reference guide](https://jolokia.org/ref
 
 http://camel.apache.org/camel-jmx.html
 
-# JMXrans: JMX metrics to anywhere
+# JMXTrans: JMX metrics to anywhere
 
 https://github.com/jmxtrans/jmxtrans/wiki/Queries
 
+Download here http://central.maven.org/maven2/org/jmxtrans/jmxtrans/263/
+jmxtrans-263-dist.tar.gz
+
+Untar and java -jar lib/jmxtrans-all.jar --help
+
+Based on quartz for the scheduling piece (`quartz-server.properties`).
+The default schedule (`runPeriod`) is 60s by default and is configurable: `-s 10` for 10s interval.
+
+The important options are:
+```
+-f, --json-file
+-q, --quartz-properties-file
+    The Quartz server properties.
+-s, --run-period-in-seconds
+    The seconds between server job runs.
+    Default: 60
+```
+- `-f`: the main configuration to provide to JMXtrans to know the source, and the sink(s).
+
+For instance, it can listen to the JMX data on `localhost:9010` and send the results to `stdout`:
+
+```js
+{
+  "servers" : [ {
+    "port" : "9010",
+    "host" : "localhost",
+    "queries" : [ {
+      "outputWriters" : [ {
+         "@class" : "com.googlecode.jmxtrans.model.output.StdOutWriter"
+      } ],
+      "obj" : "java.lang:type=OperatingSystem",
+      "attr" : [ "SystemLoadAverage", "AvailableProcessors", "TotalPhysicalMemorySize",
+                "FreePhysicalMemorySize", "TotalSwapSpaceSize", "FreeSwapSpaceSize",
+                "OpenFileDescriptorCount", "MaxFileDescriptorCount" ]
+    } ],
+    "numQueryThreads" : 2
+  } ]
+}
+```
+
+JMXTrans will watch the given properties of the JMX "node" `java.lang:type=OperatingSystem`:
+
+```xml
+Result(attributeName=SystemLoadAverage,
+    className=sun.management.OperatingSystemImpl,
+    objDomain=java.lang,
+    typeName=type=OperatingSystem,
+    values={SystemLoadAverage=-1.0},
+    epoch=1485905825980,
+    keyAlias=null)
+Result(attributeName=FreePhysicalMemorySize,
+    className=sun.management.OperatingSystemImpl,
+    objDomain=java.lang,
+    typeName=type=OperatingSystem,
+    values={FreePhysicalMemorySize=5871636480},
+    epoch=1485905825980,
+    keyAlias=null)
+...
+```
+
+- `-q`: if we want to specify some quartz properties. It has [tons of options](http://www.quartz-scheduler.org/documentation/quartz-2.2.x/configuration/) such as its threadpool config, listeners, plugins, misc thresholds..
+
+- `-s`: change the default poll interval of 60s.
 
 # Resources
 
