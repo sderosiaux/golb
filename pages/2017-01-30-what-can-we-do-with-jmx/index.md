@@ -9,6 +9,10 @@ language: "en"
 Oracle provides multiples tutorials, it's quite complete: https://docs.oracle.com/javase/8/docs/technotes/guides/jmx/tutorial/tutorialTOC.html.
 
 
+http://www.oracle.com/technetwork/java/javase/compatibility-417013.html
+http://docs.oracle.com/javase/8/docs/technotes/guides/management/agent.html
+
+
 
 ---
 Summary {.summary}
@@ -275,16 +279,23 @@ http://camel.apache.org/camel-jmx.html
 
 https://github.com/jmxtrans/jmxtrans/wiki/Queries
 
-Download here http://central.maven.org/maven2/org/jmxtrans/jmxtrans/263/
-jmxtrans-263-dist.tar.gz
-
-Untar and java -jar lib/jmxtrans-all.jar --help
-
-Based on quartz for the scheduling piece (`quartz-server.properties`).
+JMXTrans is based on quartz for the scheduling piece.
 The default schedule (`runPeriod`) is 60s by default and is configurable: `-s 10` for 10s interval.
 
-The important options are:
+Download here http://central.maven.org/maven2/org/jmxtrans/jmxtrans/263/:
+
+[jmxtrans-263-dist.tar.gz](http://central.maven.org/maven2/org/jmxtrans/jmxtrans/263/jmxtrans-263-dist.tar.gz)
+
+Then we can execute it:
+
+```xml
+$ tar zxvf jmxtrans-263-dist.tar.gz
+$ java -jar jmxtrans-263/lib/jmxtrans-all.jar --help
 ```
+
+The important options are:
+
+```bash
 -f, --json-file
 -q, --quartz-properties-file
     The Quartz server properties.
@@ -335,9 +346,48 @@ Result(attributeName=FreePhysicalMemorySize,
 ...
 ```
 
-- `-q`: if we want to specify some quartz properties. It has [tons of options](http://www.quartz-scheduler.org/documentation/quartz-2.2.x/configuration/) such as its threadpool config, listeners, plugins, misc thresholds..
+- `-q`: if we want to specify some quartz properties.
+JMXTrans has some defaults in the file `quartz-server.properties`.
+Quartz has [tons of options](http://www.quartz-scheduler.org/documentation/quartz-2.2.x/configuration/) such as its threadpool config, listeners, plugins, misc thresholds..
 
 - `-s`: change the default poll interval of 60s.
+
+# Programatically
+
+```scala
+JMXServiceURL u = new JMXServiceURL(
+  "service:jmx:rmi:///jndi/rmi://" + hostName + ":" + portNum +  "/jmxrmi");
+  JMXConnector c = JMXConnectorFactory.connect(u); 
+```
+
+
+???
+```
+static final String CONNECTOR_ADDRESS =
+ "com.sun.management.jmxremote.localConnectorAddress";
+ 
+// attach to the target application
+VirtualMachine vm = VirtualMachine.attach(id);
+ 
+// get the connector address
+String connectorAddress =
+    vm.getAgentProperties().getProperty(CONNECTOR_ADDRESS);
+ 
+// no connector address, so we start the JMX agent
+if (connectorAddress == null) {
+   String agent = vm.getSystemProperties().getProperty("java.home") +
+       File.separator + "lib" + File.separator + "management-agent.jar";
+   vm.loadAgent(agent);
+ 
+   // agent is started, get the connector address
+   connectorAddress =
+       vm.getAgentProperties().getProperty(CONNECTOR_ADDRESS);
+}
+ 
+// establish connection to connector server
+JMXServiceURL url = new JMXServiceURL(connectorAddress);
+JMXConnector = JMXConnectorFactory.connect(url);
+```
 
 # Resources
 
