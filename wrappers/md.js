@@ -9,6 +9,7 @@ import ShareButtons from 'components/ShareButtons'
 import { Flex, Box } from 'reflexbox'
 import ReadNext from 'components/ReadNext'
 import ReactDisqusThread from 'components/DisqusThread'
+import Subscribe from 'components/Subscribe'
 
 module.exports = React.createClass({
   propTypes () {
@@ -53,8 +54,10 @@ module.exports = React.createClass({
           </Flex>
         </div>        
         <div dangerouslySetInnerHTML={{ __html: post.body }} />
+        <ShareButtons url={fullUrl} title={title} />        
         <ReadNext post={post} pages={route.pages} />
-        <ShareButtons url={fullUrl} title={title} />
+        <Subscribe />
+        <div style={{height: 50}} />
         <ReactDisqusThread url={fullUrl} shortname="ctheu" title={title} />        
       </div>
     )
