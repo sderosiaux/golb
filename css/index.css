@@ -12,3 +12,8 @@ ul.index li a {
 a {
     color: #2A5DB0;
 }
+
+@media (max-width: 480px) {
+    ul { margin: 0; }
+    ul.index li { padding: 0; margin: 0; margin-bottom: 20px; }
+}
