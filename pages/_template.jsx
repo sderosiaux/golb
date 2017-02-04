@@ -53,9 +53,9 @@ module.exports = React.createClass({
                   </Flex>
                 </div>
               </Box>
-              <Box px={1}><Link to={prefixLink('/')}>Blog Index</Link></Box>
+              <Box px={1} className="index"><Link to={prefixLink('/')}>Blog Index</Link></Box>
               <Box px={1} className="social">
-                <div style={{width: 300, textAlign: 'right'}}>
+                <div>
                   <SocialIcon url="https://twitter.com/ChtefiD" style={{ height: 32, width: 32 }}/>&nbsp;
                   <SocialIcon url="https://medium.com/@ChtefiD/" style={{ height: 32, width: 32 }}/>&nbsp;
                   <SocialIcon url="https://github.com/chtefi" style={{ height: 32, width: 32 }}/>
