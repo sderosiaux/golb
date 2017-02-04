@@ -12,6 +12,20 @@
   text-align: right;
 }
 
+#mce-EMAIL {
+  -webkit-appearance: none;
+  -webkit-border-radius: 0;
+  border: 1px solid #ccc;
+  padding: 0 2px;
+}
+
+#mc-embedded-subscribe {
+  -webkit-appearance: none;
+  -webkit-border-radius: 0;
+  border: 1px solid #ccc;
+  background: #eee;
+}
+
 @media (max-width: 480px) {
   .headroom .social { display: none; }
 }
