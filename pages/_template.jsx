@@ -42,7 +42,7 @@ module.exports = React.createClass({
                         <img src={m} height={32} style={{ borderRadius: 100, margin: 0, display: 'block' }} />
                       </a>
                     </Box>
-                    <Box px={1}>
+                    <Box px={0}>
                         <form style={{margin:0,padding:0,fontSize:14}} onSubmit={this.handleSubmit} action="//ctheu.us15.list-manage.com/subscribe/post?u=10fa09a0a644f563c084ab3fd&amp;id=32c9c3f4b2" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" className="validate" target="_blank" novalidate>
                           <input style={{height: 26}} type="email" value={this.state.email} onChange={this.handleChange} name="EMAIL" placeholder="my.email@domain.com" id="mce-EMAIL" />
                           &nbsp;
