@@ -56,8 +56,9 @@ module.exports = React.createClass({
         <div dangerouslySetInnerHTML={{ __html: post.body }} />
         <ShareButtons url={fullUrl} title={title} />        
         <ReadNext post={post} pages={route.pages} />
+        <div style={{height: 20}} />
         <Subscribe />
-        <div style={{height: 50}} />
+        <div style={{height: 20}} />
         <ReactDisqusThread url={fullUrl} shortname="ctheu" title={title} />        
       </div>
     )
