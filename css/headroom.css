@@ -17,6 +17,10 @@
   -webkit-border-radius: 0;
   border: 1px solid #ccc;
   padding: 0 2px;
+  margin: 0;
+  line-height: 1;
+  height: 26px;
+  border-right: 0;
 }
 
 #mc-embedded-subscribe {
@@ -24,6 +28,9 @@
   -webkit-border-radius: 0;
   border: 1px solid #ccc;
   background: #eee;
+  padding: 0 10px;
+  line-height: 1;
+  height: 26px;  
 }
 
 @media (max-width: 480px) {

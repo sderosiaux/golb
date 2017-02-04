@@ -33,7 +33,7 @@ module.exports = React.createClass({
       <div>
         <Headroom wrapperStyle={{marginBottom: rhythm(1)}}>
           <Container style={{maxWidth: null, padding: '16px 20px'}}>
-            <Flex align="center" col="5" justify="space-between">
+            <Flex align="center" col="3" justify="space-between">
               <Box>
                 <div style={{width: 300}}>
                   <Flex>
@@ -44,8 +44,8 @@ module.exports = React.createClass({
                     </Box>
                     <Box px={0}>
                         <form style={{margin:0,padding:0,fontSize:14}} onSubmit={this.handleSubmit} action="//ctheu.us15.list-manage.com/subscribe/post?u=10fa09a0a644f563c084ab3fd&amp;id=32c9c3f4b2" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" className="validate" target="_blank" novalidate>
-                          <input style={{height: 26, lineHeight: 1, borderRight: 0}} type="email" value={this.state.email} onChange={this.handleChange} name="EMAIL" placeholder="my.email@domain.com" id="mce-EMAIL" />
-                          <input style={{height: 26, lineHeight: 1}} type="submit" value="Join" name="subscribe" id="mc-embedded-subscribe" />
+                          <input type="email" value={this.state.email} onChange={this.handleChange} name="EMAIL" placeholder="my.email@domain.com" id="mce-EMAIL" />
+                          <input type="submit" value="Join" name="subscribe" id="mc-embedded-subscribe" />
                           <div style={{position: "absolute", left: -5000}} aria-hidden="true"><input type="text" name="b_10fa09a0a644f563c084ab3fd_32c9c3f4b2" tabindex="-1" value="" /></div>
                         </form>
                       </Box>
