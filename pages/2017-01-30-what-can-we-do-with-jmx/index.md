@@ -277,10 +277,11 @@ http://camel.apache.org/camel-jmx.html
 
 # JMXTrans: JMX metrics to anywhere
 
+I've created a repository [chtefi/jmxtrans-docker](https://github.com/chtefi/jmxtrans-docker) for this part, feel free to use it.{.info}
+
 https://github.com/jmxtrans/jmxtrans/wiki/Queries
 
-JMXTrans is based on quartz for the scheduling piece.
-The default schedule (`runPeriod`) is 60s by default and is configurable: `-s 10` for 10s interval.
+JMXTrans is a scheduler (based on quartz) that pull data from any JMX source and send them to one or multiple sinks (to store them and draw dashboards).
 
 Download here http://central.maven.org/maven2/org/jmxtrans/jmxtrans/263/:
 
@@ -304,6 +305,13 @@ The important options are:
     Default: 60
 ```
 - `-f`: the main configuration to provide to JMXtrans to know the source, and the sink(s).
+- `-q`: if we want to specify some quartz properties.
+JMXTrans has some defaults in the file `quartz-server.properties`.
+Quartz has [tons of options](http://www.quartz-scheduler.org/documentation/quartz-2.2.x/configuration/) such as its threadpool config, listeners, plugins, misc thresholds..
+- `-s`: to change the default 60s poll interval (`runPeriod`).
+
+## Configuration
+
 
 For instance, it can listen to the JMX data on `localhost:9010` and send the results to `stdout`:
 
@@ -346,11 +354,67 @@ Result(attributeName=FreePhysicalMemorySize,
 ...
 ```
 
-- `-q`: if we want to specify some quartz properties.
-JMXTrans has some defaults in the file `quartz-server.properties`.
-Quartz has [tons of options](http://www.quartz-scheduler.org/documentation/quartz-2.2.x/configuration/) such as its threadpool config, listeners, plugins, misc thresholds..
+If we had a custom Java application with custom JMX MBeans, we could use:
+```
+"obj": "com.ctheu:type=RandomMetrics",
+```
 
-- `-s`: change the default poll interval of 60s.
+## Monitoring the network
+
+Send manually a metric value:
+```
+echo "com.ctheu.test 42 $(date +%s)" | nc 192.168.0.11 2003
+```
+
+
+To check if something is coming on the carbon port, we can use `ngrep`:
+```
+# ngrep -d any port 2003
+interface: any
+filter: (ip or ip6) and ( port 2003 )
+####
+T 172.17.0.1:54598 -> 172.17.0.2:2003 [AP]
+  jakub.test 50 1486316847.
+########
+T 172.17.0.1:54600 -> 172.17.0.2:2003 [AP]
+  jakub.test 56 1486316862.
+####
+```
+
+
+## Using Kafka
+
+Let's say we want to monitor our Kafka brokers, we can set our JMXTrans with this:
+
+```js
+{                                                                            
+    "outputWriters": [{                                                                        
+        "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriterFactory",
+        "port": "2003",                                                        
+        "host": "192.168.0.11",                                                
+        "flushStrategy": "always",                                             
+        "typeNames": ["name", "clientId", "brokerHost", "brokerPort" ]         
+    }],                                                                         
+    "obj": "kafka.server:type=FetcherStats,*",                                 
+    "resultAlias": "kafka",                                                    
+    "attr": []                                                                 
+},                                                                           
+```
+
+The `typeNames` are used when we are using the wildcard `*` to go deep into the hierarchy.
+This will provides the hierarchy in the metrics name.
+
+For instance, the complete `ObjectName` of one node is:
+```
+kafka.server:type=FetcherStats,name=BytesPerSec,clientId=ReplicaFetcherThread-0-109,brokerHost=hadoopmaster01.stg.ps,brokerPort=9092
+```
+As seen in jconsole:
+
+![Kafka MBeans in JConsole](jconsole_kafka.png)
+
+In Graphite, we can now construct dashboards:
+
+![Kafka MBeans in Graphite](graphite_kafka.png)
 
 # Programatically
 
