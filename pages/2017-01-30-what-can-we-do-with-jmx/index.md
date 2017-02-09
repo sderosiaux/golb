@@ -6,13 +6,12 @@ path: "/2017/02/01/what-can-we-do-with-JMX/"
 language: "en"
 ---
 
-Oracle provides multiples tutorials, it's quite complete: https://docs.oracle.com/javase/8/docs/technotes/guides/jmx/tutorial/tutorialTOC.html.
+For those working in Java or Scala, we probably already heard of JMX or already used it.
+Most of us probably already use `jconsole` or `jvisualvm` to access the "JMX data", to get some insights about the internals of a Java process.
 
+I knew we could expose it through HTTP too, and use it for the monitoring and alerting piece, but I didn't had the whole picture.
 
-http://www.oracle.com/technetwork/java/javase/compatibility-417013.html
-http://docs.oracle.com/javase/8/docs/technotes/guides/management/agent.html
-
-
+This article is a tentative to explain more globally what is JMX, and more importantly, what can we do with it? What are the existing integrations we can use? What is its ecosystem? Finally, it will show how some awesome softwares, such as Kafka, are using it, and how we can plug ourselves into.
 
 ---
 Summary {.summary}
@@ -24,6 +23,14 @@ Summary {.summary}
 # What is JMX?
 
 It's a standard issued of the JSR 003 with an addon for the remote management and monitoring in the [JSR 160: JavaTM Management Extensions (JMX) Remote API](https://jcp.org/en/jsr/detail?id=160).
+
+
+TODO
+
+Oracle provides multiples tutorials, it's quite complete: https://docs.oracle.com/javase/8/docs/technotes/guides/jmx/tutorial/tutorialTOC.html.
+    http://www.oracle.com/technetwork/java/javase/compatibility-417013.html
+http://docs.oracle.com/javase/8/docs/technotes/guides/management/agent.html
+
 
 It provides a system to call method and update variables values on the fly (such as configuration flags).
 Instead of having to restart an application when we update its configuration, with JMX, no need to restart anything.
@@ -368,7 +375,7 @@ echo "com.ctheu.test 42 $(date +%s)" | nc 192.168.0.11 2003
 
 
 To check if something is coming on the carbon port, we can use `ngrep`:
-```
+```xml
 # ngrep -d any port 2003
 interface: any
 filter: (ip or ip6) and ( port 2003 )
@@ -416,44 +423,83 @@ In Graphite, we can now construct dashboards:
 
 ![Kafka MBeans in Graphite](graphite_kafka.png)
 
-# Programatically
+# The Swiss Java Knife: jvm-tools
+
+Its GitHub repo: [jvm-tools](https://github.com/aragozin/jvm-tools)
+
+It provides a fat-jar, [downloadable on bintray](https://bintray.com/artifact/download/aragozin/generic/sjk-plus-0.4.2.jar), containing different tools for Java.
+
+The one that we care about here, is [mx](https://github.com/aragozin/jvm-tools/blob/master/sjk-core/COMMANDS.md#mx-command), to query our MBeans servers.
+
+
+
+# Programmatically
+
+Of course, it's possible to connect manually to the JMX agent through RMI and use the Java API to request the MBeans attributes and their values:
 
 ```scala
-JMXServiceURL u = new JMXServiceURL(
-  "service:jmx:rmi:///jndi/rmi://" + hostName + ":" + portNum +  "/jmxrmi");
-  JMXConnector c = JMXConnectorFactory.connect(u); 
-```
+object JMXTestConnection extends App {
+  val url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:9010/jmxrmi")
+  val connector = JMXConnectorFactory.connect(url)
+  val server = connector.getMBeanServerConnection()
+  val all = server.queryMBeans(null, null)
+  println(all.asScala.map(_.getObjectName)
+                     .map(name => s"$name\n" + attributes(name)))
 
+  // we can also call the JMX methods:
+  server.invoke(ObjectName.getInstance("java.lang:type=Memory"), "gc", null, null)
+  server.invoke(ObjectName.getInstance("com.ctheu:type=Data"), "change", Array(new Integer(18)), null)
 
-???
-```
-static final String CONNECTOR_ADDRESS =
- "com.sun.management.jmxremote.localConnectorAddress";
- 
-// attach to the target application
-VirtualMachine vm = VirtualMachine.attach(id);
- 
-// get the connector address
-String connectorAddress =
-    vm.getAgentProperties().getProperty(CONNECTOR_ADDRESS);
- 
-// no connector address, so we start the JMX agent
-if (connectorAddress == null) {
-   String agent = vm.getSystemProperties().getProperty("java.home") +
-       File.separator + "lib" + File.separator + "management-agent.jar";
-   vm.loadAgent(agent);
- 
-   // agent is started, get the connector address
-   connectorAddress =
-       vm.getAgentProperties().getProperty(CONNECTOR_ADDRESS);
+  private def attributes(name: ObjectName) = {
+    server.getMBeanInfo(name).getAttributes.toList.map(attribute(name, _)).mkString("\n")
+  }
+
+  private def attribute(name: ObjectName, attr: MBeanAttributeInfo) = {
+    s"- ${attr.getName} (${attr.getType}) = ${attributeValue(name, attr)}"
+  }
+
+  private def attributeValue(name: ObjectName, attr: MBeanAttributeInfo) = {
+    // it's possible getAttribute throws an exception, see the output
+    Try(server.getAttribute(ObjectName.getInstance(name), attr.getName))
+  }
 }
- 
-// establish connection to connector server
-JMXServiceURL url = new JMXServiceURL(connectorAddress);
-JMXConnector = JMXConnectorFactory.connect(url);
+```
+The output looks like this:
+```xml
+Set(java.lang:type=MemoryPool,name=Code Cache
+- Name (java.lang.String) = Success(Code Cache)
+- Type (java.lang.String) = Success(NON_HEAP)
+- CollectionUsage (javax.management.openmbean.CompositeData) = Success(null)
+- CollectionUsageThreshold (long) = Failure(javax.management.RuntimeMBeanException: java.lang.UnsupportedOperationException: CollectionUsage threshold is not supported)
+- CollectionUsageThresholdCount (long) = Failure(javax.management.RuntimeMBeanException: java.lang.UnsupportedOperationException: CollectionUsage threshold is not supported)
+- MemoryManagerNames ([Ljava.lang.String;) = Success([Ljava.lang.String;@3ee0fea4)
+...
 ```
 
-# Resources
+We don't need `jconsole` or `jvisualvm` anymore, we can roll our own application.
 
-A implementation in Scala: https://github.com/dacr/jajmx that can query a MBean server directly in an application.
+This could be useful when an application wants to monitor another application or a pool of applications directly using JMX to retrieve some specific attributes, and act upon their values.
 
+It's also possible the application to monitor itself, connecting to its own MBean server. Some values could be easier to catch there than using some third-value APIs or when it's just impossible to grab elsewhere.
+
+## Scala wrapper: jajmx
+
+There is a library which implements the JMX API with some Scala wrappers: [jajmx](https://github.com/dacr/jajmx).
+This way, no need of this Java non-sense (even if yes, it's not that complicated here).
+
+```scala
+import jajmx._
+val jmx = JMX()
+import jmx._
+
+mbeans.take(10).map(_.name).foreach(println)
+```
+```xml
+java.lang:type=Memory
+java.lang:type=MemoryPool,name=PS Eden Space
+java.lang:type=MemoryPool,name=PS Survivor Space
+...
+```
+
+It also provides some smart `sh` scripts to query any application with JMX and retrieve specific values, list threads, use filters..
+Go take a [look](https://github.com/dacr/jajmx)!
