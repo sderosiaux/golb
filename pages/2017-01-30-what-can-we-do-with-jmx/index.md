@@ -31,6 +31,9 @@ Oracle provides multiples tutorials, it's quite complete: https://docs.oracle.co
     http://www.oracle.com/technetwork/java/javase/compatibility-417013.html
 http://docs.oracle.com/javase/8/docs/technotes/guides/management/agent.html
 
+http://docs.oracle.com/cd/E19698-01/816-7609/6mdjrf83l/index.html
+http://docs.oracle.com/javase/7/docs/api/javax/management/MXBean.html
+
 
 It provides a system to call method and update variables values on the fly (such as configuration flags).
 Instead of having to restart an application when we update its configuration, with JMX, no need to restart anything.
@@ -102,11 +105,6 @@ Kafka exposes tons of MBeans.
 ![Kafka using JMX](jmx_kafka.png)
 
 We can retrieve and set the logging level of all the loggers, get the start/end offsets of each partitions, get metrics about elections, logs flushing, queues size, messages/bytes per seconds (globally, per topic), and so much more.
-
-
-# Akka Actors metrics to JMX
-
-https://tersesystems.com/2014/08/19/exposing-akka-actor-state-with-jmx/
 
 
 # Jolokia: JMX to HTTP
@@ -278,6 +276,119 @@ $ java -jar jolokia-jvm-1.3.5-agent.jar --help
 As we can see, the endpoint security is builtin in Jolokia.
 All the options are also listed on the [reference guide](https://jolokia.org/reference/html/agents.html#agents-jvm).
 
+# Kamon and JMX
+
+[Kamon](http://kamon.io/introduction/get-started/) is a delightful metrics framework written in Scala.
+
+Without writting any code, Kamon can already provide some classic metrics (JVM, System), but it's mostly useful to create custom metrics to expose and measure the internals of our application (database latency, count of items, time to execute some code..).
+The documentation is clear, the API is good and not overwhelming.
+
+Kamon has a lot of features:
+
+- Provides different types of metrics (counters, histograms..).
+- Measures the time to execute any code block.
+- Measures the `Future`s execution time.
+- Measures the JVM and System metrics.
+- Provides metrics about Executor Services (threads pools).
+
+It also provides some plugins for specific frameworks: Akka, Play Framework, JDBC, Elasticsearch..
+
+And finally, Kamon is able to send the metrics to tons of backends: _stdout_, StatsD, FluentD, ...JMX! The one we care about here.
+
+http://kamon.io/backends/jmx/
+
+Here is a complete example that simulate some gets and insertions into a database:
+
+```scala
+libraryDependencies ++= Seq("io.kamon" %% "kamon-core" % "0.6.5",
+                            "io.kamon" %% "kamon-jmx" % "0.6.5")
+```
+
+```scala
+object WithKamon extends App {
+  Kamon.start()
+  implicit val system = ActorSystem("with-kamon")
+  implicit val ec = system.dispatcher
+  val scheduler = system.scheduler
+
+  val latency = Kamon.metrics.histogram("database-get-ms", Time.Milliseconds)
+  val counter = Kamon.metrics.counter("inserted-records")
+
+  scheduler.schedule(0 second, 10 millis)
+                    (latency.record((math.random * 1000000).toInt + 100000))
+  scheduler.schedule(0 second, 15 millis)
+                    (counter.increment((math.random * 10).toInt))
+}
+```
+
+Thanks to the JMX backend, we can check our metrics through JMX:
+
+![Kamon to JMX](jmx_kamon.png)
+
+It can be very handy to, for instance, add some alerting (email, slack) if the database latency is greater than 1s or if the count of items is 0 while we don't expect this case.
+
+Small tips: by default, Kamon sends the metrics to the backends every 10s. To change this interval, we can add `kamon.metric.tick-interval = 1 second` into our `application.conf`.{.info}
+
+## Akka
+
+A very nice Kamon plugin is [kamon-akka](http://kamon.io/integrations/akka/overview/).
+
+Thanks to it, it's very easy to monitor the internals of any actors in the application (which is something not trivial).
+It rely on a Java Agent that must be started with the JVM (to alter the bytecode).
+
+Let's say we have a program with a main actor `PingActor` that sends a `Ping(i+1)` to 10 `PongActor`s that each reply with `i+1` to the unique `PingActor`:
+
+```scala
+case object Start
+case class Ping(i: Int) extends AnyVal
+case class Pong(i: Int) extends AnyVal
+
+class PingActor(target: ActorRef) extends Actor {
+  override def receive = {
+    // The Ping(n) will be broadcast to all PongActors by the router
+    case Start => target ! Ping(0)
+    case Pong(i) => sender ! Ping(i+1)
+  }
+}
+class PongActor extends Actor {
+  override def receive = {
+    case Ping(i) => sender ! Pong(i+1)
+  }
+}
+
+object WithKamon extends App {
+  Kamon.start()
+  implicit val system = ActorSystem("with-kamon")
+
+  val router = system.actorOf(BroadcastPool(10).props(Props[PongActor]), "routero")
+  val pingo = system.actorOf(Props(classOf[PingActor], router), "pingo")
+  pingo ! Start
+}
+```
+
+We use a generic configuration to monitor all actors, dispatchers, and routers of the system:
+
+```
+kamon.metric.filters {
+  akka-actor {
+    includes = ["with-kamon/user/**", "with-kamon/system/**"]
+    excludes = []
+  }
+  akka-dispatcher {
+    includes = ["with-kamon/akka.actor.default-dispatcher"]
+    excludes = []
+  }
+  akka-router {
+    includes = [ "with-kamon/**" ]
+    excludes = []
+  }
+}
+```
+
+Then, we can see the graal in our JMX connector:
+
+![JMX with Akka](jmx_akka.png)
+
 # Camel: ???
 
 http://camel.apache.org/camel-jmx.html
@@ -388,7 +499,6 @@ T 172.17.0.1:54600 -> 172.17.0.2:2003 [AP]
 ####
 ```
 
-
 ## Using Kafka
 
 Let's say we want to monitor our Kafka brokers, we can set our JMXTrans with this:
@@ -422,6 +532,9 @@ As seen in jconsole:
 In Graphite, we can now construct dashboards:
 
 ![Kafka MBeans in Graphite](graphite_kafka.png)
+
+
+
 
 # The Swiss Java Knife: jvm-tools
 
@@ -480,12 +593,12 @@ We don't need `jconsole` or `jvisualvm` anymore, we can roll our own application
 
 This could be useful when an application wants to monitor another application or a pool of applications directly using JMX to retrieve some specific attributes, and act upon their values.
 
-It's also possible the application to monitor itself, connecting to its own MBean server. Some values could be easier to catch there than using some third-value APIs or when it's just impossible to grab elsewhere.
+It's also possible the application to monitor itself, connecting to its own MBean server. Some values could be easier to catch there than using some third-party APIs, or when it's just impossible to grab elsewhere.
 
 ## Scala wrapper: jajmx
 
 There is a library which implements the JMX API with some Scala wrappers: [jajmx](https://github.com/dacr/jajmx).
-This way, no need of this Java non-sense (even if yes, it's not that complicated here).
+This way, no need of this Java non-sense (even if yes, it's not that complicated actually).
 
 ```scala
 import jajmx._
@@ -494,6 +607,8 @@ import jmx._
 
 mbeans.take(10).map(_.name).foreach(println)
 ```
+
+Output:
 ```xml
 java.lang:type=Memory
 java.lang:type=MemoryPool,name=PS Eden Space
@@ -502,4 +617,12 @@ java.lang:type=MemoryPool,name=PS Survivor Space
 ```
 
 It also provides some smart `sh` scripts to query any application with JMX and retrieve specific values, list threads, use filters..
-Go take a [look](https://github.com/dacr/jajmx)!
+Take a [look](https://github.com/dacr/jajmx)!
+
+# Conclusion
+
+JMX is a simple but powerful technology to expose any Java applications internals.
+
+With Kamon to expose the application internals, some tools to regularly poll the values from JMX, and a backend to store them, it's possible to have some monitoring and alerting, with some pretty dashboard to display the evolution of any metrics. It's useful when we don't want our application to push its metrics somewhere (such as: Kamon to FluentD to Graphite), we can let any application pull them directly instead thanks to JMX.
+
+The Jolokia project is perfect to expose the JMX MBeans values directly through HTTP, hence we are able to consume them with absolutely any application in any language.
