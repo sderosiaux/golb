@@ -10,7 +10,10 @@ var highlight = function (str, lang) {
     } catch (_error) {
       console.error(_error)
     }
+  } else if (lang !== null) {
+    console.error("unknown language: " + lang)
   }
+
   try {
     return hljs.highlightAuto(str).value
   } catch (_error) {
