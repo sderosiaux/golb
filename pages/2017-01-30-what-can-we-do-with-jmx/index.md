@@ -389,6 +389,8 @@ Then, we can see the graal in our JMX connector:
 
 ![JMX with Akka](jmx_akka.png)
 
+We can find back our _routero_ router and _pingo_ actor and monitor their Akka internal state (mailbox, )
+
 # Camel: ???
 
 http://camel.apache.org/camel-jmx.html
