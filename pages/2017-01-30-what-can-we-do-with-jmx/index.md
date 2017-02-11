@@ -6,12 +6,10 @@ path: "/2017/02/01/what-can-we-do-with-JMX/"
 language: "en"
 ---
 
-For those working in Java or Scala, we probably already heard of JMX or already used it.
+Working with Java or Scala, we probably already heard of JMX or already using it.
 Most of us probably already use `jconsole` or `jvisualvm` to access the "JMX data", to get some insights about the internals of a Java process.
 
-I knew we could expose it through HTTP too, and use it for the monitoring and alerting piece, but I didn't had the whole picture.
-
-This article is a tentative to explain more globally what is JMX, and more importantly, what can we do with it? What are the existing integrations we can use? What is its ecosystem? Finally, it will show how some awesome softwares, such as Kafka, are using it, and how we can plug ourselves into.
+This article is a tentative to explain more globally what is JMX, and more importantly, what can we do with it? Is it simple? What are the existing integrations we can use? What is its ecosystem? Finally, we'll look at some awesome softwares, such as Kafka, how it is using JMX, and how we can plug ourselves into (alerting, monitoring).
 
 ---
 Summary {.summary}
