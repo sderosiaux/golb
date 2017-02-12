@@ -4,8 +4,20 @@
 .table-of-contents ul {
   list-style-type: none;
 }
+.table-of-contents > ul > li > ul > li {
+  opacity: 0.8;
+  margin: 0;
+}
 .table-of-contents > ul > li > ul > li > a:before {
   content: '• ';
+}
+
+.table-of-contents > ul > li:before {
+  content: "-";
+  margin-left: -1.3em;
+  width: 1.3em;
+  color: #2A5DB0;
+  float: left;
 }
 
 .markdown > div > ul {
