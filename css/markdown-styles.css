@@ -8,6 +8,17 @@
   content: '• ';
 }
 
+.markdown > div > ul {
+  list-style-type: none;
+}
+.markdown > div > ul > li:before {
+  content: "➔";
+  margin-left: -1.3em;
+  width: 1.3em;
+  color: #2A5DB0;
+  float: left;
+}
+
 .scrollUp {
   cursor: pointer;
   transition: all .2s cubic-bezier(.87,-.41,.19,2.44);
