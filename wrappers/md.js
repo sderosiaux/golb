@@ -44,6 +44,7 @@ module.exports = React.createClass({
           ]}
         />
         <h1>{post.title}</h1>
+        { post.tags && <ul className="tags">{ post.tags.split(',').map(t => <li>{t}</li>) }</ul> }
         <div style={{color: '#aaa', fontSize: 'small', marginBottom: 20}}>
           <Flex>
             <Box>{format(post.date, 'MMM Do, YYYY')}</Box>

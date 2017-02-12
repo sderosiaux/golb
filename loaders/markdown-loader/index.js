@@ -11,7 +11,7 @@ var highlight = function (str, lang) {
       console.error(_error)
     }
   } else if (lang !== null) {
-    console.error("unknown language: " + lang)
+    console.error("unknown language: " + lang + " (" + str.substring(0, 15) + ")")
   }
 
   try {

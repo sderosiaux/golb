@@ -27,12 +27,13 @@ export default (props) => {
       <ul className="index">
         { blogs.map(blog => <li>
           <Link className="title" to={prefixLink(blog.path)}>{blog.title}</Link>
-            <Flex>
-              <Box><div style={{width: 150}}>{format(blog.date, 'MMM Do, YYYY')}</div></Box>
-              <Box>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="clock"></span>&nbsp;</Box>
-              <Box><ReadTime content={blog.body} /></Box>
-            </Flex>
-          </li>) }
+          { blog.tags && <ul className="tags">{ blog.tags.split(',').map(t => <li>{t}</li>) }</ul> }
+          <Flex>
+            <Box><div style={{width: 150}}>{format(blog.date, 'MMM Do, YYYY')}</div></Box>
+            <Box>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="clock"></span>&nbsp;</Box>
+            <Box><ReadTime content={blog.body} /></Box>
+          </Flex>
+        </li>) }
       </ul>
     </div>
   )

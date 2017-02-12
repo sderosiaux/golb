@@ -1,11 +1,11 @@
-ul.index li {
+ul.index > li {
  padding: 10px;
  margin: 10px;
 
  overflow: hidden;
 }
 
-ul.index li a {
+ul.index > li > a {
     font-size: 22px;    
 }
 
@@ -15,5 +15,5 @@ a {
 
 @media (max-width: 480px) {
     ul { margin: 0; }
-    ul.index li { padding: 0; margin: 0; margin-bottom: 20px; }
+    ul.index > li { padding: 0; margin: 0; margin-bottom: 20px; }
 }
