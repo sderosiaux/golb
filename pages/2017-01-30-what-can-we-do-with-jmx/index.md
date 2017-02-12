@@ -1,16 +1,20 @@
 ---
-title: "What JMX is all about"
+title: "Why is JMX all about?"
 date: "2017-02-01T01:32Z"
 layout: post
 path: "/2017/02/01/what-jmx-is-all-about/"
 language: "en"
-tags: java, jmx, monitoring, rmi, kafka, jolokia, jmxtrans, akka
+tags: java, scala, jmx, monitoring, rmi, kafka, jolokia, jmxtrans, akka
 ---
 
-Working with Java or Scala, we probably already heard of JMX or already using it.
-Most of us probably already use `jconsole` or `jvisualvm` to access the "JMX data", to get some insights about the internals of a Java process.
+If you're working with Java or Scala, you probably already heard of JMX or already using it. Most of us probably already use `jconsole` or `jvisualvm` to access the "JMX data", to get some insights about the internals of a Java process.
 
-This article is a tentative to explain more globally what is JMX, and more importantly, what can we do with it? Is it simple? What are the existing integrations we can use? What is its ecosystem? Finally, we'll look at some awesome softwares, such as Kafka, how it is using JMX, and how we can plug ourselves into (alerting, monitoring).
+This article is a tentative to explain more globally what is JMX. What can we do with it? Is it simple to use? What are the existing integrations we can use? What about its ecosystem?
+
+- How to use JMX connectors to connect to MBeans servers.
+- How to use JMX to monitor applications internals and create dashboards with JMXTrans and Graphite.
+- How to expose JMX data over HTTP using Jolokia for universal access.
+- How to use JMX to monitor Akka's actors using Kamon.
 
 ---
 Summary {.summary}
@@ -279,7 +283,7 @@ All the options are also listed on the [reference guide](https://jolokia.org/ref
 
 [Kamon](http://kamon.io/introduction/get-started/) is a delightful metrics framework written in Scala.
 
-Without writting any code, Kamon can already provide some classic metrics (JVM, System), but it's mostly useful to create custom metrics to expose and measure the internals of our application (database latency, count of items, time to execute some code..).
+Without writing any code, Kamon can already provide some classic metrics (JVM, System), but it's mostly useful to create custom metrics to expose and measure the internals of our application (database latency, count of items, time to execute some code..).
 The documentation is clear, the API is good and not overwhelming.
 
 Kamon has a lot of features:
@@ -394,7 +398,7 @@ We can find back our _routero_ router and _pingo_ actor and monitor their Akka i
 
 http://camel.apache.org/camel-jmx.html
 
-# JMXTrans: Send JMX metrics to anywhere
+# JMXTrans: Send JMX metrics anywhere
 
 JMXTrans is mostly a scheduler (based on [quartz](https://github.com/quartz-scheduler/quartz)) that pulls data from any JMX source and send them to one or multiple sinks (to store them and draw dashboards).
 
