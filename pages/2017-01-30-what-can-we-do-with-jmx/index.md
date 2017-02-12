@@ -1,9 +1,10 @@
 ---
-title: "What can we do with JMX?"
+title: "What JMX is all about"
 date: "2017-02-01T01:32Z"
 layout: post
-path: "/2017/02/01/what-can-we-do-with-JMX/"
+path: "/2017/02/01/what-jmx-is-all-about/"
 language: "en"
+tags: java, jmx, monitoring, rmi, kafka, jolokia, jmxtrans, akka
 ---
 
 Working with Java or Scala, we probably already heard of JMX or already using it.
@@ -393,17 +394,15 @@ We can find back our _routero_ router and _pingo_ actor and monitor their Akka i
 
 http://camel.apache.org/camel-jmx.html
 
-# JMXTrans: JMX metrics to anywhere
+# JMXTrans: Send JMX metrics to anywhere
+
+JMXTrans is mostly a scheduler (based on [quartz](https://github.com/quartz-scheduler/quartz)) that pulls data from any JMX source and send them to one or multiple sinks (to store them and draw dashboards).
+
+We just have to set some config file and start the application anywhere, it will try to connect to the sources and the sinks at a regular pace (1min by default).
 
 I've created a repository [chtefi/jmxtrans-docker](https://github.com/chtefi/jmxtrans-docker) for this part, feel free to use it.{.info}
 
-https://github.com/jmxtrans/jmxtrans/wiki/Queries
-
-JMXTrans is a scheduler (based on quartz) that pull data from any JMX source and send them to one or multiple sinks (to store them and draw dashboards).
-
-Download here http://central.maven.org/maven2/org/jmxtrans/jmxtrans/263/:
-
-[jmxtrans-263-dist.tar.gz](http://central.maven.org/maven2/org/jmxtrans/jmxtrans/263/jmxtrans-263-dist.tar.gz)
+We can download JMXTrans here http://central.maven.org/maven2/org/jmxtrans/jmxtrans/263/, specifically the built distribution archive: [jmxtrans-263-dist.tar.gz](http://central.maven.org/maven2/org/jmxtrans/jmxtrans/263/jmxtrans-263-dist.tar.gz).
 
 Then we can execute it:
 
@@ -422,39 +421,42 @@ The important options are:
     The seconds between server job runs.
     Default: 60
 ```
-- `-f`: the main configuration to provide to JMXtrans to know the source, and the sink(s).
+- `-f`: the main configuration to provide for JMXTrans to know which source and sink(s) to connect. It can contain multiple sources and multiple sinks. It's also possible to put several config file in a folder (`-j`).
 - `-q`: if we want to specify some quartz properties.
 JMXTrans has some defaults in the file `quartz-server.properties`.
-Quartz has [tons of options](http://www.quartz-scheduler.org/documentation/quartz-2.2.x/configuration/) such as its threadpool config, listeners, plugins, misc thresholds..
+Quartz has [tons of options](http://www.quartz-scheduler.org/documentation/quartz-2.2.x/configuration/) such as its threadpool config, listeners, plugins, misc thresholds.
 - `-s`: to change the default 60s poll interval (`runPeriod`).
 
 ## Configuration
 
+The configuration is what JMXTrans calls [Queries](https://github.com/jmxtrans/jmxtrans/wiki/Queries).
+
+This is where we define the JMX sources and the sinks where we want to send the JMX values.
 
 For instance, it can listen to the JMX data on `localhost:9010` and send the results to `stdout`:
 
-```js
+```json
 {
-  "servers" : [ {
+  "servers" : [{
     "port" : "9010",
     "host" : "localhost",
-    "queries" : [ {
-      "outputWriters" : [ {
+    "queries" : [{
+      "outputWriters" : [{
          "@class" : "com.googlecode.jmxtrans.model.output.StdOutWriter"
-      } ],
+      }],
       "obj" : "java.lang:type=OperatingSystem",
       "attr" : [ "SystemLoadAverage", "AvailableProcessors", "TotalPhysicalMemorySize",
                 "FreePhysicalMemorySize", "TotalSwapSpaceSize", "FreeSwapSpaceSize",
                 "OpenFileDescriptorCount", "MaxFileDescriptorCount" ]
-    } ],
+    }],
     "numQueryThreads" : 2
-  } ]
+  }]
 }
 ```
 
 JMXTrans will watch the given properties of the JMX "node" `java.lang:type=OperatingSystem`:
 
-```xml
+```c
 Result(attributeName=SystemLoadAverage,
     className=sun.management.OperatingSystemImpl,
     objDomain=java.lang,
@@ -462,6 +464,7 @@ Result(attributeName=SystemLoadAverage,
     values={SystemLoadAverage=-1.0},
     epoch=1485905825980,
     keyAlias=null)
+
 Result(attributeName=FreePhysicalMemorySize,
     className=sun.management.OperatingSystemImpl,
     objDomain=java.lang,
