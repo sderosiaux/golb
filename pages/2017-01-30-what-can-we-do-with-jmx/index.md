@@ -11,11 +11,6 @@ If you're working with Java or Scala, you probably already heard of JMX or alrea
 
 This article is a tentative to explain more globally what is JMX. What can we do with it? Is it simple to use? What are the existing integrations we can use? What about its ecosystem?
 
-- How to use JMX connectors to connect to MBeans servers.
-- How to use JMX to monitor applications internals and create dashboards with JMXTrans and Graphite.
-- How to expose JMX data over HTTP using Jolokia for universal access.
-- How to use JMX to monitor Akka's actors using Kamon.
-
 ---
 Summary {.summary}
 
@@ -25,16 +20,26 @@ Summary {.summary}
 
 # What is JMX?
 
-It's a standard issued of the JSR 003 with an addon for the remote management and monitoring in the [JSR 160: JavaTM Management Extensions (JMX) Remote API](https://jcp.org/en/jsr/detail?id=160).
+It's a standard originally coming from the [JSR 3: Java&trade; Management Extensions (JMX&trade;) Specification](https://jcp.org/en/jsr/detail?id=003) (came with J2SE 5.0), that defines a way and an API to manage and expose resources (custom and of the JVM itself, called _MBeans_) in an application. It was later consolidated by the [JSR 160: Java&trade; Management Extensions (JMX) Remote API](https://jcp.org/en/jsr/detail?id=160) to handle the remote management (RMI).
 
 
 TODO
 
-Oracle provides multiples tutorials, it's quite complete: https://docs.oracle.com/javase/8/docs/technotes/guides/jmx/tutorial/tutorialTOC.html.
-    http://www.oracle.com/technetwork/java/javase/compatibility-417013.html
+Oracle provides multiples tutorials, it's quite complete:
+
+https://docs.oracle.com/javase/8/docs/technotes/guides/jmx/tutorial/tutorialTOC.html.
+http://www.oracle.com/technetwork/java/javase/compatibility-417013.html
 http://docs.oracle.com/javase/8/docs/technotes/guides/management/agent.html
 
 http://docs.oracle.com/cd/E19698-01/816-7609/6mdjrf83l/index.html
+
+https://docs.oracle.com/javase/7/docs/api/javax/management/openmbean/SimpleType.html
+
+http://docs.oracle.com/javase/tutorial/jmx/overview/index.html
+http://docs.oracle.com/javase/tutorial/jmx/mbeans/index.html
+http://docs.oracle.com/javase/tutorial/jmx/remote/index.html
+http://download.oracle.com/otn-pub/jcp/jmx_remote-1_4-mrel2-spec/jsr160-jmx-1_4-mrel4-spec-FINAL-v1_0.pdf?AuthParam=1486942615_b4637d1ff7539733779f3ed8853176b5
+
 http://docs.oracle.com/javase/7/docs/api/javax/management/MXBean.html
 
 
@@ -44,6 +49,8 @@ Instead of having to restart an application when we update its configuration, wi
 It's a bit like [Archaius]() when you are using DynamicProperty and polling a database for changes, or when we use Zookeeper when some znode is created or is updated. JMX can also be used to directly call methods on MBeans.
 
 ## MBeans and MXBeans
+
+MBean stands for _Managed Bean_.
 
 ![](mxbean_memory.png)
 
@@ -67,15 +74,15 @@ println(obj) // class javax.management.ObjectInstance
 
 # How to use JMX?
 
-## JMX Connectors
+## JMX Connectors: jconsole, jvisualvm, jmc
 
-We can use:
+The Java JDK already embeds several JMX connectors with more or less complex UI:
 
-- jconsole
-- Java VisualVM
-- Java Mission control
+- [jconsole](http://docs.oracle.com/javase/8/docs/technotes/guides/management/jconsole.html): the simplest.
+- [Java VisualVM](http://docs.oracle.com/javase/8/docs/technotes/guides/visualvm/index.html): the middle-ground, it has more options and handle plugins. It's also on [GitHub](https://github.com/visualvm/visualvm.src).
+- [Java Mission Control](https://docs.oracle.com/javacomponents/jmc-5-5/jmc-user-guide/toc.htm): part of the Oracle commercial features, the UI is more polished, it has a complete recorder feature that can really help to find problems source.
 
-All three are packaged by default with the JVM installation and provide a connector to local or remote MBeans servers.
+All three are packaged by default with the JVM installation and provide a connector to local or remote JMX Agent (exposing a MBeans server).
 
 MBean Server (we register Managed Beans), it is the one that manage the objects and provides methods to register/unregister, invoke methods on the MBean.
 The MBean Server is a JMX agent.
@@ -85,13 +92,91 @@ A MBean must have an object name composed of a _domain_ and key values pairs.
 an interface with the "MBean" suffix is mandatory to be recognize and be able to register it into the JMX server.
 Because we need get/set and we are working in Scala, we don't forget to annotate the properties with `@BeanProperty`.
 
-MBean can be "standard", "dynamic", "open", or "model".
+MBeans can be "standard", "dynamic", "open", "model", or "monitor".
+
+## Programmatically
+
+Java exposes a client API in `javax.management[.remote]` to connect to any JMX agent through RMI and retrieve A `MBeanServerConnection` to request the MBeans attributes and their values.
+
+The connection scheme is quite ugly: `service:jmx:rmi:///jndi/rmi://localhost:9010/jmxrmi` but trust me, it works! 
+
+Here is a program that output the whole MBeans hierarchy attributes and values, then calls some JMX methods:
+
+```scala
+object JMXTestConnection extends App {
+  val url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:9010/jmxrmi")
+  val connector = JMXConnectorFactory.connect(url)
+  val server = connector.getMBeanServerConnection()
+  val all = server.queryMBeans(null, null).asScala
+
+  println(all.map(_.getObjectName)
+             .map(name => s"$name\n" + attributes(name)))
+
+  // we can also call the JMX methods:
+  server.invoke(ObjectName.getInstance("java.lang:type=Memory"), "gc", null, null)
+  server.invoke(ObjectName.getInstance("com.ctheu:type=Data"), "change", Array(new Integer(18)), null)
 
 
-## Remote JMX
+
+  private def attributes(name: ObjectName) = {
+    server.getMBeanInfo(name).getAttributes.toList.map(attribute(name, _)).mkString("\n")
+  }
+
+  private def attribute(name: ObjectName, attr: MBeanAttributeInfo) = {
+    s"- ${attr.getName} (${attr.getType}) = ${attributeValue(name, attr)}"
+  }
+
+  private def attributeValue(name: ObjectName, attr: MBeanAttributeInfo) = {
+    // it's possible getAttribute throws an exception, see the output below
+    Try(server.getAttribute(ObjectName.getInstance(name), attr.getName))
+  }
+}
+```
+The output looks like this:
+```xml
+Set(java.lang:type=MemoryPool,name=Code Cache
+- Name (java.lang.String) = Success(Code Cache)
+- Type (java.lang.String) = Success(NON_HEAP)
+- CollectionUsage (javax.management.openmbean.CompositeData) = Success(null)
+- CollectionUsageThreshold (long) = Failure(javax.management.RuntimeMBeanException: java.lang.UnsupportedOperationException: CollectionUsage threshold is not supported)
+- CollectionUsageThresholdCount (long) = Failure(javax.management.RuntimeMBeanException: java.lang.UnsupportedOperationException: CollectionUsage threshold is not supported)
+- MemoryManagerNames ([Ljava.lang.String;) = Success([Ljava.lang.String;@3ee0fea4)
+...
+```
+
+This could be useful when an application wants to monitor another application or a pool of applications, directly using JMX to retrieve some specific attributes, and act upon their values.
+
+It's also possible for an application to monitor itself, connecting to its own MBean server. Some values could be easier to catch there than using some third-party APIs, or when it's just impossible to grab elsewhere.
+
+### Scala wrapper: jajmx
+
+There is a library which implements the JMX API with some Scala wrappers: [jajmx](https://github.com/dacr/jajmx).
+This way, no need of this Java non-sense (even if yes, it's not that complicated actually).
+
+```scala
+import jajmx._
+val jmx = JMX()
+import jmx._
+
+mbeans.take(10).map(_.name).foreach(println)
+```
+
+Output:
+```xml
+java.lang:type=Memory
+java.lang:type=MemoryPool,name=PS Eden Space
+java.lang:type=MemoryPool,name=PS Survivor Space
+...
+```
+
+It also provides some smart `sh` scripts to query any application with JMX and retrieve specific values, list threads, use filters..
+Take a [look](https://github.com/dacr/jajmx)!
+
+
+## Connect to JMX on a remote server
 
 ```bash
--Dcom.sun.management.jmxremote
+-Dcom.sun.management.jmxremote # old option needed until Java 6
 -Dcom.sun.management.jmxremote.port=9010
 -Dcom.sun.management.jmxremote.local.only=false
 -Dcom.sun.management.jmxremote.authenticate=false
@@ -100,23 +185,15 @@ MBean can be "standard", "dynamic", "open", or "model".
 ```
 
 
-
-# Example: Kafka
-
-Kafka exposes tons of MBeans.
-
-![Kafka using JMX](jmx_kafka.png)
-
-We can retrieve and set the logging level of all the loggers, get the start/end offsets of each partitions, get metrics about elections, logs flushing, queues size, messages/bytes per seconds (globally, per topic), and so much more.
-
-
 # Jolokia: JMX to HTTP
 
-Jolokia is a Java agent used to expose JMX through HTTP (json), instead of using JMX Connectors (jconsole, Java Mission Control..).
+## A Java Agent
+
+Jolokia is a Java Agent used to expose JMX through HTTP (as JSON), which is universal.
 
 A Java agent is some piece of code started when the JVM starts, that can instrument classes before the real application starts OR it can be plugged on any JVM application on the fly.{.info}
 
-It supports attributes list, read, write, and methods execution. Jolokia simplifies how to use JMX because JSON through HTTP is way more accessible and can be used in any language. Jolokia [provides](https://jolokia.org/features/polyglot.html) some client libraries to simplify the flow (Java, Javascript (with jQuery, erk), Perl), but anything can query the HTTP endpoint, it's plain JSON.
+Jolokia supports attributes listing, reading, writing, and methods execution. Jolokia simplifies how to use JMX because JSON through HTTP is way more accessible and can be used by any language. Jolokia [provides](https://jolokia.org/features/polyglot.html) some client libraries to simplify the flow (Java, Javascript (with jQuery, erk), Perl), but anything can query the HTTP endpoint, it's plain JSON.
 
 The installation of Jolokia is quite straight-forward:
 
@@ -136,7 +213,7 @@ We'll get a log stating it's all good:
 ```
 
 Now, when we query `http://localhost:7777/jolokia/`, we get the agent version:
-```js
+```c
 {
     "request": {
         "type": "version"
@@ -150,9 +227,11 @@ Now, when we query `http://localhost:7777/jolokia/`, we get the agent version:
         ...
 ```
 
+## Queries
+
 From there, we can list, read, or write any attributes and execute methods.
 
-- List
+### List
 
 When we are looking around:
 
@@ -160,11 +239,11 @@ When we are looking around:
 http://localhost:7777/jolokia/list
 # or a particular namespace
 http://localhost:7777/jolokia/list/java.lang
-# or particular attribute
+# or a particular attribute
 http://localhost:7777/jolokia/list/java.lang/type=Memory/attr/HeapMemoryUsage
 ```
 
-```js
+```c
 {
     "request": { "type": "list" },
     "value": {
@@ -184,13 +263,16 @@ http://localhost:7777/jolokia/list/java.lang/type=Memory/attr/HeapMemoryUsage
                     "type": "javax.management.openmbean.CompositeData",
                     "desc": "HeapMemoryUsage"
                 },
-    ...
+                ...
 ```
 
-- Read
+Note that this route does not return the values, but only the JMX metadata.
 
-Perfect if we know what we are looking for.
-The route to use when we want to monitor the metrics using a Monitoring System and have some nice charts.
+### Read
+
+It's perfect if we know what we are looking for.
+
+It's the route to use when we want to monitor some specific metrics in a monitoring system and renders some nice charts because it exposes the values.
 
 ```bash
 http://localhost:7777/jolokia/read/java.lang:type=Memory
@@ -198,7 +280,7 @@ http://localhost:7777/jolokia/read/java.lang:type=Memory
 http://localhost:7777/jolokia/read/java.lang:type=Memory/HeapMemoryUsage/used
 ```
 
-```js
+```c
 {
     "request": { "mbean": "java.lang:type=Memory", "type": "read" },
     "value": {
@@ -223,7 +305,7 @@ http://localhost:7777/jolokia/read/java.lang:type=Memory/HeapMemoryUsage/used
 }
 ```
 
-- Write
+### Write
 
 Let's say Jolokia has some MBeans that return these values:
 
@@ -246,7 +328,7 @@ If we read it again:
 { "HistorySize": 82, "MaxDebugEntries": 100, "HistoryMaxEntries": 10, "Debug": true }
 ```
 
-- Method execution
+### Method execution
 
 There are already some existing MBeans in the JRE we can call:
 
@@ -279,9 +361,164 @@ $ java -jar jolokia-jvm-1.3.5-agent.jar --help
 As we can see, the endpoint security is builtin in Jolokia.
 All the options are also listed on the [reference guide](https://jolokia.org/reference/html/agents.html#agents-jvm).
 
+Jolokia is a very nice tool to consider when we want to quickly plug an application into an existing monitoring system which has probably already something to read metrics from HTTP. It's useless to develop a custom HTTP service expose metrics. It's better to expose them through JMX, then, by HTTP with Jolokia. That will provide 2 ways to read the metrics.
+
+# Camel: stay awhile and listen
+
+Camel is a generic _source_ and _sink_ connector, that can be used to create complex pipelines of events publishing/consuming.
+It has a support for absolutely every possible source or sink (files, messages queues, sockets, aws, ftp, mail, irc, and [more more more](https://camel.apache.org/components.html)).
+Here, we're just going to talk about the JMX part.
+
+Camel handles it in two ways:
+- It can listen to MBeans modifications, this is the [JMX Component](https://camel.apache.org/jmx.html).
+- We can use JMX to monitor Camel internals, this is [Camel JMX](http://camel.apache.org/camel-jmx.html).
+
+## Listen to MBeans modifications
+
+Camel can subscribe to MBeans that are listenable: MBeans that implements `javax.management.NotificationBroadcaster` (this just offers a simple publisher/subscriber interface).
+
+It's quite common to inherit directly from `NotificationBroadcasterSupport` that implements it and support Executors (to notify the listener asynchronously).
+
+A typical MBean implementation would be:
+
+```scala
+trait MyMetricMBean {
+  def getValue(): Double
+  
+  def update(): Unit // we'll use it after
+}
+class MyMetric(var value: Double) extends NotificationBroadcasterSupport with MyMetricMBean {
+  // a notification needs a unique sequence number
+  private val sequence = new AtomicInteger()
+
+  override def getValue(): Double = value
+  def setValue(newValue: Double) = {
+    val oldValue = value
+    this.value = newValue
+    // this is quite verbose but at least, it contains everything we could think of
+    this.sendNotification(new AttributeChangeNotification(this,
+      sequence.incrementAndGet(), Instant.now().toEpochMilli,
+      "Value changed", "Value", "Double",
+      oldValue, newValue
+    ))
+  }
+
+  override def update(): Unit = setValue(math.random)
+}
+```
+
+Now, we can register an instance of this MBean into the local MBeans server, and ask Camel to subscribe to its notifications, and act upon them (here, we'll just log the notification on stdout):
+
+```scala
+object WithCamel extends App with LazyLogging {
+  val server = ManagementFactory.getPlatformMBeanServer
+
+  val metric = new MyMetric(0)
+  server.registerMBean(metric, ObjectName.getInstance("com.ctheu:type=MyMetric"))
+
+  val context = new DefaultCamelContext()
+  context.addRouteDefinition(new RouteDefinition(
+    "timer:updateValue?period=800")
+    .bean(metric, "update"))
+  context.addRouteDefinition(new RouteDefinition(
+    "jmx:platform?objectDomain=com.ctheu&key.type=MyMetric")
+    .to("log:com.ctheu:INFO"))
+
+  // it's possible to be notified only according to some thresholds (<0.05 or >0.95 here)
+  /* context.addRouteDefinition(new RouteDefinition(
+    "jmx:platform?objectDomain=com.ctheu&key.type=MyMetric" + 
+    "&observedAttribute=Value&monitorType=gauge&granularityPeriod=500" + 
+    "&notifyHigh=true&notifyLow=true&thresholdHigh=0.95&thresholdLow=0.05")
+    .to("log:com.ctheu:INFO")) */
+
+  context.start()
+  Thread.sleep(60000)
+  context.stop()
+}
+```
+
+We can find the JMX values in this stdout extract:
+
+```xml
+Route: route1 started and consuming from: timer://updateValue?period=800
+Route: route2 started and consuming from: jmx://platform?key.type=MyMetric&objectDomain=com.ctheu&observedAttribute=Value
+Total 2 routes, of which 2 are started.
+Apache Camel 2.18.1 (CamelContext: camel-1) started in 0.647 seconds
+
+INFO com.ctheu:INFO - Exchange[ExchangePattern: InOnly, BodyType: String, Body:
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<AttributeChangeNotification xmlns="urn:org.apache.camel.component:jmx">
+  <source>com.ctheu:type=MyMetric</source>
+  <message>Value changed</message>
+  <sequence>1</sequence>
+  <timestamp>1486933777838</timestamp>
+  <dateTime>2017-02-12T22:09:37.838+01:00</dateTime>
+  <type>jmx.attribute.change</type>
+  <attributeName>Value</attributeName>
+  <attributeType>Double</attributeType>
+  <newValue>0.23164144347463556</newValue>
+  <oldValue>0.0</oldValue>
+</AttributeChangeNotification>]
+
+INFO com.ctheu:INFO - Exchange[ExchangePattern: InOnly, BodyType: String, Body:
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <AttributeChangeNotification xmlns="urn:org.apache.camel.component:jmx">
+  <source>com.ctheu:type=MyMetric</source>
+  <message>Value changed</message>
+  <sequence>2</sequence>
+  <timestamp>1486933778624</timestamp>
+  <dateTime>2017-02-12T22:09:38.624+01:00</dateTime>
+  <type>jmx.attribute.change</type>
+  <attributeName>Value</attributeName>
+  <attributeType>Double</attributeType>
+  <newValue>0.37393058222906805</newValue>
+  <oldValue>0.23164144347463556</oldValue>
+</AttributeChangeNotification>]
+```
+
+From there, we can trigger any pipeline and send those data to messages brokers, monitoring systems, files, anything.
+
+## Monitor Camel internals with JMX
+
+Camel exposes a TONS of MBeans.
+
+- The Camel context: generally only one per application. It exposes a bunch of global metrics, exchanges counts, processing time.
+- All instantiated components: from which the endpoints were created.
+- All endpoints: their configuration (mutable).
+- All processors: the things doing the work. They exposes the same metrics as the context but just about them.
+- All consumers: the things that listen to some incoming messages.
+- All producers: the things that publish the messages.
+- All routes: the pipelines of consumers and producers. Same metrics as processors but about the whole pipeline.
+
+![MBeans of Camel](jmx_camel.png)
+
+All those MBeans have operations to get part of their state (getters), dump the stats and routes as XML, pause/stop/start the context/consumers/producers/processors/routes..
+
+Also, through JMX, we can send custom data into the Camel context directly. Let's say we create a simple `direct` endpoint:
+
+```scala
+context.addRouteDefinition(new RouteDefinition("direct:testing").to("log:com.ctheu:INFO"))
+```
+
+![Sending data with JMX](jmx_camel_send.png)
+
+```
+[RMI TCP Connection(5)-10.0.75.1]
+INFO com.ctheu:INFO - Exchange[ExchangePattern: InOnly, BodyType: String, Body: hello there!]
+```
+
+Because any program can invoke the JMX methods, and Camel is able to handle them and put them into some pipeline, the possibilities and combinaisons are endless.
+
+A program running Camel can get its data from another application, do some transformations, merge multiple sources, send and broadcast new events anywhere else: it can just act as a big processor itself.{.info}
+
+
 # Kamon and JMX
 
+## Kamon's features
+
 [Kamon](http://kamon.io/introduction/get-started/) is a delightful metrics framework written in Scala.
+
+[Dropwizard's Metrics](http://metrics.dropwizard.io/3.1.0/getting-started/#) is another good metrics framework written in Java.{.info}
 
 Without writing any code, Kamon can already provide some classic metrics (JVM, System), but it's mostly useful to create custom metrics to expose and measure the internals of our application (database latency, count of items, time to execute some code..).
 The documentation is clear, the API is good and not overwhelming.
@@ -299,6 +536,8 @@ It also provides some plugins for specific frameworks: Akka, Play Framework, JDB
 And finally, Kamon is able to send the metrics to tons of backends: _stdout_, StatsD, FluentD, ...JMX! The one we care about here.
 
 http://kamon.io/backends/jmx/
+
+## Exposing metrics to JMX
 
 Here is a complete example that simulate some gets and insertions into a database:
 
@@ -332,7 +571,7 @@ It can be very handy to, for instance, add some alerting (email, slack) if the d
 
 Small tips: by default, Kamon sends the metrics to the backends every 10s. To change this interval, we can add `kamon.metric.tick-interval = 1 second` into our `application.conf`.{.info}
 
-## Akka
+## kamon-akka: Monitoring Akka's actors
 
 A very nice Kamon plugin is [kamon-akka](http://kamon.io/integrations/akka/overview/).
 
@@ -394,11 +633,9 @@ Then, we can see the graal in our JMX connector:
 
 We can find back our _routero_ router and _pingo_ actor and monitor their Akka internal state (mailbox, )
 
-# Camel: ???
-
-http://camel.apache.org/camel-jmx.html
-
 # JMXTrans: Send JMX metrics anywhere
+
+## Startup
 
 JMXTrans is mostly a scheduler (based on [quartz](https://github.com/quartz-scheduler/quartz)) that pulls data from any JMX source and send them to one or multiple sinks (to store them and draw dashboards).
 
@@ -417,7 +654,7 @@ $ java -jar jmxtrans-263/lib/jmxtrans-all.jar --help
 
 The important options are:
 
-```bash
+```c
 -f, --json-file
 -q, --quartz-properties-file
     The Quartz server properties.
@@ -431,7 +668,7 @@ JMXTrans has some defaults in the file `quartz-server.properties`.
 Quartz has [tons of options](http://www.quartz-scheduler.org/documentation/quartz-2.2.x/configuration/) such as its threadpool config, listeners, plugins, misc thresholds.
 - `-s`: to change the default 60s poll interval (`runPeriod`).
 
-## Configuration
+## Queries
 
 The configuration is what JMXTrans calls [Queries](https://github.com/jmxtrans/jmxtrans/wiki/Queries).
 
@@ -441,19 +678,19 @@ For instance, it can listen to the JMX data on `localhost:9010` and send the res
 
 ```json
 {
-  "servers" : [{
-    "port" : "9010",
-    "host" : "localhost",
-    "queries" : [{
-      "outputWriters" : [{
-         "@class" : "com.googlecode.jmxtrans.model.output.StdOutWriter"
+  "servers": [{
+    "port": "9010",
+    "host": "localhost",
+    "queries": [{
+      "outputWriters": [{
+         "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
       }],
-      "obj" : "java.lang:type=OperatingSystem",
-      "attr" : [ "SystemLoadAverage", "AvailableProcessors", "TotalPhysicalMemorySize",
+      "obj": "java.lang:type=OperatingSystem",
+      "attr": [ "SystemLoadAverage", "AvailableProcessors", "TotalPhysicalMemorySize",
                 "FreePhysicalMemorySize", "TotalSwapSpaceSize", "FreeSwapSpaceSize",
                 "OpenFileDescriptorCount", "MaxFileDescriptorCount" ]
     }],
-    "numQueryThreads" : 2
+    "numQueryThreads": 2
   }]
 }
 ```
@@ -480,37 +717,40 @@ Result(attributeName=FreePhysicalMemorySize,
 ```
 
 If we had a custom Java application with custom JMX MBeans, we could use:
+
+```scala
+trait RandomMetricsMBean {
+  def getValue(): Double
+}
+class RandomMetrics(@BeanProperty var value: Double) extends RandomMetricsMBean
+
+val metrics = new RandomMetrics(0d)
+server.registerMBean(metrics, ObjectName.getInstance("com.ctheu:type=RandomMetrics"))
 ```
-"obj": "com.ctheu:type=RandomMetrics",
-```
-
-## Monitoring the network
-
-Send manually a metric value:
-```
-echo "com.ctheu.test 42 $(date +%s)" | nc 192.168.0.11 2003
-```
-
-
-To check if something is coming on the carbon port, we can use `ngrep`:
-```xml
-# ngrep -d any port 2003
-interface: any
-filter: (ip or ip6) and ( port 2003 )
-####
-T 172.17.0.1:54598 -> 172.17.0.2:2003 [AP]
-  jakub.test 50 1486316847.
-########
-T 172.17.0.1:54600 -> 172.17.0.2:2003 [AP]
-  jakub.test 56 1486316862.
-####
-```
-
-## Using Kafka
-
-Let's say we want to monitor our Kafka brokers, we can set our JMXTrans with this:
 
 ```js
+"queries": [{
+  "outputWriters": [{
+      "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+  }],
+  "obj": "com.ctheu:type=RandomMetrics",
+  "attr": []
+}],
+```
+
+By default, if no attributes are specified, JMXTrans will just take them all.
+
+## Example: Kafka as source
+
+Kafka exposes tons of MBeans about its internals.
+
+![Kafka using JMX](jmx_kafka.png)
+
+We can retrieve get the start/end offsets of each partitions, get metrics about elections, logs flushing, queues size, messages/bytes per seconds (globally, per topic), and so much more.
+
+Let's say we want to monitor the `FetcherStats` metrics, we setup our JMXTrans queries with this:
+
+```json
 {                                                                            
     "outputWriters": [{                                                                        
         "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriterFactory",
@@ -522,109 +762,130 @@ Let's say we want to monitor our Kafka brokers, we can set our JMXTrans with thi
     "obj": "kafka.server:type=FetcherStats,*",                                 
     "resultAlias": "kafka",                                                    
     "attr": []                                                                 
-},                                                                           
+}
 ```
 
-The `typeNames` are used when we are using the wildcard `*` to go deep into the hierarchy.
-This will provides the hierarchy in the metrics name.
+The `typeNames` are used when we are using the wildcard `*` to grab the full hierarchy undernealth.
+This will properly set the path names of the metrics in Graphite.{.info}
 
-For instance, the complete `ObjectName` of one node is:
+For instance, the complete `ObjectName` of one of theses nodes is:
 ```
-kafka.server:type=FetcherStats,name=BytesPerSec,clientId=ReplicaFetcherThread-0-109,brokerHost=hadoopmaster01.stg.ps,brokerPort=9092
+kafka.server:type=FetcherStats,
+             name=BytesPerSec,
+             clientId=ReplicaFetcherThread-0-109,
+             brokerHost=hadoopmaster01.stg.ps,
+             brokerPort=9092
 ```
 As seen in jconsole:
 
 ![Kafka MBeans in JConsole](jconsole_kafka.png)
 
-In Graphite, we can now construct dashboards:
+Thanks to `typeNames`, we'll have a clear and distinct path in Graphite for all the attributes:
 
 ![Kafka MBeans in Graphite](graphite_kafka.png)
 
 
+## The raw Graphite protocol: using nc and ngrep
 
+Not directly related to JMX but more to Graphite and specially Carbon (which is the piece that listen to incoming metrics), it's possible and very easy to send any metrics to Carbon using simple tool such as `nc`.
 
-# The Swiss Java Knife: jvm-tools
+The input format of Carbon is `[metric path] [value] [timestamp]`.
+The JMXTrans Graphite connector simply translates the JMX attributes path and values to this format when we use Graphite as sink.
 
-Its GitHub repo: [jvm-tools](https://github.com/aragozin/jvm-tools)
-
-It provides a fat-jar, [downloadable on bintray](https://bintray.com/artifact/download/aragozin/generic/sjk-plus-0.4.2.jar), containing different tools for Java.
-
-The one that we care about here, is [mx](https://github.com/aragozin/jvm-tools/blob/master/sjk-core/COMMANDS.md#mx-command), to query our MBeans servers.
-
-
-
-# Programmatically
-
-Of course, it's possible to connect manually to the JMX agent through RMI and use the Java API to request the MBeans attributes and their values:
-
-```scala
-object JMXTestConnection extends App {
-  val url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:9010/jmxrmi")
-  val connector = JMXConnectorFactory.connect(url)
-  val server = connector.getMBeanServerConnection()
-  val all = server.queryMBeans(null, null)
-  println(all.asScala.map(_.getObjectName)
-                     .map(name => s"$name\n" + attributes(name)))
-
-  // we can also call the JMX methods:
-  server.invoke(ObjectName.getInstance("java.lang:type=Memory"), "gc", null, null)
-  server.invoke(ObjectName.getInstance("com.ctheu:type=Data"), "change", Array(new Integer(18)), null)
-
-  private def attributes(name: ObjectName) = {
-    server.getMBeanInfo(name).getAttributes.toList.map(attribute(name, _)).mkString("\n")
-  }
-
-  private def attribute(name: ObjectName, attr: MBeanAttributeInfo) = {
-    s"- ${attr.getName} (${attr.getType}) = ${attributeValue(name, attr)}"
-  }
-
-  private def attributeValue(name: ObjectName, attr: MBeanAttributeInfo) = {
-    // it's possible getAttribute throws an exception, see the output
-    Try(server.getAttribute(ObjectName.getInstance(name), attr.getName))
-  }
-}
-```
-The output looks like this:
-```xml
-Set(java.lang:type=MemoryPool,name=Code Cache
-- Name (java.lang.String) = Success(Code Cache)
-- Type (java.lang.String) = Success(NON_HEAP)
-- CollectionUsage (javax.management.openmbean.CompositeData) = Success(null)
-- CollectionUsageThreshold (long) = Failure(javax.management.RuntimeMBeanException: java.lang.UnsupportedOperationException: CollectionUsage threshold is not supported)
-- CollectionUsageThresholdCount (long) = Failure(javax.management.RuntimeMBeanException: java.lang.UnsupportedOperationException: CollectionUsage threshold is not supported)
-- MemoryManagerNames ([Ljava.lang.String;) = Success([Ljava.lang.String;@3ee0fea4)
-...
+For instance, to send a metric value:
+```c
+echo "com.ctheu.test 42 $(date +%s)" | nc 192.168.0.11 2003
 ```
 
-We don't need `jconsole` or `jvisualvm` anymore, we can roll our own application.
+![Graphite using nc](jmx_nc.png)
 
-This could be useful when an application wants to monitor another application or a pool of applications directly using JMX to retrieve some specific attributes, and act upon their values.
-
-It's also possible the application to monitor itself, connecting to its own MBean server. Some values could be easier to catch there than using some third-party APIs, or when it's just impossible to grab elsewhere.
-
-## Scala wrapper: jajmx
-
-There is a library which implements the JMX API with some Scala wrappers: [jajmx](https://github.com/dacr/jajmx).
-This way, no need of this Java non-sense (even if yes, it's not that complicated actually).
-
-```scala
-import jajmx._
-val jmx = JMX()
-import jmx._
-
-mbeans.take(10).map(_.name).foreach(println)
+When running into troubles, it's possible to check if the carbon port receives something using `ngrep`:
+```c
+# ngrep -d any port 2003
+interface: any
+filter: (ip or ip6) and ( port 2003 )
+####
+T 172.17.0.1:54598 -> 172.17.0.2:2003 [AP]
+  com.ctheu.test 42 1486316847.
+########
+T 172.17.0.1:54600 -> 172.17.0.2:2003 [AP]
+  com.ctheu.test 43 1486316862.
+####
 ```
 
-Output:
-```xml
+# The Swiss Java Knife: jvm-tools / sjk
+
+[jvm-tools](https://github.com/aragozin/jvm-tools) provides several general Java command line tool (monitor threads, gc, memory..), and things about JMX, what we care about here.
+
+Click [here](https://bintray.com/artifact/download/aragozin/generic/sjk-plus-0.4.2.jar) to download the fat-jar.
+
+## mxdump: The whole JMX tree into JSON
+
+It's useful when we just want to deal with JSON without thinking twice. We can put this into some NoSQL database and query it the way we want.
+
+```c
+$ java -jar sjk-plus-0.4.2.jar mxdump -p 3032
+```
+```json
+{
+  "beans" : [ {
+    "name" : "java.lang:type=MemoryPool,name=Metaspace",
+    "modelerType" : "sun.management.MemoryPoolImpl",
+    "Name" : "Metaspace",
+    "Type" : "NON_HEAP",
+    "Valid" : true,
+    "UsageThreshold" : 0,
+    "UsageThresholdSupported" : true,
+    "Usage" : {
+      "committed" : 227868672,
+      "init" : 0,
+      "max" : -1,
+      "used" : 219723800
+    },
+```
+
+## mx: query the MBeans
+
+[mx](https://github.com/aragozin/jvm-tools/blob/master/sjk-core/COMMANDS.md#mx-command) is more granular and allow us to pick which MBean we'd like to query attributes, and provide setter and invoke methods.
+
+It's useful to use it with some bash scripts: the script can monitor and affect the Java process internals. 
+
+```c
+$ java -jar sjk-plus-0.4.2.jar mx -p 3032 -b java.lang:type=Memory --info
 java.lang:type=Memory
-java.lang:type=MemoryPool,name=PS Eden Space
-java.lang:type=MemoryPool,name=PS Survivor Space
-...
+sun.management.MemoryImpl
+ - Information on the management interface of the MBean
+ (A) HeapMemoryUsage : CompositeData
+ (A) NonHeapMemoryUsage : CompositeData
+ (A) ObjectPendingFinalizationCount : int
+ (A) Verbose : boolean - WRITEABLE
+ (A) ObjectName : javax.management.ObjectName
+ (O) gc() : void
+```
+(A)ttributes, and (O)perations!
+
+```
+$ java -jar sjk-plus-0.4.2.jar mx -p 3032 -b java.lang:type=Memory --attribute HeapMemoryUsage --get
+java.lang:type=Memory
+committed: 2112618496
+init:      2147483648
+max:       2112618496
+used:      1116738328
 ```
 
-It also provides some smart `sh` scripts to query any application with JMX and retrieve specific values, list threads, use filters..
-Take a [look](https://github.com/dacr/jajmx)!
+As we said, it's possible to call operations, for instance let's call [`dumpAllThreads`](https://docs.oracle.com/javase/7/docs/api/java/lang/management/ThreadMXBean.html#dumpAllThreads(boolean,%20boolean)) exposed by the `ThreadMXBean`:
+
+```xml
+$ java -jar sjk-plus-0.4.2.jar mx -p 3032 -b java.lang:type=Threading \
+                                  --operation dumpAllThreads --call   \
+                                  --arguments [false,false]
+java.lang:type=Threading
+blockedCount|blockedTime|inNative|lockInfo                                |lockName                                |lockOwnerId|lockOwnerName|lockedMonitors|lockedSynchronizers|stackTrace                              |suspended|threadId|threadName                              |threadState  |waitedCount|waitedTime
+------------+-----------+--------+----------------------------------------+----------------------------------------+-----------+-------------+--------------+-------------------+----------------------------------------+---------+--------+----------------------------------------+-------------+-----------+----------
+2           |-1         |false   |{className=[I,identityHashCode=167611...|[I@63e785f6                             |-1         |null         |              |                   |{className=java.lang.Object,fileName=...|false    |217     |JMX server connection timeout 217       |TIMED_WAITING|3          |-1
+2           |-1         |false   |{className=[I,identityHashCode=315703...|[I@12d13f02                             |-1         |null         |              |                   |{className=java.lang.Object,fileName=...|false    |216     |JMX server connection timeout 216       |TIMED_WAITING|3          |-1
+...
+```
 
 # Conclusion
 
