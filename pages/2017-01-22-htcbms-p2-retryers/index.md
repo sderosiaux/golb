@@ -4,6 +4,7 @@ date: "2017-01-22T15:28Z"
 layout: post
 path: "/2017/01/22/how-to-communicate-between-micro-services-part-2-retryers/"
 language: "en"
+tags: micro-services, retryers, couchbase, spark, guava, akka, akka streams, lagom
 ---
 
 _The introduction of this series: [How to communicate between micro-services — Part 1](https://www.ctheu.com/2017/01/18/how-to-communicate-between-micro-services-part-1/)_.

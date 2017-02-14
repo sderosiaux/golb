@@ -1,15 +1,15 @@
 ---
-title: "Why is JMX all about?"
-date: "2017-02-01T01:32Z"
+title: "All the things we can do with JMX"
+date: "2017-02-14T00:45Z"
 layout: post
-path: "/2017/02/01/what-jmx-is-all-about/"
+path: "/2017/02/14/all-the-things-we-can-do-with-jmx/"
 language: "en"
-tags: java, scala, jmx, monitoring, rmi, kafka, jolokia, jmxtrans, akka
+tags: java, scala, jmx, rmi, monitoring, kafka, akka, camel, kamon, jolokia, jmxtrans
 ---
 
-If you're working with Java or Scala, you probably already heard of JMX or already using it. Most of us probably already use `jconsole` or `jvisualvm` to access the "JMX data", to get some insights about the internals of a Java process.
+If you're working with Java or Scala, you probably already heard of JMX or already using it. Most of us probably already used `jconsole` or `jvisualvm` to access the "JMX data", to get some insights about the internals of a Java process. If you did not, you're going to wonder why you never did. If you did, you may be interested by all the integrations we're going to show.
 
-This article is a tentative to explain more globally what is JMX. What can we do with it? Is it simple to use? What are the existing integrations we can use? What about its ecosystem?
+This article is a tentative to explain globally what is JMX. What is its purpose? What can we do with it? Is it simple to use? What are the existing integrations we can use? What about its ecosystem? We'll use a bunch of tools that are using it to make it clear.
 
 ---
 Summary {.summary}
@@ -20,90 +20,132 @@ Summary {.summary}
 
 # What is JMX?
 
-It's a standard originally coming from the [JSR 3: Java&trade; Management Extensions (JMX&trade;) Specification](https://jcp.org/en/jsr/detail?id=003) (came with J2SE 5.0), that defines a way and an API to manage and expose resources (custom and of the JVM itself, called _MBeans_) in an application. It was later consolidated by the [JSR 160: Java&trade; Management Extensions (JMX) Remote API](https://jcp.org/en/jsr/detail?id=160) to handle the remote management (RMI).
+It's a standard originally from the [JSR 3: Java&trade; Management Extensions (JMX&trade;) Specification](https://jcp.org/en/jsr/detail?id=003) (came with J2SE 5.0), that defines a way and an API to manage and expose resources (custom and of the JVM itself, called _MBeans_) in an application. It was later consolidated by the [JSR 160: Java&trade; Management Extensions (JMX) Remote API](https://jcp.org/en/jsr/detail?id=160) to handle JMX remote management (with RMI).
 
+With JMX, we can retrieve or change some application resources values (MBeans attributes), or call methods on them, on the fly, to alter the behavior of the application and to monitor its internals.
 
-TODO
+We can use JMX for anything, the possibilities are quite infinite. For instance:
+- Know the memory and CPU the application is using.
+- Trigger the GC.
+- How many _requests_ were processed by the application?
+- What are the database latency percentiles?
+- How many elements are contained in the caches?
+- Change the load-balancing strategy in real-time.
+- Force an internal circuit-breaker to be open.
+- ...
 
-Oracle provides multiples tutorials, it's quite complete:
+It all depends on what the application is "offering".
 
-https://docs.oracle.com/javase/8/docs/technotes/guides/jmx/tutorial/tutorialTOC.html.
-http://www.oracle.com/technetwork/java/javase/compatibility-417013.html
-http://docs.oracle.com/javase/8/docs/technotes/guides/management/agent.html
+It's _almost_ like we had a reactive database inside the application and we were exposing HTTP REST services (GET, PUT) over it, without coding anything, without the hassle, and with standard request/response payloads anyone (exterior) can interact with.
 
-http://docs.oracle.com/cd/E19698-01/816-7609/6mdjrf83l/index.html
+## MBeans &amp; Co
 
-https://docs.oracle.com/javase/7/docs/api/javax/management/openmbean/SimpleType.html
+All those values we talked about (that we can read or write) and methods we can call, must be contained inside MBeans.
 
-http://docs.oracle.com/javase/tutorial/jmx/overview/index.html
-http://docs.oracle.com/javase/tutorial/jmx/mbeans/index.html
-http://docs.oracle.com/javase/tutorial/jmx/remote/index.html
-http://download.oracle.com/otn-pub/jcp/jmx_remote-1_4-mrel2-spec/jsr160-jmx-1_4-mrel4-spec-FINAL-v1_0.pdf?AuthParam=1486942615_b4637d1ff7539733779f3ed8853176b5
+- MBean stands for _Managed Bean_. It's simply a _Java Bean_ following some constraints (implements an interface `xxxMBean` and provides gets/sets).
+- MBeans have the possibility to send notifications on changes but it's not mandatory (they are often read by just polling them at a regular interval).
+- A evolution are the [MXBeans](http://docs.oracle.com/javase/8/docs/api/javax/management/MXBean.html): they are MBeans that handle a pre-defined set of [Open Types](https://docs.oracle.com/javase/8/docs/api/javax/management/openmbean/OpenType.html) necessary for a better inter-operability.
+- There are pre-existing _platform MXBeans_: the ones already packaged with the JRE that expose the JVM internals (memory, cpu, threads, system, classes).
 
-http://docs.oracle.com/javase/7/docs/api/javax/management/MXBean.html
+Here is the platform MXBean `java.lang:type=Memory` attributes and values:
 
+![Attributes of the MXBean:java.lang:type=Memory](mxbean_memory.png)
 
-It provides a system to call method and update variables values on the fly (such as configuration flags).
-Instead of having to restart an application when we update its configuration, with JMX, no need to restart anything.
-
-It's a bit like [Archaius]() when you are using DynamicProperty and polling a database for changes, or when we use Zookeeper when some znode is created or is updated. JMX can also be used to directly call methods on MBeans.
-
-## MBeans and MXBeans
-
-MBean stands for _Managed Bean_.
-
-![](mxbean_memory.png)
-
-Here, we are looking at the object `java.lang:type=Memory`.
 The values we see in the screenshot are the exact as we can get in the code with:
 
 ```scala
 val mem = ManagementFactory.getMemoryMXBean
 mem.setVerbose(true)
-mem.getNonHeapMemoryUsage.getUsed
+mem.getNonHeapMemoryUsage.getUsed // 8688760
+
+// we can call methods!
 mem.gc()
 ```
 
-We can retrieve with its ObjectName but useless, because we just grab an instance of `ObjectInstance`, so we don't have any methods:
+The platform MXBeans have static accessors in `ManagementFactory` (because they are Java standards) and they are strongly typed.
+
+It's also possible to grab them dynamically, as any other MBean.
+To do that, we need to build a `ObjectName`, which is the _path_ of the MBean:
 
 ```scala
-val obj = server.getObjectInstance(ObjectName.getInstance("java.lang:type=Memory"))
-println(obj) // class javax.management.ObjectInstance
-// behind it's a MemoryImpl but the visibility is package only
+// MBeans belongs to a MBeans server as we say: the Java API can create one if we ask
+val server = ManagementFactory.getPlatformMBeanServer()
+
+println(server.getMBeanCount())
+// 22
+
+val info = server.getMBeanInfo(ObjectName.getInstance("java.lang:type=Memory"))
+info.getAttributes() // MBeanAttributeInfo[]
+info.getOperations() // MBeanOperationInfo[]
 ```
+
+## How to declare a custom MBean
+
+The MBeans must be declared by the application in a standard way.
+
+- It has to implement an interface with the `MBean` suffix. (or `MXBean` if [Open Typed](https://docs.oracle.com/javase/8/docs/api/javax/management/openmbean/OpenType.html))
+- It needs getters and/or setters (properties can be readonly). Because we are working in Scala, we can use `@BeanProperty` to generate them but they still need to be declared in the interface/trait.
+- It can have methods with parameters.
+
+```scala
+trait MetricMBean {
+  def getValue(): Double
+  def setValue(d: Double): Unit
+}
+class Metric(@BeanProperty var value: Double) extends MetricMBean
+```
+
+Finally, to be accessible, we need to register an instance of it into a MBeans server.
+
+- A MBeans server is the entity that manages the resources (MBeans), provides methods to register/unregister them, invoke methods on the MBeans and so on.
+- A MBeans server is part of a _JMX agent_, which runs in the same JVM. The JMX Agent exposes a JMX server connector for JMX client connector to be able to connect to it (local or remote), list the MBeans, get the attributes values, invoke methods, and do whatever they want with them.
+
+To register a MBean instance, we must provide an object name composed of a _domain_ and key values pairs to form the path:
+
+```scala
+object JMX extends App {
+  val server = ManagementFactory.getPlatformMBeanServer()
+  server.registerMBean(new Metric(1.0), ObjectName.getInstance("com.ctheu:type=Metric"))
+  server.registerMBean(new Metric(2.0), ObjectName.getInstance("com.ctheu:type=Metric,subtype=Sub"))
+
+  Thread.sleep(60000)
+}
+```
+We can see our metrics in JConsole, and modify them:
+
+![Simple JMX](jmx_simple.png)
+
+The application itself can monitor this value or be notified to adapt its behavior.
+Other applications can do the same by connecting themselves to the application JMX Agent, through RMI.
 
 # How to use JMX?
 
-## JMX Connectors: jconsole, jvisualvm, jmc
+## UI: JMX Client Connectors: jconsole, jvisualvm, jmc
 
-The Java JDK already embeds several JMX connectors with more or less complex UI:
+The Java JDK already embeds several JMX client connectors with more or less complex UIs, that provides more or less general features:
 
-- [jconsole](http://docs.oracle.com/javase/8/docs/technotes/guides/management/jconsole.html): the simplest.
+- [jconsole](http://docs.oracle.com/javase/8/docs/technotes/guides/management/jconsole.html): the simplest, the fastest.
 - [Java VisualVM](http://docs.oracle.com/javase/8/docs/technotes/guides/visualvm/index.html): the middle-ground, it has more options and handle plugins. It's also on [GitHub](https://github.com/visualvm/visualvm.src).
 - [Java Mission Control](https://docs.oracle.com/javacomponents/jmc-5-5/jmc-user-guide/toc.htm): part of the Oracle commercial features, the UI is more polished, it has a complete recorder feature that can really help to find problems source.
 
-All three are packaged by default with the JVM installation and provide a connector to local or remote JMX Agent (exposing a MBeans server).
-
-MBean Server (we register Managed Beans), it is the one that manage the objects and provides methods to register/unregister, invoke methods on the MBean.
-The MBean Server is a JMX agent.
-
-A MBean must have an object name composed of a _domain_ and key values pairs.
-
-an interface with the "MBean" suffix is mandatory to be recognize and be able to register it into the JMX server.
-Because we need get/set and we are working in Scala, we don't forget to annotate the properties with `@BeanProperty`.
-
-MBeans can be "standard", "dynamic", "open", "model", or "monitor".
+All three are packaged by default with the JDK installation and can connect to a local or remote JMX Agent (exposing a MBeans server).
 
 ## Programmatically
 
-Java exposes a client API in `javax.management[.remote]` to connect to any JMX agent through RMI and retrieve A `MBeanServerConnection` to request the MBeans attributes and their values.
+Java exposes a client API in `javax.management[.remote]` to connect to any JMX agent through RMI and retrieve a `MBeanServerConnection` to request the MBeans attributes, their values, etc.
 
-The connection scheme is quite ugly: `service:jmx:rmi:///jndi/rmi://localhost:9010/jmxrmi` but trust me, it works! 
+The connection scheme is quite ugly: `service:jmx:rmi:///jndi/rmi://localhost:9010/jmxrmi` but trust me, it works! The important part being `localhost:9010`. (here, 9010 is the RMI _registry_ port I pick, we'll see that just after)
 
 Here is a program that output the whole MBeans hierarchy attributes and values, then calls some JMX methods:
 
 ```scala
+// The program was started with:
+// -Dcom.sun.management.jmxremote.port=9010
+// -Dcom.sun.management.jmxremote.authenticate=false
+// -Dcom.sun.management.jmxremote.ssl=false
+
 object JMXTestConnection extends App {
+  // we listen to our own JMX agent!
   val url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:9010/jmxrmi")
   val connector = JMXConnectorFactory.connect(url)
   val server = connector.getMBeanServerConnection()
@@ -112,20 +154,18 @@ object JMXTestConnection extends App {
   println(all.map(_.getObjectName)
              .map(name => s"$name\n" + attributes(name)))
 
-  // we can also call the JMX methods:
+  // we can also call the JMX methods: "gc", "change" (custom MBean):
   server.invoke(ObjectName.getInstance("java.lang:type=Memory"), "gc", null, null)
-  server.invoke(ObjectName.getInstance("com.ctheu:type=Data"), "change", Array(new Integer(18)), null)
+  server.invoke(ObjectName.getInstance("com.ctheu:type=Metric"), "change", Array(new Integer(18)), null)
 
-
-
+  
+  // helpers
   private def attributes(name: ObjectName) = {
     server.getMBeanInfo(name).getAttributes.toList.map(attribute(name, _)).mkString("\n")
   }
-
   private def attribute(name: ObjectName, attr: MBeanAttributeInfo) = {
     s"- ${attr.getName} (${attr.getType}) = ${attributeValue(name, attr)}"
   }
-
   private def attributeValue(name: ObjectName, attr: MBeanAttributeInfo) = {
     // it's possible getAttribute throws an exception, see the output below
     Try(server.getAttribute(ObjectName.getInstance(name), attr.getName))
@@ -139,19 +179,24 @@ Set(java.lang:type=MemoryPool,name=Code Cache
 - Type (java.lang.String) = Success(NON_HEAP)
 - CollectionUsage (javax.management.openmbean.CompositeData) = Success(null)
 - CollectionUsageThreshold (long) = Failure(javax.management.RuntimeMBeanException: java.lang.UnsupportedOperationException: CollectionUsage threshold is not supported)
-- CollectionUsageThresholdCount (long) = Failure(javax.management.RuntimeMBeanException: java.lang.UnsupportedOperationException: CollectionUsage threshold is not supported)
-- MemoryManagerNames ([Ljava.lang.String;) = Success([Ljava.lang.String;@3ee0fea4)
+...
+Set(java.nio:type=BufferPool,name=mapped
+- Name (java.lang.String)=Success(mapped)
+- MemoryUsed (long)=Success(0)
+...
+Set(java.lang:type=GarbageCollector,name=PS Scavenge
+- LastGcInfo (javax.management.openmbean.CompositeData)=Success(...)
 ...
 ```
 
-This could be useful when an application wants to monitor another application or a pool of applications, directly using JMX to retrieve some specific attributes, and act upon their values.
+We can see it's possible for an application to monitor itself, connecting to its own MBean server. Some values could be easier to catch there than using some third-party APIs, or when it's just impossible to grab elsewhere.
 
-It's also possible for an application to monitor itself, connecting to its own MBean server. Some values could be easier to catch there than using some third-party APIs, or when it's just impossible to grab elsewhere.
+But it's mostly useful to connect to another application, or pool of applications, to grab some specific attributes, and act upon their values (monitoring, alerting, routing, load balancing..).
 
 ### Scala wrapper: jajmx
 
 There is a library which implements the JMX API with some Scala wrappers: [jajmx](https://github.com/dacr/jajmx).
-This way, no need of this Java non-sense (even if yes, it's not that complicated actually).
+This way, no need of this Java non-sense (ok, it's not that complicated but still).
 
 ```scala
 import jajmx._
@@ -160,8 +205,8 @@ import jmx._
 
 mbeans.take(10).map(_.name).foreach(println)
 ```
+The API is a bit more Scala'ish.
 
-Output:
 ```xml
 java.lang:type=Memory
 java.lang:type=MemoryPool,name=PS Eden Space
@@ -172,17 +217,45 @@ java.lang:type=MemoryPool,name=PS Survivor Space
 It also provides some smart `sh` scripts to query any application with JMX and retrieve specific values, list threads, use filters..
 Take a [look](https://github.com/dacr/jajmx)!
 
+## Connect to a distant JMX Agent
 
-## Connect to JMX on a remote server
+By default, it's not possible to connect to a distant JMX Agent. The distant application must add some Java options to allow the connection.
 
-```bash
--Dcom.sun.management.jmxremote # old option needed until Java 6
--Dcom.sun.management.jmxremote.port=9010
+This is the purpose of the [JSR 160: Java&trade; Management Extensions (JMX) Remote API](https://jcp.org/en/jsr/detail?id=160): to handle JMX remote management with RMI.
+
+The most common options to use on the distant application are (the others are mostly security related):
+
+```
+# -Dcom.sun.management.jmxremote
 -Dcom.sun.management.jmxremote.local.only=false
+-Dcom.sun.management.jmxremote.port=9010
 -Dcom.sun.management.jmxremote.authenticate=false
 -Dcom.sun.management.jmxremote.ssl=false
--Djava.rmi.server.hostname=127.0.0.1
 ```
+
+- `-Dcom.sun.management.jmxremote`: was necessary until J2SE6, is not needed anymore, but we can still stumbled upon it.
+- `-Dcom.sun.management.jmxremote.local.only`: by default, it's `true` to accept only local connections. If a `port` is specified, it is automatically switch to `true`.
+- `-Dcom.sun.management.jmxremote.port`: publish a RMI connector on this port for a remote application to connect to. It's just the _registry_ port (default is 1099), there is another port which is the server port (random).
+- `-Dcom.sun.management.jmxremote.authenticate=false`: by default, the authentication is enabled. The user must beforehands update the config files in `JRE_HOME/lib/management` to specify users, passwords, permissions.. It's often disabled! You must be sure nobody from the exterior can access it.
+- `-Dcom.sun.management.jmxremote.ssl=false`: by default, SSL is enabled when connecting remotely. The user must beforehands update create a certificate and import it into the keystore of the JVM. Often disabled! You must be sure nobody from the exterior can access it.
+
+---
+
+Finally, 2 more options are necessary when the private networks are different between the client and the server, or for other networking reasons:
+
+```
+-Djava.rmi.server.hostname=server
+-Djava.rmi.server.useLocalHostname
+```
+
+- `-Djava.rmi.server.hostname=server`: it is the address the client (the RMI stub) will use to query the remote server. For instance, if the server is not on the same local network than ours, the default address will the be private IP of the server, that we can't reach. But it's possible we can reach it through its hostname or another IP, so we set this property.
+- `-Djava.rmi.server.useLocalHostname`: if `java.rmi.server.hostname` is not specified, the RMI ports will be bind to the hostname instead of the local IP. If the client can resolve the hostname but not the IP (because private on another network), set this on!
+
+More documentation is available in the [Agent technotes](http://docs.oracle.com/javase/8/docs/technotes/guides/management/agent.html).
+
+If you want to connect through SSH tunnel, there is a nice [SO thread](http://stackoverflow.com/questions/15093376/jconsole-over-ssh-local-port-forwarding/32418821#32418821) to explain how to.{.info}
+
+Now that we've seen the theory, let's dive into the JMX ecosystem! 
 
 
 # Jolokia: JMX to HTTP
@@ -365,7 +438,7 @@ Jolokia is a very nice tool to consider when we want to quickly plug an applicat
 
 # Camel: stay awhile and listen
 
-Camel is a generic _source_ and _sink_ connector, that can be used to create complex pipelines of events publishing/consuming.
+Camel is a generic _sources_ and _sinks_ connector, that can be used to create complex pipelines of events publishing/consuming.
 It has a support for absolutely every possible source or sink (files, messages queues, sockets, aws, ftp, mail, irc, and [more more more](https://camel.apache.org/components.html)).
 Here, we're just going to talk about the JMX part.
 
@@ -889,8 +962,11 @@ blockedCount|blockedTime|inNative|lockInfo                                |lockN
 
 # Conclusion
 
-JMX is a simple but powerful technology to expose any Java applications internals.
+JMX is a _simple_ and powerful technology to expose any Java application internals and react upon their modifications.
 
-With Kamon to expose the application internals, some tools to regularly poll the values from JMX, and a backend to store them, it's possible to have some monitoring and alerting, with some pretty dashboard to display the evolution of any metrics. It's useful when we don't want our application to push its metrics somewhere (such as: Kamon to FluentD to Graphite), we can let any application pull them directly instead thanks to JMX.
+- The Jolokia project is perfect to expose the MBeans values directly through HTTP, to be able to consume them with absolutely any application in any language.
+- We can integrate JMX updates or notifications into Camel pipelines.
+- With Kamon to expose custom metrics and Akka Actors internals, JMXTrans to poll values, and a backend such as Graphite to store them, it's possible to create useful monitoring and alerting systems, and some pretty dashboards to display the evolution of any metrics.
 
-The Jolokia project is perfect to expose the JMX MBeans values directly through HTTP, hence we are able to consume them with absolutely any application in any language.
+Exposing metrics through JMX is useful when we don't want our application to push its metrics itself somewhere (such as: Kamon &#x2794; FluentD &#x2794; Graphite): we can let any application pull them directly from our JMX Agent.
+
