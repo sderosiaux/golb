@@ -4,6 +4,7 @@ date: "2017-01-29T01:32Z"
 layout: post
 path: "/2017/01/29/how-to-communicate-between-micro-services-part-3-circuit-breakers/"
 language: "en"
+tags: circuit-breakers, netflix, hystrix, archaius, akka, lagom
 ---
 
 _The previous part of this series: [How to communicate between micro-services — Part 2 — Retryers](https://www.ctheu.com/2017/01/22/how-to-communicate-between-micro-services-part-2-retryers/)_.

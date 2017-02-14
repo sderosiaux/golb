@@ -1,8 +1,8 @@
 {
-  "name": "gatsby-starter-default",
-  "description": "Gatsby default starter",
+  "name": "ctheu-blog",
+  "description": "chteu.com Blog",
   "version": "1.0.0",
-  "author": "Kyle Mathews <mathews.kyle@gmail.com>",
+  "author": "Stéphane Derosiaux",
   "dependencies": {
     "date-fns": "^1.21.0",
     "front-matter": "^2.1.1",

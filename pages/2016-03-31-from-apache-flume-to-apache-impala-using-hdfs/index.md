@@ -4,6 +4,7 @@ date: "2016-03-31T12:05:27Z"
 layout: post
 path: "/2016/03/31/from-apache-flume-to-apache-impala-using-hdfs/"
 language: "en"
+tags: flume, hdfs, avro, hive, impala, cloudera, oozie
 ---
 
 We have a Flume agent getting some Avro timestamped data.

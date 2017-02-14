@@ -4,6 +4,7 @@ date: "2017-01-09T22:54:22Z"
 layout: post
 path: "/2017/01/09/comparing-blog-hosting-services-for-developers/"
 language: "en"
+tags: blog, wordpress, markdown, github, amazon s3, surge, now, gatsby, netlify
 ---
 
 This blog was using Wordpress hosted on OVH for a long time. I'm sorry.

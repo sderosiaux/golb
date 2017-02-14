@@ -4,6 +4,7 @@ date: "2017-01-18T01:16:28Z"
 layout: post
 path: "/2017/01/18/how-to-communicate-between-micro-services-part-1/"
 language: "en"
+tags: micro-services, grpc, sbe, netty, kafka, hazelcast, hollow, zookeeper, consul, etcd, druid, cqrs, hystrix, akka
 ---
 
 The title says _micro-services_ but it's more about _services_ on general. It's just more _catchy_.

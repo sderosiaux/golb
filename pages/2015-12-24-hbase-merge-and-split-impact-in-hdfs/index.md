@@ -4,6 +4,7 @@ date: "2015-12-24T23:15:01Z"
 layout: post
 path: "/2015/12/24/hbase-merge-and-split-impact-in-hdfs/"
 language: en
+tags: hbase, hdfs, cloudera, internals
 ---
 
 We had a table with a lot of regions (almost a thousand) dispatched on ~ten Region Servers. It means each RS handled 100 regions: more than we wanted, and more than it should, [according to the HBase book](https://hbase.apache.org/book.html#too_many_regions). (memory pressure, compactions, MapReduce processes are split per region)
