@@ -450,7 +450,7 @@ Camel handles it in two ways:
 
 Camel can subscribe to MBeans that are listenable: MBeans that implements `javax.management.NotificationBroadcaster` (this just offers a simple publisher/subscriber interface).
 
-It's quite common to inherit directly from `NotificationBroadcasterSupport` that implements it and support Executors (to notify the listener asynchronously).
+It's quite common to inherit directly from `NotificationBroadcasterSupport` that implements it and support Executors (to notify the listeners asynchronously).
 
 A typical MBean implementation would be:
 
@@ -704,7 +704,12 @@ Then, we can see the graal in our JMX connector:
 
 ![JMX with Akka](jmx_akka.png)
 
-We can find back our _routero_ router and _pingo_ actor and monitor their Akka internal state (mailbox, )
+We can find back our _routero_ router and _pingo_ actor and monitor their Akka internal state:
+- mailboxes size: it should stay small
+- processing time: it should be tiny
+- errors: it should be 0
+
+We can create nice dashboards with those metrics to clearly have the picture of what's going on within the actors, that's truly useful.
 
 # JMXTrans: Send JMX metrics anywhere
 
