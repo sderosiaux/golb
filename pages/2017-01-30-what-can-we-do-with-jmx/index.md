@@ -245,11 +245,11 @@ Finally, 2 more options are necessary when the private networks are different be
 
 ```
 -Djava.rmi.server.hostname=server
--Djava.rmi.server.useLocalHostname
+-Djava.rmi.server.useLocalHostname=true
 ```
 
 - `-Djava.rmi.server.hostname=server`: it is the address the client (the RMI stub) will use to query the remote server. For instance, if the server is not on the same local network than ours, the default address will the be private IP of the server, that we can't reach. But it's possible we can reach it through its hostname or another IP, so we set this property.
-- `-Djava.rmi.server.useLocalHostname`: if `java.rmi.server.hostname` is not specified, the RMI ports will be bind to the hostname instead of the local IP. If the client can resolve the hostname but not the IP (because private on another network), set this on!
+- `-Djava.rmi.server.useLocalHostname`: if `java.rmi.server.hostname` is not specified, the client will use the hostname of the server instead of the local IP (it's useful when the IP is a private one belonging to another network). It's a shortcut/alternative to `java.rmi.server.hostname`.
 
 More documentation is available in the [Agent technotes](http://docs.oracle.com/javase/8/docs/technotes/guides/management/agent.html).
 
