@@ -713,7 +713,7 @@ We can create nice dashboards with those metrics to clearly have the picture of 
 
 # JMXTrans: Send JMX metrics anywhere
 
-## Startup
+## Standalone
 
 JMXTrans is mostly a scheduler (based on [quartz](https://github.com/quartz-scheduler/quartz)) that pulls data from any JMX source and send them to one or multiple sinks (to store them and draw dashboards).
 
@@ -862,6 +862,90 @@ Thanks to `typeNames`, we'll have a clear and distinct path in Graphite for all 
 
 ![Kafka MBeans in Graphite](graphite_kafka.png)
 
+## JMXTrans as an Agent
+
+It's also possible to run JMXTrans not a standalone application, but as an Java agent, starting directly with the application it monitors.
+
+This is the purpose of the project [jmxtrans-agent](https://github.com/jmxtrans/jmxtrans-agent) which embeds JMXTrans, and just rely on a config.xml file (that contain the JMX queries to do). _It's too bad it's not the same format as the JMXTrans standalone application._
+
+We already used an agent previously, Jolokia. This is the same story:
+
+- We [download](https://github.com/jmxtrans/jmxtrans-agent/releases/latest) the agent: [jmxtrans-agent-1.2.4.jar](https://github.com/jmxtrans/jmxtrans-agent/releases/download/jmxtrans-agent-1.2.4/jmxtrans-agent-1.2.4.jar).
+- We add `-javaagent` to the command line when we start Java to take our `.jar` into account. Configuring the command line can be done through the IDE project configuration or directly in `build.sbt` when we use `sbt run`:
+
+```scala
+fork in run := true
+javaOptions += "-javaagent:jmxtrans-agent-1.2.4.jar=path/to/jmxtrans-agent.xml"
+mainClass in (Compile, run) := Some("com.ctheu.JMXTest") // a simple blocking app
+```
+
+Let's use the macro feature (explained below) of the agent (`#...#`) and create this config file, that will output the metrics to stdout every 10s:
+
+```xml
+<jmxtrans-agent>
+    <queries>
+        <query objectName="java.lang:type=OperatingSystem"
+               resultAlias="os.#attribute#"/>
+        <query objectName="java.lang:type=Memory"
+               attribute="HeapMemoryUsage" resultAlias="mem.#key#"/>
+        <query objectName="java.lang:type=Runtime"
+               attribute="InputArguments" resultAlias="args.#position#"/>
+    </queries>
+    <outputWriter class="org.jmxtrans.agent.ConsoleOutputWriter"/>
+    <collectIntervalInSeconds>10</collectIntervalInSeconds>
+</jmxtrans-agent>
+```
+If we don't put a `resultAlias`, it will still work but the metrics name will be empty!{.warn}
+
+If everything is right, when we `sbt run`, we should get:
+
+```java
+[info] 2017-02-16 23:28:10.483 INFO [main] org.jmxtrans.agent.JmxTransAgent -
+Starting 'JMX metrics exporter agent: 1.2.4' with configuration 'path/to/jmxtrans-agent.xml'...
+[info] 2017-02-16 23:28:10.499 INFO [main] org.jmxtrans.agent.JmxTransAgent -
+PropertiesLoader: Empty Properties Loader
+[info] 2017-02-16 23:28:15.527 INFO [main] org.jmxtrans.agent.JmxTransAgent -
+JmxTransAgent started with configuration 'path/to/jmxtrans-agent.xml'
+
+[info] os.CommittedVirtualMemorySize 479408128 1487285558
+[info] os.FreePhysicalMemorySize 4773953536 1487285558
+[info] os.FreeSwapSpaceSize 2861543424 1487285558
+[info] os.ProcessCpuLoad 0.008171516430434778 1487285558
+...
+
+[info] mem.committed 257425408 1487285558
+[info] mem.init 268435456 1487285558
+[info] mem.max 3814195200 1487285558
+[info] mem.used 22726360 1487285558
+
+[info] args.0 -javaagent:jmxtrans-agent-1.2.4.jar=src/main/resources/jmxtrans-agent.xml 1487285558
+...
+```
+
+We clearly see our `os`, `mem`, and `args` metrics, with the macros replaced.
+
+Macros automatically pick the name of the resources to name the metrics:
+- `#attribute#`: for classic JMX MBeans properties (the fields).
+- `#key#`: for `CompositeData` (maps) fields.
+- `#position#`: for arrays.
+
+And, last but not least, multiple backends exists, especially Graphite:
+
+```xml
+<outputWriter class="org.jmxtrans.agent.GraphitePlainTextTcpOutputWriter">
+  <host>localhost</host>
+  <port>2003</port>
+  <namePrefix>api.</namePrefix>
+</outputWriter>
+```
+
+Results in Graphite:
+
+![JMXTrans Agent to Graphite](jmx_jmxtrans_agent.png)
+
+Easy as pie right?
+
+I invite you to check the repository [jmxtrans-agent](https://github.com/jmxtrans/jmxtrans-agent) to read a bit more about the other available backends. (files, statsd, influxdb)
 
 ## The raw Graphite protocol: using nc and ngrep
 
@@ -974,4 +1058,6 @@ JMX is a _simple_ and powerful technology to expose any Java application interna
 - With Kamon to expose custom metrics and Akka Actors internals, JMXTrans to poll values, and a backend such as Graphite to store them, it's possible to create useful monitoring and alerting systems, and some pretty dashboards to display the evolution of any metrics.
 
 Exposing metrics through JMX is useful when we don't want our application to push its metrics itself somewhere (such as: Kamon &#x2794; FluentD &#x2794; Graphite): we can let any application pull them directly from our JMX Agent.
+
+
 
