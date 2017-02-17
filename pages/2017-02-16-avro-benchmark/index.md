@@ -23,7 +23,8 @@ Even if that does not matter a lot for the types of benchmarks done here, the te
 - Windows 10
 - Started from IntelliJ IDEA Community Edition 2016.3
 - jdk1.8.0_121
-- SBT 0.13.8
+- sbt 0.13.8
+- `"org.apache.avro" % "avro" % "1.8.1"`
 - `"sbt-jmh" % "0.2.21"`
 - 1 iteration, 1 warmup iteration, 2 forks, 1 thread: `-i 1 -wi 1 -f2 -t1`
 
@@ -57,9 +58,9 @@ Then we are going to add the integration of Schema Registry (AVRO-1124) and ther
 
 Let's remember how to write a Avro `Schema` and how to generate an associated `GenericRecord`:
 
-We create a `User` schema with 80 columns:
+- Create a `User` schema with 80 columns:
 
-```
+```scala
 val schema: Schema = {
     val fa = SchemaBuilder.record("User").namespace("com.ctheu").fields()
     (0 to 80).foldLeft(fa) { (fields, i) => fields.optionalString("value" + i) }
@@ -67,19 +68,19 @@ val schema: Schema = {
 }
 ```
 
-We can generate a typical record from this schema with random values:
+- Generate a record from this schema with random values:
 
-```
+```scala
 val record = new GenericData.Record(schema)
 (0 to 80).foreach(i => record.put("value" + i, math.random.toString))
 ```
 
-We are going to use it for (reading/writing) (from/to) (input/output)streams or bytes.
+We are going to use it for (reading/writing) (from/to) (input/output)streams or bytes during the benchmarks.
 
 ## The types matter
 
-Strings are slower to deserialize than Double. I did some benchmarks, 80 `Double`s offer ~20% more throughput than 80 `String`s.
-But here, we'll only deal with Strings, to stay focus and keep our benchmarks consistent.
+`String`s are slower to deserialize than `Double`s. I did some benchmarks, 80 `Double`s offer ~20% more throughput than 80 `String`s.
+Here, we'll focus on `String`s only, to keep our benchmarks consistent.
 
 # Results
 
@@ -173,3 +174,22 @@ I guess (I didn't measured) it is because of the reflection in `EncoderFactory.b
     }
   }
 ```
+
+
+# With a Schema Registry
+
+When we use Avro, we must deal with a Schema Registry (SR)
+
+There are two choices:
+- [Confluent's](http://docs.confluent.io/3.1.2/schema-registry/docs/index.html)
+- [schema-repo](https://github.com/schema-repo/schema-repo) which is the implementation of [AVRO-1124](https://issues.apache.org/jira/browse/AVRO-1124). We'll go with the latter, because it's simpler to integrate.
+
+Dealing with a SR enforces to code the version of the schema into the payload, as the first bytes.
+
+- On serialization: we contact the SR to register (if not already) the Avro schema of the data we're going to write (to get an ID). We write this ID as the first bytes, then we append the data.
+- On deserialization: we read the first bytes of the payload to know what is the version of the Avro schema that was used to write the data. We contact the SR with this ID to grab the Schema, then we used this Schema to read the data. (or a compatible's one if we ensure backward/forward compatibility)
+
+Anyway, the serialization/deserialization now must deal with another step for each and every message.
+Generally, the client API of the SR has a cache, to not call the SR server every time.
+
+
