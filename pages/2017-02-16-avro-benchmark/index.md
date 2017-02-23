@@ -288,14 +288,14 @@ The versions we talked about are only unique per subject:
 
 A version is not sufficient to retrieve a schema: the key `(subject, version)` is necessary.
 
-A schema registry is not specialized for Avro Schemas. The "schemas" (which are simply the value of the key `(subject, version)`) can actually be anything we want (integers, strings, whatever), using Avro Schemas is only one of their usage.{.info}
-
 ## With schema-repo
 
 It's not maintained anymore because it works perfectly! The repo: [schema-repo](https://github.com/schema-repo/schema-repo).
 
 It's a simple HTTP service that can store and retrieve schemas on disk, in memory (for development purpose only), or in Zookeeper.
 We can download [a jar with all dependencies](https://oss.sonatype.org/content/repositories/releases/org/schemarepo/schema-repo-bundle/0.1.3/schema-repo-bundle-0.1.3-withdeps.jar), it just needs a simple configuration file to declare where to store the schemas.
+
+schema-repo is not necessarily specialized for Avro Schemas. The "schemas" (which are simply the value of the key `(subject, version)`) can actually be anything we want (integers, strings, whatever), using Avro Schemas is only one of their usage.{.info}
 
 ```xml
 $ cat sr.config
@@ -314,7 +314,7 @@ Let's describe the available route to understand clearly its purpose:
 
 ![schema-repo browser](schemarepo.png)
 
-- The Json interface (that will be used by the Java client API of schema-repo):
+- The JSON API (that will be used by the Java client API of schema-repo):
   - GET http://localhost:2876/schema-repo: list all the subjects.
   - GET http://localhost:2876/schema-repo/{subject}: 200 if the subject exists.
   - GET http://localhost:2876/schema-repo/{subject}/all: list all the (version+schema) of the subject.
@@ -327,6 +327,8 @@ Let's describe the available route to understand clearly its purpose:
   - PUT http://localhost:2876/schema-repo/{subject}/register_if_latest/{latestId}: add a schema only if the given version was the latest.
 
 It's basically a `Map[String, (Map[Int, Any], Config)]` (!).
+
+Note that there is now way to remove a schema from a subject, it's immutable. It's only possible by removing them manually from their storage.{.warn}
 
 - The whole configuration of the schema registry:
   - http://localhost:2876/config?includeDefaults=true
@@ -354,8 +356,192 @@ schema-repo.zookeeper.curator.number-of-retries: 10
 schema-repo.zookeeper.curator.sleep-time-between-retries: 2000
 ```
 
-Hopefully, there is a Java API to deal with all the endpoints and totally ignore them.
+Hopefully, there is a Java API to deal with all the endpoints.
 
+### Client API
+
+The client API is really just a wrapper that contact the schema registry using Jersey client.
+
+Here are the necessary sbt dependencies to add:
+
+```scala
+libraryDependencies += "org.schemarepo" % "schema-repo-client" % "0.1.3"
+libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.23"
+libraryDependencies += "com.sun.jersey" % "jersey-client" % "1.19"
+libraryDependencies += "com.sun.jersey" % "jersey-core" % "1.19"
+```
+
+And here is a simple example where we create a new subject with 2 schemas:
+
+```scala
+val repo = new RESTRepositoryClient("http://localhost:2876/schema-repo", new GsonJsonUtil(), false)
+
+// register create a new subject/schema or return the existing one if one matches
+val subject = repo.register("toto-" + Math.random(), SubjectConfig.emptyConfig())
+subject.register("SCHEMA A")
+subject.register("SCHEMA B")
+println(s"entries: ${subject.allEntries()}")
+println(s"latest: ${subject.latest()}")
+```
+
+Output:
+
+```xml
+[main] INFO org.schemarepo.client.RESTRepositoryClient -
+Pointing to schema-repo server at http://localhost:2876/schema-repo
+[main] INFO org.schemarepo.client.RESTRepositoryClient -
+Remote exceptions from GET requests will be propagated to the caller
+
+entries: [1 SCHEMA B, 0 SCHEMA A]
+latest: 1 SCHEMA B
+```
+
+### Subject wrappers: read-only, cache, validating
+
+schema-repo provides 3 `Subject` wrappers:
+
+- A read-only subject, to pass it down safely:
+```scala
+// wrap the subject into a read-only container to ensure nothing can register schemas on it
+val readOnlySubject = Subject.readOnly(subject)
+// readOnlySubject.register("I WILL CRASH")
+```
+
+- A cached subject, to avoid doing HTTP requests:
+```scala
+// cache the schemas id+value in memory the first time they are accessed through the subject.
+// This is to avoid contacting the HTTP schema registry if it was already seen.
+val cachedSubject = Subject.cacheWith(subject, new InMemorySchemaEntryCache())
+val schemaC = cachedSubject.register("SCHEMA C") // HTTP call, creating ID "2"
+// ...
+val schemaC = cachedSubject.lookupById("2")      // No HTTP call, it was in the cache
+```
+
+- A validating subject, to ensure a compatibility with the existing schemas of the subject. For instance, we can forbid the new schema to be shorter than the existing ones (?!):
+
+```scala
+// wrap the subject with the default validators
+val alwaysLongerValidator = new ValidatorFactory.Builder()
+  .setValidator("my custom validator", new Validator {
+    override def validate(schemaToValidate: String, schemasInOrder: Iterable[SchemaEntry]): Unit = {
+      if (!schemasInOrder.asScala.forall(_.getSchema.length <= schemaToValidate.length)) {
+        throw new SchemaValidationException("A new schema can't be shorter than the existing ones")
+      }
+    }
+  })
+  .setDefaultValidator("my custom validator")
+  .build()
+
+val validatingSubject = Subject.validatingSubject(subject, alwaysLongerValidator)
+validatingSubject.register("SCHEMA 4")
+validatingSubject.register("SHORT") // Exception !
+```
+
+Let's use this validator thing to do something truly useful in our case..
+
+### Ensure Avro schemas full compatibility
+
+We can ensure that any new Avro schema is compatible (forward and backward) with all the existing Avro schemas of a subject:
+
+```scala
+val avroValidators = new ValidatorFactory.Builder()
+  .setValidator("avro full compatibility validator", new Validator {
+    override def validate(schemaToValidate: String, schemasInOrder: Iterable[SchemaEntry]): Unit = {
+      // We must NOT use the same Parser because a Parser stores which schema it has already parsed
+      // and throw an exception if we try to parse 2 schema with the same namespace/name
+      val writerSchema = new Schema.Parser().parse(schemaToValidate)
+      schemasInOrder.asScala
+        .map(s => new Schema.Parser().parse(s.getSchema))
+        .map(s => SchemaCompatibility.checkReaderWriterCompatibility(s, writerSchema))
+        .find(_.getType == SchemaCompatibilityType.INCOMPATIBLE)
+        .foreach(incompat => throw new SchemaValidationException(incompat.getDescription))
+    }
+  })
+  // The subject can set which validator to use in its config.
+  // The default validators are used if they are not defined explicitely.
+  .setDefaultValidator("avro full compatibility validator")
+  .build()
+```
+
+It means that we ensure any event written with the new schema can be read by the existing schemas, AND, that the new schema can read the events written by any existing schemas.
+
+Here is an example where we try at the end to insert an incompatible schema:
+
+It's incompatible because we removed a field: the old schemas are not compatible anymore. If an app was still reading events using the original schema, it wouldn't be able to deserialize the new events because it expects a `first` property (no default value).{.info}
+
+```scala
+// we can specify which validator to use, and not rely on the default validators of the factory
+val config = new SubjectConfig.Builder().addValidator("avro full compatibility validator").build()
+val avroSubject = Subject.validatingSubject(
+                    client.register("avro-" + Math.random(), config),
+                    avroValidators)
+
+println(avroSubject.register("""
+    |{
+    |     "type": "record",
+    |     "namespace": "com.example",
+    |     "name": "Person",
+    |     "fields": [
+    |       { "name": "first", "type": "string" }
+    |     ]
+    |}
+  """.stripMargin)) // OK!
+
+println(avroSubject.register("""
+    |{
+    |     "type": "record",
+    |     "namespace": "com.example",
+    |     "name": "Person",
+    |     "fields": [
+    |       { "name": "first", "type": "string" },
+    |       { "name": "last", "type": "string" }
+    |     ]
+    |}
+  """.stripMargin)) // OK!
+
+println(avroSubject.register("""
+    |{
+    |     "type": "record",
+    |     "namespace": "com.example",
+    |     "name": "Person",
+    |     "fields": [
+    |       { "name": "last", "type": "string" }
+    |     ]
+    |}
+  """.stripMargin)) // INCOMPATIBLE, WILL FAIL!
+```
+Output:
+
+```js
+0	{ "type": "record", ... }
+1	{ "type": "record", ... }
+Exception in thread "main" org.schemarepo.SchemaValidationException:
+Data encoded using writer schema:
+{
+  "type" : "record",
+  "name" : "Person",
+  "namespace" : "com.example",
+  "fields" : [ {
+    "name" : "last",
+    "type" : "string"
+  } ]
+}
+will or may fail to decode using reader schema:
+{
+  "type" : "record",
+  "name" : "Person",
+  "namespace" : "com.example",
+  "fields" : [ {
+    "name" : "first",
+    "type" : "string"
+  }, {
+    "name" : "last",
+    "type" : "string"
+  } ]
+}
+```
+
+In a company, it's quite straightforward to create a small custom framework around those pieces to ensure any application pointing to the same schema repository won't break rules and inject bad Avro schemas.
 
 ## With Confluent's Schema Registry
 
