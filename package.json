@@ -7,7 +7,7 @@
     "date-fns": "^1.21.0",
     "front-matter": "^2.1.1",
     "gatsby": "^0.12.20",
-    "highlight.js": "^9.8.0",
+    "highlight.js": "^9.9.0",
     "history": "^2.0.2",
     "inferno": "^1.2.0",
     "inferno-compat": "^1.2.0",

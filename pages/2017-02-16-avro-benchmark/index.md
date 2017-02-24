@@ -315,16 +315,16 @@ Let's describe the available route to understand clearly its purpose:
 ![schema-repo browser](schemarepo.png)
 
 - The JSON API (that will be used by the Java client API of schema-repo):
-  - GET http://localhost:2876/schema-repo: list all the subjects.
-  - GET http://localhost:2876/schema-repo/{subject}: 200 if the subject exists.
-  - GET http://localhost:2876/schema-repo/{subject}/all: list all the (version+schema) of the subject.
-  - GET http://localhost:2876/schema-repo/{subject}/config: display the config of the subject.
-  - GET http://localhost:2876/schema-repo/{subject}/latest: get the latest schema of the subject.
-  - GET http://localhost:2876/schema-repo/{subject}/id/{id}: get a specific version of the subject.
-  - PUT http://localhost:2876/schema-repo/{subject}: create a new subject
-  - POST http://localhost:2876/schema-repo/{subject}/schema: check if the schema in this subject exists
-  - PUT http://localhost:2876/schema-repo/{subject}/register: add a schema to the subject. It can fail if the schema is not compatible with the previous one (according to the validator rules of the subject, if set).
-  - PUT http://localhost:2876/schema-repo/{subject}/register_if_latest/{latestId}: add a schema only if the given version was the latest.
+  - GET /schema-repo: list all the subjects.
+  - GET /schema-repo/{subject}: 200 if the subject exists.
+  - GET /schema-repo/{subject}/all: list all the (version+schema) of the subject.
+  - GET /schema-repo/{subject}/config: display the config of the subject.
+  - GET /schema-repo/{subject}/latest: get the latest schema of the subject.
+  - GET /schema-repo/{subject}/id/{id}: get a specific version of the subject.
+  - PUT /schema-repo/{subject}: create a new subject
+  - POST /schema-repo/{subject}/schema: check if the schema in this subject exists
+  - PUT /schema-repo/{subject}/register: add a schema to the subject. It can fail if the schema is not compatible with the previous one (according to the validator rules of the subject, if set).
+  - PUT /schema-repo/{subject}/register_if_latest/{latestId}: add a schema only if the given version was the latest.
 
 It's basically a `Map[String, (Map[Int, Any], Config)]` (!).
 
@@ -332,7 +332,7 @@ Note that there is now way to remove a schema from a subject, it's immutable. It
 
 - The whole configuration of the schema registry:
   - http://localhost:2876/config?includeDefaults=true
-```
+```xml
 Configuration of schema-repo server:
 
 schema-repo.start-datetime: Wed Feb 22 00:46:50 CET 2017
@@ -545,11 +545,139 @@ In a company, it's quite straightforward to create a small custom framework arou
 
 ## With Confluent's Schema Registry
 
-It's part of a much much bigger platform and is tightly linked to Kafka, using it as a storage.
+The schema registry of Confluent is part of a much much bigger platform and is tightly linked to Kafka, using it as a storage.
+It's way more maintained than schema-repo as you can see on Github: [confluentinc/schema-registry](https://github.com/confluentinc/schema-registry). It is dedicated to Avro schemas and nothing else.
 
-http://packages.confluent.io/archive/3.1/confluent-oss-3.1.2-2.11.zip
+The platform with its schema registry is downloable here on Confluent's website: [confluent-oss-3.1.2-2.11.zip](http://packages.confluent.io/archive/3.1/confluent-oss-3.1.2-2.11.zip).
+
+Let's go into the wild and try to start the schema registry. We first need to start Zookeeper and Kafka. The schema registry depends on Zookeeper and look for Kafka brokers. If it can't find one, it won't start.
+
+Confluent provides some default config files we can use to start the whole stack:
+
+```xml
+$ cd confluent-3.1.2
+$ ./bin/zookeeper-server-start -daemon ./etc/kafka/zookeeper.properties
+$ ./bin/kafka-server-start -daemon ./etc/kafka/server.properties
+$ ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties
+[2017-02-24 00:01:47,667] INFO SchemaRegistryConfig values:
+        ...
+        kafkastore.topic = _schemas
+        metrics.jmx.prefix = kafka.schema.registry
+        schema.registry.zk.namespace = schema_registry
+        avro.compatibility.level = backward
+        port = 8081
+        ...
+[2017-02-24 00:01:53,858] INFO Started @7282ms (org.eclipse.jetty.server.Server:379)
+[2017-02-24 00:01:53,860] INFO Server started, listening for requests...
+```
+
+I've kept only the interesting parts:
+- It stores the schemas modifications into a kafka topic `_schemas`.
+- We can use JMX to check the internals of the registry.
+- In Zookeeper, we'll find the data in `/schema_registry`.
+- We can only insert backward compatible Avro schemas (in the subject) and it's configurable.
+
+We can check in Zookeeper:
+
+```bash
+$ ./bin/zookeeper-shell localhost
+> ls /schema_registry
+[schema_registry_master, schema_id_counter]
+> get /schema_registry/schema_registry_master
+{"host":"00-666-99.eu","port":8081,"master_eligibility":true,"version":1}
+```
+
+The schema registry is using Zookeeper to coordinate with another schema registries (master writer/slave readers) to ensure scaling, HA and unique global IDs.
+It also listens to Kafka to load up the data on startup, and write updates into it (the master): this is why those elements are mandatory.
+
+Let's do like with schema-repo and list the useful routes:
+
+- GET/PUT /config: retrieve/set the global Avro compabitility level
+- GET/PUT /config/{subject}: retrieve/set this subject Avro compabitility level
+- GET  /subjects: list all the subjects
+- POST /subjects/{subject}: check if a schema belongs to a subject
+- GET  /subjects/{subject}/versions: list all the schemas of this subject
+- GET  /subjects/{subject}/versions/{version}: retrieve this schema version of this subject
+- POST /subjects/{subject}/versions: register a new schema for this subject
+- GET  /schemas/ids/{id}: get the schema with this ID.
+- POST /compatibility/subjects/{subject}/versions/{version}: Test if the given schema (in the payload) is compatible with the given version.
+
+All the POST/PUT must send the header: `Content-Type: application/vnd.schemaregistry.v1+json` to be taken into account.{.warn}
+
+- `{version}` starts at 1 or can be "latest".
+- In this schema registry, the ID is globally unique per distinct schema. We don't need the subject and the version to retrieve a schema, we just need its ID.
+
+If we register some subjects and schemas, we can see all our changes in Kafka:
+
+```xml
+$ ./bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic _schemas \
+                               --from-beginning --property print.key=true
+{"magic":0,"keytype":"NOOP"}    null
+{"subject":"subject_test","version":1,"magic":0,"keytype":"SCHEMA"}     {"subject":"subject_test","version":1,"id":21,"schema":"\"string\""}
+{"subject":"subject_test2","version":1,"magic":0,"keytype":"SCHEMA"}    {"subject":"subject_test2","version":1,"id":21,"schema":"\"string\""}
+...
+```
+
+Hopefully, we have also a Java Client API to deal with it.
+
+### Client API
+
+```scala
+resolvers += "Confluent" at "http://packages.confluent.io/maven"
+libraryDependencies += "io.confluent" % "kafka-schema-registry-client" % "3.1.2"
+```
+
+```scala
+val client = new CachedSchemaRegistryClient("http://vps:8081", Int.MaxValue)
+val s1 = SchemaBuilder.builder("com.ctheu").record("Transaction").fields()
+  .requiredString("uuid").endRecord()
+val s2 = SchemaBuilder.builder("com.ctheu").record("Transaction").fields()
+  .requiredString("uuid")
+  .optionalDouble("value")
+  .endRecord()
+
+val id1 = client.register("MY_SUBJECT", s1)
+val id2 = client.register("MY_SUBJECT", s2)
+
+println(id1, id2)
+//(41,42)
+
+val metadata = client.getLatestSchemaMetadata("MY_SUBJECT")
+println(s"latest: ${metadata.getSchema}")
+// latest: {"type":"record","name":"Transaction","namespace":"com.ctheu","fields":[...]}
+
+// helper methods:
+println("fully compatible? " + AvroCompatibilityChecker.FULL_CHECKER.isCompatible(s1, s2))
+// fully compatible? true
+```
+
+By default, the client caches the schemas passing by to avoid querying the HTTP endpoint each time.
+
+And that's it, nothing more is provided. The schema validation is done on the schema registry itself according to its configuration.
+There is no custom configuration as with schema-repo, because it's only Avro-based.
 
 
+
+---
+
+There is an unofficial UI to go along: [Landoop/schema-registry-ui](https://github.com/Landoop/schema-registry-ui/)
+
+
+
+
+# Because we love Scala macros
+
+Because we are not going to write the Avro schema ourself, we need something to write them for us, that can't do typos: the Scala macros.
+
+- [avro4s](https://github.com/sksamuel/avro4s)
+- [avrohugger](https://github.com/julianpeeters/avrohugger)
+- [scavro](https://github.com/oedura/scavro)
+
+## avro4s
+
+## avrohugger
+
+## scavro
 
 
 # Having fun: Custom Encoder and OutputStream.

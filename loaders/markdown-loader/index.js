@@ -6,7 +6,7 @@ var objectAssign = require('object-assign')
 var highlight = function (str, lang) {
   if ((lang !== null) && hljs.getLanguage(lang)) {
     try {
-      return hljs.highlight(lang, str).value
+      return hljs.highlight(lang, str, true, false).value
     } catch (_error) {
       console.error(_error)
     }
