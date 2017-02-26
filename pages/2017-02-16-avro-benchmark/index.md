@@ -17,7 +17,7 @@ Summary {.summary}
 ---
 
 
-# The Avro API
+# The basics
 
 First, let's remember how to use the Avro Java API to deal with `Schema`, `GenericRecord`, and serialization/deserialization.
 
@@ -77,9 +77,11 @@ def toRecord(buffer: Array[Byte], schema: Schema): GenericRecord = {
 Don't reuse those implementations, they are not optimized at all and create a whole stack of objects every time.
 A same writer/reader can be used as many times as we want, as long as the data fits its schema.{.warn}
 
-# Test Cases and conditions
+# Performances
 
-To start properly a benchmark, we need to specify the tests conditions and versions:
+We'll do some benchmark to see how many records/s we can encode/decode.
+
+Here are the benchmarks conditions:
 
 - CPU i5 2500k, 3.30GHz, 4 cores.
 - jdk1.8.0_121
@@ -110,7 +112,7 @@ Their defaults are:
   - 2048 bytes for the encoders: to bufferize serialized data before flushing them into the output stream.
   - 8192 bytes for the decoders: to read that much data from the input stream, chunk by chunk.
 
-## Test Cases
+---
 
 We are going to test all the "reuse" combinaisons and play with the size of the data to serialize/deserialize at once, and see the impact of the `bufferSize`.
 
@@ -121,18 +123,9 @@ We will use a 80-Strings-containing-10-digits-each record in all cases.
 
 Note that Strings are slower to handle than Doubles for instance. 80x-Doubles records offer ~20% more throughput than 80x-Strings records.{.info}
 
-## Schema Registry
+## JMH Results
 
-Finally, we will use a Schema Registry (AVRO-1124 with [schema-repo](https://github.com/schema-repo/schema-repo) and [Confluent's](https://github.com/confluentinc/schema-registry)) to deal with schema versioning.
-
-- To read data, we will need grab the schema ID contained inside the data, get the corresponding schema, and read the data using it.
-- To write data, we will need to push our schema to the Schema Registry (if not done yet) and write the corresponding schema ID in the data.
-
-We will also see how the schema registry client API deals with schema caching (we won't do a HTTP request for each message).
-
-# Results
-
-## Encoders
+### Encoders
 
 As previously said, we are going to test:
 - `binaryEncoder` and `directBinaryEncoder`: with and without encoder reuse, 1/10/1000 records.
@@ -210,7 +203,7 @@ To conclude:
 - Do not use the `reuse` param for the encoders
 - It seems useless to batch the writes using the same encoder (poor gain) but if you do, increase greatly the `bufferSize`.
 
-## Decoders
+### Decoders
 
 As previously said, we are going to test:
 
@@ -261,9 +254,11 @@ To conclude: do how you want when you deserialize the records, it does not matte
 
 # Versioning the Avro schemas
 
-When we use Avro, we must deal with a Schema Registry (_SR_)
+When we use Avro, we *must* deal with a Schema Registry (shortcut: _SR_).
 
-There are two main choices:
+It's useful to not associate a message to a full schema each time (not space and network efficient!), but just to an ID. This is necessary for systems where applications talk to each other and are never shutdown at the same time, or when we have a message broker (like Kafka) where the consumers are never stopped and can read messages with the new schemas (and won't need to read the new columns because they don't care for instance).
+
+There are two main schema registries out there:
 - [Confluent's](http://docs.confluent.io/3.1.2/schema-registry/docs/index.html): integrated with the Confluent's Platform.
 - [schema-repo](https://github.com/schema-repo/schema-repo) which is the implementation of [AVRO-1124](https://issues.apache.org/jira/browse/AVRO-1124).
 
@@ -278,15 +273,13 @@ Hopefully, the client API of the SR is always caching the requested schemas, to 
 
 ## Subjects
 
-We need to introduce the notion of _Subject_ when we are using SR.
+We need to introduce the notion of _Subject_ when we are using a SR.
 
 A subject represents a collection of _compatible_ (according to custom validation rules) schemas in the SR.
 
 The versions we talked about are only unique per subject:
 - a subject A can have v1, v2.
 - a subject B can have v1, v2, v3.
-
-A version is not sufficient to retrieve a schema: the key `(subject, version)` is necessary.
 
 ## With schema-repo
 
@@ -315,16 +308,16 @@ Let's describe the available route to understand clearly its purpose:
 ![schema-repo browser](schemarepo.png)
 
 - The JSON API (that will be used by the Java client API of schema-repo):
-  - GET /schema-repo: list all the subjects.
-  - GET /schema-repo/{subject}: 200 if the subject exists.
-  - GET /schema-repo/{subject}/all: list all the (version+schema) of the subject.
-  - GET /schema-repo/{subject}/config: display the config of the subject.
-  - GET /schema-repo/{subject}/latest: get the latest schema of the subject.
-  - GET /schema-repo/{subject}/id/{id}: get a specific version of the subject.
-  - PUT /schema-repo/{subject}: create a new subject
-  - POST /schema-repo/{subject}/schema: check if the schema in this subject exists
-  - PUT /schema-repo/{subject}/register: add a schema to the subject. It can fail if the schema is not compatible with the previous one (according to the validator rules of the subject, if set).
-  - PUT /schema-repo/{subject}/register_if_latest/{latestId}: add a schema only if the given version was the latest.
+  - `GET /schema-repo`: list all the subjects.
+  - `GET /schema-repo/{subject`}: 200 if the subject exists.
+  - `GET /schema-repo/{subject}/all`: list all the (version+schema) of the subject.
+  - `GET /schema-repo/{subject}/config`: display the config of the subject.
+  - `GET /schema-repo/{subject}/latest`: get the latest schema of the subject.
+  - `GET /schema-repo/{subject}/id/{id}`: get a specific version of the subject.
+  - `PUT /schema-repo/{subject}`: create a new subject
+  - `POST /schema-repo/{subject}/schema`: check if the schema in this subject exists
+  - `PUT /schema-repo/{subject}/register`: add a schema to the subject. It can fail if the schema is not compatible with the previous one (according to the validator rules of the subject, if set).
+  - `PUT /schema-repo/{subject}/register_if_latest/{latestId}`: add a schema only if the given version was the latest.
 
 It's basically a `Map[String, (Map[Int, Any], Config)]` (!).
 
@@ -592,15 +585,15 @@ It also listens to Kafka to load up the data on startup, and write updates into 
 
 Let's do like with schema-repo and list the useful routes:
 
-- GET/PUT /config: retrieve/set the global Avro compabitility level
-- GET/PUT /config/{subject}: retrieve/set this subject Avro compabitility level
-- GET  /subjects: list all the subjects
-- POST /subjects/{subject}: check if a schema belongs to a subject
-- GET  /subjects/{subject}/versions: list all the schemas of this subject
-- GET  /subjects/{subject}/versions/{version}: retrieve this schema version of this subject
-- POST /subjects/{subject}/versions: register a new schema for this subject
-- GET  /schemas/ids/{id}: get the schema with this ID.
-- POST /compatibility/subjects/{subject}/versions/{version}: Test if the given schema (in the payload) is compatible with the given version.
+- `GET/PUT /config`: retrieve/set the global Avro compabitility level
+- `GET/PUT /config/{subject}`: retrieve/set this subject Avro compabitility level
+- `GET  /subjects`: list all the subjects
+- `POST /subjects/{subject}`: check if a schema belongs to a subject
+- `GET   /subjects/{subject}/versions`: list all the schemas of this subject
+- `GET   /subjects/{subject}/versions/{version}`: retrieve this schema version of this subject
+- `POST /subjects/{subject}/versions`: register a new schema for this subject
+- `GET   /schemas/ids/{id}`: get the schema with this ID (globally unique).
+- `POST /compatibility/subjects/{subject}/versions/{version}`: Test if the given schema (in the payload) is compatible with the given version.
 
 All the POST/PUT must send the header: `Content-Type: application/vnd.schemaregistry.v1+json` to be taken into account.{.warn}
 
@@ -621,6 +614,8 @@ $ ./bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic _schema
 Hopefully, we have also a Java Client API to deal with it.
 
 ### Client API
+
+Here are the sbt changes and a small application to play with the client API:
 
 ```scala
 resolvers += "Confluent" at "http://packages.confluent.io/maven"
@@ -656,24 +651,136 @@ By default, the client caches the schemas passing by to avoid querying the HTTP 
 And that's it, nothing more is provided. The schema validation is done on the schema registry itself according to its configuration.
 There is no custom configuration as with schema-repo, because it's only Avro-based.
 
+### With a nice UI
 
+There is an unofficial UI to go along: [Landoop/schema-registry-ui](https://github.com/Landoop/schema-registry-ui/).
 
----
+We'll need to enable CORS on the Schema Registry server of allow cross-domain requests if needed:
 
-There is an unofficial UI to go along: [Landoop/schema-registry-ui](https://github.com/Landoop/schema-registry-ui/)
+```
+$ cat >> etc/schema-registry/schema-registry.properties << EOF
+access.control.allow.methods=GET,POST,PUT,OPTIONS
+access.control.allow.origin=*
+EOF
+```
+Then we can simply run a Docker image to get the UI working:
 
+```
+$ docker run -d -p 8000:8000 -e "SCHEMAREGISTRY_URL=http://vps:8081" landoop/schema-registry-ui
+```
 
+![Schema Registry UI](schemaregistry_ui.png)
 
+We have a nice UI to create/update schemas, access the configuration and so on. Much more practical than plain REST routes.
 
-# Because we love Scala macros
+# Scala macros to the rescue
 
-Because we are not going to write the Avro schema ourself, we need something to write them for us, that can't do typos: the Scala macros.
+Because we don't want to write the Avro schema ourself, we need something to write them for us, that can't do typos: the Scala macros.
+
+Here are 3 nices projects along this way:
 
 - [avro4s](https://github.com/sksamuel/avro4s)
 - [avrohugger](https://github.com/julianpeeters/avrohugger)
 - [scavro](https://github.com/oedura/scavro)
 
+Generally, in our application, we have some `case class` and we want the Avro conversion to be transparent, this is the purpose of such projects.
+
+They don't provide the full power of Avro (aliases, defaults, enums, maps..) but still, they can come in handy for most cases.
+
 ## avro4s
+
+Probably the more complete project out there. Still properly maintained, it can generate the Avro schema from any case class, and it comes with a sbt plugin [sbt-avro4s](https://github.com/sksamuel/sbt-avro4s) that can generate case classes from existing Avro schemas.
+
+There are some limitations, like with nested generics, cycle references, but it works flawlessly for most cases.
+
+Here are some quick examples (the README of the project already covers everything):
+
+```scala
+libraryDependencies += "com.sksamuel.avro4s" %% "avro4s-core" % "1.6.4"
+```
+
+```scala
+import com.sksamuel.avro4s.AvroSchema
+case class User(firstName: String, lastName: String, age: Int)
+val schema: Schema = AvroSchema[User] // replaced with Macros
+println(schema)
+// {"type":"record","name":"User","namespace":"com.ctheu",
+//  "fields":[{"name":"firstName","type":"string"},...] }
+```
+
+Serialization and deserialization in a nutshell:
+```scala
+// NO schema written. Uses Avro binaryEncoder.
+// Useful when combined to a Schema Registry that provides an ID instead.
+val bin = AvroOutputStream.binary[User](System.out)
+ // Schema written. Uses Avro jsonEncoder.
+val json = AvroOutputStream.json[User](System.out)
+// Schema written. Store the schema first, then the records.
+val data = AvroOutputStream.data[User](System.out) 
+
+val u = Seq(User("john", "doe", 66), User("mac", "king", 24))
+json.write(u)
+bin.write(u)
+data.write(u)
+
+val bytes: Array[Byte] = ???
+AvroInputStream.binary[User](bytes).iterator.foreach(println)
+AvroInputStream.json[User](bytes).iterator.foreach(println)
+AvroInputStream.data[User](bytes).iterator.foreach(println)
+```
+
+It's also possible to work with `GenericRecord` directly:
+
+```scala
+val u = User("john", "doe", 66)
+
+val genericRecord = RecordFormat[User].to(u)
+val u2 = RecordFormat[User].from(genericRecord)
+assert(u == u2)
+```
+
+There are some more features available, take a peek at the [README](https://github.com/sksamuel/avro4s) (type precision, custom mapping).
+
+### Generate the case class from the schema
+
+As we said, it's also possible to do the reverse transformation using sbt-avro4s, ie: generate the case class.
+
+Quite straight-forward:
+
+In `project/plugins.sbt`:
+```
+addSbtPlugin("com.sksamuel.avro4s" % "sbt-avro4s" % "1.0.0")
+```
+
+In `src/main/resources/avro/Usr.avsc` (AVro SChema):
+```json
+{
+    "type":"record",
+    "name":"Usr",
+    "namespace":"com.ctheu",
+    "fields":[
+        {"name":"firstName","type":"string"},
+        {"name":"lastName","type":"string"},
+        {"name":"age","type":"int"}
+    ]
+}
+```
+
+In the code:
+```scala
+val u = Usr("john", "doe", 66)
+```
+
+A dependent task will be associated to `sbt compile` but it's also possible to call this task directly to run the generation:
+```scala
+avro2Class
+[info] [sbt-avro4s] Generating sources from [src\main\resources\avro]
+[info] --------------------------------------------------------------
+[info] [sbt-avro4s] Found 1 schemas
+[info] [sbt-avro4s] Generated 1 classes
+[info] [sbt-avro4s] Wrote class files to [target\scala-2.11\src_managed\main\avro]
+```
+And voilà, our case class is there and our project can now compile!
 
 ## avrohugger
 
