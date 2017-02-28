@@ -258,6 +258,8 @@ When we use Avro, we *must* deal with a Schema Registry (shortcut: _SR_).
 
 It's useful to not associate a message to a full schema each time (not space and network efficient!), but just to an ID. This is necessary for systems where applications talk to each other and are never shutdown at the same time, or when we have a message broker (like Kafka) where the consumers are never stopped and can read messages with the new schemas (and won't need to read the new columns because they don't care for instance).
 
+[Confluent had written a nice article about them](https://www.confluent.io/blog/schema-registry-kafka-stream-processing-yes-virginia-you-really-need-one/).
+
 There are two main schema registries out there:
 - [Confluent's](http://docs.confluent.io/3.1.2/schema-registry/docs/index.html): integrated with the Confluent's Platform.
 - [schema-repo](https://github.com/schema-repo/schema-repo) which is the implementation of [AVRO-1124](https://issues.apache.org/jira/browse/AVRO-1124).
@@ -673,15 +675,14 @@ $ docker run -d -p 8000:8000 -e "SCHEMAREGISTRY_URL=http://vps:8081" landoop/sch
 
 We have a nice UI to create/update schemas, access the configuration and so on. Much more practical than plain REST routes.
 
-# Scala macros to the rescue
+# Scala code generation to the rescue
 
 Because we don't want to write the Avro schema ourself, we need something to write them for us, that can't do typos: the Scala macros.
 
-Here are 3 nices projects along this way:
+Here are 2 nice projects along this way:
 
 - [avro4s](https://github.com/sksamuel/avro4s)
 - [avrohugger](https://github.com/julianpeeters/avrohugger)
-- [scavro](https://github.com/oedura/scavro)
 
 Generally, in our application, we have some `case class` and we want the Avro conversion to be transparent, this is the purpose of such projects.
 
@@ -689,8 +690,11 @@ They don't provide the full power of Avro (aliases, defaults, enums, maps..) but
 
 ## avro4s
 
-Probably the more complete project out there. Still properly maintained, it can generate the Avro schema from any case class, and it comes with a sbt plugin [sbt-avro4s](https://github.com/sksamuel/sbt-avro4s) that can generate case classes from existing Avro schemas.
+avro4s can:
+- generate the Avro schema from any case class.
+- handle serialization/deserialization of case classes to Avro raw data (using the Avro encoders).
 
+It also comes with an sbt plugin [sbt-avro4s](https://github.com/sksamuel/sbt-avro4s) that can generate case classes from existing Avro schemas.
 There are some limitations, like with nested generics, cycle references, but it works flawlessly for most cases.
 
 Here are some quick examples (the README of the project already covers everything):
@@ -739,20 +743,18 @@ val u2 = RecordFormat[User].from(genericRecord)
 assert(u == u2)
 ```
 
-There are some more features available, take a peek at the [README](https://github.com/sksamuel/avro4s) (type precision, custom mapping).
+There are a few more features available, take a peek at the [README](https://github.com/sksamuel/avro4s) (type precision, custom mapping).
 
 ### Generate the case class from the schema
 
-As we said, it's also possible to do the reverse transformation using sbt-avro4s, ie: generate the case class.
-
-Quite straight-forward:
+As we said, it's also possible to do the reverse transformation using [sbt-avro4s](https://github.com/sksamuel/sbt-avro4s), ie: generate the case class from a schema.
 
 In `project/plugins.sbt`:
 ```
 addSbtPlugin("com.sksamuel.avro4s" % "sbt-avro4s" % "1.0.0")
 ```
 
-In `src/main/resources/avro/Usr.avsc` (AVro SChema):
+In `src/main/resources/avro/Usr.avsc` (AVro SChema, using a JSON notation):
 ```json
 {
     "type":"record",
@@ -766,11 +768,6 @@ In `src/main/resources/avro/Usr.avsc` (AVro SChema):
 }
 ```
 
-In the code:
-```scala
-val u = Usr("john", "doe", 66)
-```
-
 A dependent task will be associated to `sbt compile` but it's also possible to call this task directly to run the generation:
 ```scala
 avro2Class
@@ -780,11 +777,116 @@ avro2Class
 [info] [sbt-avro4s] Generated 1 classes
 [info] [sbt-avro4s] Wrote class files to [target\scala-2.11\src_managed\main\avro]
 ```
-And voilà, our case class is there and our project can now compile!
+
+The `Usr` case class is generated in `target\scala-2.11\src_managed\main\avro`.
+We can use it:
+
+```scala
+val u = Usr("john", "doe", 66)
+```
 
 ## avrohugger
 
-## scavro
+Avrohugger does not rely on macros but on [treehugger](http://eed3si9n.com/treehugger/), which generates scala source code directly (whereas macros evaluation is just another phase in the compiler processing).
+
+Avrohugger is a set of libraries and tools:
+- `"com.julianpeeters" %% "avrohugger-core" % "0.15.0"`: generate Scala source code from Avro schemas. It can generates case classes but also `SpecificRecordBase` classes and `scavro` case classes ([scavro](https://github.com/oedura/scavro) is another library to generate case classes from schemas).
+
+```scala
+import avrohugger._
+
+val schema: Schema = ???
+
+println(new Generator(format.Standard).schemaToStrings(schema))
+// case class Usr(firstName: String, lastName: String, age: Int)
+
+println(new Generator(format.SpecificRecord).schemaToStrings(schema))
+// case class Usr(var firstName: String, var lastName: String, var age: Int)
+//   extends org.apache.avro.specific.SpecificRecordBase { ... }
+
+println(new Generator(format.Scavro).schemaToStrings(schema))
+// case class Usr(firstName: String, lastName: String, age: Int)
+//   extends org.oedura.scavro.AvroSerializeable { ... }
+
+// More useful, it can generate to files directly:
+new Generator(format.Standard).schemaToFile(schema /*, outDir = "target/generated-sources"*/)
+```
+
+It handles properly Scala enums (avro4s too) and has some options to map the generated case classes:
+
+```scala
+val schema = new Schema.Parser().parse(
+"""
+  |{
+  |    "type":"record",
+  |    "name":"Usr",
+  |    "namespace":"com.ctheu",
+  |    "fields":[
+  |        {"name":"firstName","type":"string"},
+  |        {"name":"lastName","type":"string"},
+  |        {"name":"age","type":"int"},
+  |        {"name": "suit", "type": { "name": "Suit", "type": "enum",
+  |         "symbols" : ["SPADES", "HEARTS", "DIAMONDS", "CLUBS"] } }
+  |    ]
+  |}
+""".stripMargin)
+
+println(new Generator(format.Standard,
+  avroScalaCustomTypes = Map("int" -> classOf[Double]),
+  avroScalaCustomNamespace = Map("com.ctheu" -> "com.toto"),
+  avroScalaCustomEnumStyle = Map(),
+  restrictedFieldNumber = false
+).schemaToStrings(schema))
+
+/* Output:
+object Suit extends Enumeration {
+  type Suit = Value
+  val SPADES, HEARTS, DIAMONDS, CLUBS = Value
+}
+
+case class Usr(firstName: String, lastName: String, age: Double, suit: Suit.Value))
+*/
+```
+
+- [sbt-avro-hugger](https://github.com/julianpeeters/sbt-avrohugger) `addSbtPlugin("com.julianpeeters" % "sbt-avrohugger" % "0.15.0")`: a plugin just to automatize these generations using sbt tasks.
+
+- [avro-scala-macro-annotations](https://github.com/julianpeeters/avro-scala-macro-annotations) `"com.julianpeeters" % "avro-scala-macro-annotations_2.11" % "0.11.1"`: _fills_ an existing empty `case class` at compilation time, with the fields found in an avro schema or in an avro data file, eg:
+```scala
+// From a schema:
+@AvroTypeProvider("avro/user.avsc")
+case class User()
+// => case class User(firstName: String, age: Int)
+
+// OR from the data:
+@AvroTypeProvider("avro/user.avro")
+case class User()
+// => case class User(firstName: String, age: Int)
+```
+
+# TODO: schema registry and binary message? how to encode ??? 
+
+http://docs.confluent.io/3.1.2/schema-registry/docs/serializer-formatter.html
+
+schema registry:
+producer:
+props and "schema.registry.url"
+props.put("key.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
+props.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
+
+consumer:
+props.put("schema.registry.url", url);
+props.put("specific.avro.reader", true);
+KafkaAvroDecoder avroDecoder = new KafkaAvroDecoder(vProps);
+GenericRecord genericEvent = (GenericRecord) messageAndMetadata.message();
+LogLine event = (LogLine) SpecificData.get().deepCopy(LogLine.SCHEMA$, genericEvent);
+
+Raw "protocol":
+
+| | | |
+|-|-|-|
+| 0 | Magic Byte | Confluent serialization format version number; currently always 0. |
+| 1-4 | Schema ID | 4-byte schema ID as returned by the Schema Registry |
+| 5-... | Data | Avro serialized data in Avro’s binary encoding. The only exception is raw bytes, which will be written directly without any special Avro encoding. |
 
 
 # Having fun: Custom Encoder and OutputStream.
