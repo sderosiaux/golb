@@ -1,8 +1,8 @@
 ---
-title: "How to use the Avro API with a Schema Registry, and benchmarks"
-date: "2017-02-14T00:45Z"
+title: "Apache Avro: how to, benchmarks and schema registries"
+date: "2017-03-02T02:08Z"
 layout: post
-path: "/2017/02/14/avro-benchmark/"
+path: "/2017/03/02/apache-avro-how-to-benchmarks-and-schema-registries/"
 language: "en"
 tags: scala, avro, benchmark, schema registry, confluent
 ---
