@@ -1,5 +1,5 @@
 ---
-title: "Apache Avro: how to, benchmarks, and schema registries"
+title: "Apache Avro: How to, Benchmarks, and Schema Registries"
 date: "2017-03-02T02:08Z"
 layout: post
 path: "/2017/03/02/apache-avro-how-to-benchmarks-and-schema-registries/"
