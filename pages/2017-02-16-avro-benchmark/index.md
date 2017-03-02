@@ -1,8 +1,8 @@
 ---
-title: "Serializing data efficiently with Apache Avro and dealing with Schemas registries"
+title: "Serializing data efficiently with Apache Avro and dealing with a Schema Registry"
 date: "2017-03-02T02:08Z"
 layout: post
-path: "/2017/03/02/serializing-data-efficiently-with-apache-avro-and-dealing-with-schemas-registries/"
+path: "/2017/03/02/serializing-data-efficiently-with-apache-avro-and-dealing-with-a-schema-registry/"
 language: "en"
 tags: scala, avro, benchmark, schema registry, confluent
 ---
