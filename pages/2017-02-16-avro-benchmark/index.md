@@ -7,7 +7,16 @@ language: "en"
 tags: scala, avro, benchmark, schema registry, confluent
 ---
 
-I was intrigued by...
+This article started with only the benchmark part, because I was curious of the impact of some parameters of the API, and if I could make things go faster.
+One thing led to another, I was suddenly writing a lot of pieces around Avro, presenting different framework and way of doing things!
+
+This article does not explains what is Avro (ie: a data serialization system) and what are the use-cases. The best source for this is the official website: [Apache Avro](https://avro.apache.org/docs/current/).
+
+We'll just go quickly through the basics of the Avro API, then we'll focus on:
+
+- The Java Avro API performance with some jmh benchmarks.
+- The schemas registry management.
+- The schemas/case classes auto-generation in Scala.
 
 ---
 Summary {.summary}
@@ -21,7 +30,7 @@ Summary {.summary}
 
 First, let's remember how to use the Avro Java API to deal with `Schema`, `GenericRecord`, and serialization/deserialization.
 
-## How to generate an Avro Schema and some records
+## How to create an Avro Schema and some records
 
 - Create a `User` schema with 80 columns:
 
@@ -33,6 +42,15 @@ val schema: Schema = {
 }
 ```
 
+`schema` contains:
+
+```json
+{"type":"record","name":"User","namespace":"com.ctheu","fields":[
+  {"name":"value0","type":["null","string"],"default":null},
+  {"name":"value1","type":["null","string"],"default":null},
+...
+```
+
 - Generate a record from this schema with random values:
 
 ```scala
@@ -40,20 +58,27 @@ val record = new GenericData.Record(schema)
 (0 to 80).foreach(i => record.put("value" + i, math.random.toString))
 ```
 
-We are going to use it for (reading/writing) (from/to) (input/output)streams or bytes during the benchmarks.
+`record` contains:
+```json
+{"value0": "0.09768197503406495", "value1": "0.5937827911773815", ... }
+```
+
+We are going to use it to [read|write] [from|to] [input|output]streams or bytes during the benchmarks.
 
 ## How to convert Avro records to bytes and vice-versa
 
-To serialize a record, we need a few pieces:
+To serialize a record (to be sent into Kafka for instance), we need a few pieces:
 
-- An Avro `GenericRecord` (basically, this is a Map) we're going to convert.
-- An `EncoderFactory` to provide an implementation of `org.apache.avro.io.Encoder` (we'll use both `BufferedBinaryEncoder` and `DirectBinaryEncoder`, but a `JsonEncoder` also exists). The encoder contains a bunch of low-level methods `writeFloat`, `writeString` and so on. The impl can write them where it desires. The default Avro encoders write them only into an `OutputStream` (in which you can only write bytes).
-- This is why we need to provide a `OutputStream` that will be filled with bytes by the `Encoder`. We can only write into a `OutputStream` or convert it to bytes.
-- Because the `Encoder` is low-level, we need a more high-level component to call the methods `write*` for us: it's the role of the `DatumWriter` that needs an `Encoder` to write something. The `DatumWriter` just knows how to parse the object.
+- A `GenericRecord` (basically, this is a Map) we want to convert.
+- An `EncoderFactory` to provide an implementation of `org.apache.avro.io.Encoder` (we'll use both `BufferedBinaryEncoder` and `DirectBinaryEncoder`, but a `JsonEncoder` also exists). The encoder contains a bunch of low-level methods such as `writeFloat`, `writeString` and so on. It write them where it wants. The default Avro encoders write them only into `OutputStream`s (in which you can only write bytes).
+- This is why we need to provide a `OutputStream` that will be filled with bytes by the `Encoder`. Note: We can only write into a `OutputStream` or convert it to bytes.
+- Because the `Encoder` is low-level (`writeFloat`, `writeString`, one by one), we need a more high-level component to call the methods `write*` for us: it's the role of the `DatumWriter` that needs an `Encoder` to provide those atomic writes. The `DatumWriter` just knows how to parse (walk into) a complex object.
+
+Here is the combinaison of those elements with a function that convert a complete record into bytes:
 
 ```scala
-def toBytes(record: GenericRecord, schema: Schema): Array[Byte] = {
-  val writer = new GenericDatumWriter[GenericRecord](schema)
+def toBytes(record: GenericRecord): Array[Byte] = {
+  val writer = new GenericDatumWriter[GenericRecord](schema.getSchema)
   val out = new ByteArrayOutputStream()
   val encoder = EncoderFactory.get().binaryEncoder(out, null)
   writer.write(record, encoder)
@@ -62,11 +87,12 @@ def toBytes(record: GenericRecord, schema: Schema): Array[Byte] = {
 }
 ```
 
-Same story to deserialize some bytes into a record, except we use an `InputStream` and a `Decoder` (that can `readInt`, `readString` etc. from the stream):
+Same story to deserialize some bytes into a record (to be consumed by Kafka consumers for instance), except we use an `InputStream` and a `Decoder` (that can `readInt`, `readString` etc. from the stream):
 
 ```scala
 def toRecord(buffer: Array[Byte], schema: Schema): GenericRecord = {
-  // Note that we can provide 2 schemas here: the writer schema and the reader schema
+  // We can provide 2 compatible schemas here: the writer schema and the reader schema
+  // For instance, the reader schema could be interested with only one column.
   val reader = new GenericDatumReader[GenericRecord](schema)
   val in = new ByteArrayInputStream(buffer)
   val decoder = DecoderFactory.get().binaryDecoder(in, null)
@@ -79,7 +105,7 @@ A same writer/reader can be used as many times as we want, as long as the data f
 
 # Performances
 
-We'll do some benchmark to see how many records/s we can encode/decode.
+We'll do some benchmarks to see how many records/s we can encode/decode per second, and what are the differents combinaisons, to see if we can optimize something.
 
 Here are the benchmarks conditions:
 
@@ -92,22 +118,25 @@ Here are the benchmarks conditions:
 
 ## What we'll test: encoders, decoders, reuse, bufferSize
 
-We are going to test the default decoder `binaryDecoder` (buffered) and its unbuffered version `directBinaryDecoder`.
+We are going to test the default decoder `binaryDecoder` (buffered, it reads the bytes from the stream chunk by chunk) and its unbuffered version `directBinaryDecoder` (read on demand).
 Same for the encoders `binaryEncoder` and `directBinaryEncoder`.
 
-- Encoders and decoders accept a nullable `reuse` parameter, to avoid to create new encoder/decoder instances in memory every time they write/read, and reuse (reconfigure) an existing one.
+- Encoders and decoders accept a nullable `reuse` parameter, to avoid to create new encoder/decoder instances in memory every time they write/read to/from a stream, and reuse (_reconfigure_) an existing one.
 
 ```java
 public BinaryEncoder binaryEncoder(OutputStream out, BinaryEncoder reuse) {}
 public BinaryDecoder binaryDecoder(byte[] bytes, BinaryDecoder reuse) {}
 ```
 
-- There is an additional "reuse" parameter available when we deserialize a record: the `GenericDatumReader` (which uses a `Decoder`) also accepts a nullable `reuse` argument to update an existing instance object (which class must implement `IndexedRecord`) instead of creating a new instance as result:
+- There is an additional "reuse" parameter available when we deserialize a record: the `GenericDatumReader` (which uses a `Decoder`) also accepts a nullable `reuse` argument to update an existing instance object instead of creating a new instance as result:
+
 ```java
 public D read(D reuse, Decoder in) throws IOException {}
 ```
 
-- Finally, encoders and decoders also have a configurable `bufferSize` (passed down by their factory).
+The class behind `D` must implement `IndexedRecord` to be reusable.{.warn}
+
+- Finally, encoders and decoders also have a configurable `bufferSize` if applicable.
 Their defaults are:
   - 2048 bytes for the encoders: to bufferize serialized data before flushing them into the output stream.
   - 8192 bytes for the decoders: to read that much data from the input stream, chunk by chunk.
@@ -116,21 +145,21 @@ Their defaults are:
 
 We are going to test all the "reuse" combinaisons and play with the size of the data to serialize/deserialize at once, and see the impact of the `bufferSize`.
 
-- `binaryEncoder` and `directBinaryEncoder`: with and without encoder reuse, 1/10/1000 records.
-- `binaryDecoder` and `directBinaryDecoder`: with and without decoder reuse, with and without record reuse, 1/10/1000 records.
+- `binaryEncoder` and `directBinaryEncoder`: with and without encoder reuse, with 1/10/1000 records.
+- `binaryDecoder` and `directBinaryDecoder`: with and without decoder reuse, with and without record reuse, with 1/10/1000 records.
 
-We will use a 80-Strings-containing-10-digits-each record in all cases.
+We will use a 80-Strings-containing-10-digits-each record as a fixture to serialize/deserialize.
 
 Note that Strings are slower to handle than Doubles for instance. 80x-Doubles records offer ~20% more throughput than 80x-Strings records.{.info}
 
-## JMH Results
+## Benchmarks Results
 
 ### Encoders
 
 As previously said, we are going to test:
 - `binaryEncoder` and `directBinaryEncoder`: with and without encoder reuse, 1/10/1000 records.
 
-This represents 12 tests, and they look like this:
+This represents 12 tests (2 * 2 * 3), and they look like this (with JMH):
 
 ```scala
 @Benchmark @Fork(2)
@@ -148,7 +177,7 @@ def withReuse1record(s: AvroState, bh: Blackhole) = {
 }
 ```
 
-The other 4 tests just loop on the `write` to write multiple records in the same iteration.
+The 10/1000 records tests just loop on the `write` line to write multiple records in the same iteration.
 
 Here are the results:
 
@@ -169,7 +198,7 @@ withoutReuse1000recordDirect  thrpt   20     52,407 ±   0,383  ops/s
 withReuse1000recordDirect     thrpt   20     51,923 ±   0,280  ops/s
 ```
 
-The bufferized and the direct encoders have the same performance, except for the 1 record processing where the direct encoder is always bad.
+The bufferized and the direct encoders have the same performance, except for the 1 record processing without reuse `withoutReuse1recordDirect` where the direct encoder is losing off with `withoutReuse1record`.
 
 If we look at the buffered encoder, without reuse, and normalize by records/s, we get:
 
@@ -186,30 +215,18 @@ withoutReuse1000record  thrpt   40  82,362 ± 0,238  ops/s
 - 10 records: 5116 ops/s, hence 51160 records/s. 
 - 1000 records: 82 ops/s, hence 82000 records/s, we achieve the best throughput here.
 
-Using `reuse` with the encoders and 1 record seems useless or just totally broken (see withReuse1record).{.warn}
-
-I guess (I didn't measured) it is because of the reflection in `EncoderFactory.binaryEncoder`:
-
-```java
-public BinaryEncoder binaryEncoder(OutputStream out, BinaryEncoder reuse) {
-  if (null == reuse || !reuse.getClass().equals(BufferedBinaryEncoder.class)) {
-    ...
-  }
-}
-```
-
 To conclude:
-- The `directBinaryEncoder` has no buffer, and directly writes its data into the output stream. It's only useful if no buffer is really needed (short live) or if the stream is not compatible.
-- Do not use the `reuse` param for the encoders
+- The `directBinaryEncoder` has no buffer, and directly writes its data into the output stream. It's only useful if no buffer is really needed (short live) or if the output stream is not compatible.
+- Do not use the `reuse` param for the encoders, it brings nothing performance wise. I should have check the memory usage.
 - It seems useless to batch the writes using the same encoder (poor gain) but if you do, increase greatly the `bufferSize`.
 
 ### Decoders
 
 As previously said, we are going to test:
 
-- `binaryDecoder` and `directBinaryDecoder`: with and without decoder reuse, with and without record reuse, 1/10/1000 records.
+- `binaryDecoder` and `directBinaryDecoder`: with and without decoder reuse, with and without record reuse, with 1/10/1000 records.
 
-This represents 24 tests! and they look like this:
+This represents 24 tests (2 * 2 * 2 * 3) ! and they look like this:
 
 ```scala
 @Benchmark
@@ -226,7 +243,7 @@ def withRecordwithoutReuse1(s: AvroState, bh: Blackhole) = {
 ...
 ```
 
-... with all the variations with/without, and with 1/10/1000 records tests using a simple loop.
+... with all the variations with/without, and with 1/10/1000 records tests using a simple loop, as with the Encoders benchmarks.
 
 Here are the results:
 
@@ -247,30 +264,40 @@ withoutRecordwithReuse1000     thrpt   20     188,073 ±    1,671  ops/s
 withoutRecordwithoutReuse1000  thrpt   20     187,071 ±    0,922  ops/s
 ```
 
-We can see that reuse or not, multiple records or not, with a bigger buffer, it's the same performance! Around 190k record/s, no matter how many records in a row (with the same reader and decoder).
-I didn't test the `directBinaryDecoder`, do you really want me to?
+I didn't test the `directBinaryDecoder`, do you really want me to? ;)
 
-To conclude: do how you want when you deserialize the records, it does not matter, except on the memory and GC pressure probably, so reusing encoders and records seems like a good idea.
+We can see that reuse or not, multiple records or not, it's the same performance (even with a bigger buffer)! Around 190k record/s, no matter how many records in a row.
+
+
+To conclude:
+- Do how you want when you deserialize the records, it does not matter, except on the memory and GC pressure probably: reusing encoders and records seems like a good idea.
 
 # Versioning the Avro schemas
 
 When we use Avro, we *must* deal with a Schema Registry (shortcut: _SR_).
 
-It's useful to not associate a message to a full schema each time (not space and network efficient!), but just to an ID. This is necessary for systems where applications talk to each other and are never shutdown at the same time, or when we have a message broker (like Kafka) where the consumers are never stopped and can read messages with the new schemas (and won't need to read the new columns because they don't care for instance).
+Why?
 
-[Confluent had written a nice article about them](https://www.confluent.io/blog/schema-registry-kafka-stream-processing-yes-virginia-you-really-need-one/).
+It's useless to send the schema of the data along with the data each time (as we do with JSON). It's not memory and network efficient. It's smarter to just send an ID along the data that the other parties will use to understand how are encoded the data.
+
+Moreover, this is necessary when applications talk to each other and are never shutdown at the same time (the data are going to evolve one day right?), or when we have a message broker (like Kafka) where the consumers are never stopped and should be able to read messages encoded with a new schema (a new column for instance, a renaming, a deleted column..).
+We just want to update the application that produces the messages, not necessarily all the consumers.
+
+Last but not least, that gives us an idea of what's in the _pipes_ without checking the code, because the schemas are externalized into another storage, which is HTTP accessible, and it provides an audit (what changed, when..).
+
+[Confluent had written a nice article about them and why it's mandatory](https://www.confluent.io/blog/schema-registry-kafka-stream-processing-yes-virginia-you-really-need-one/).
 
 There are two main schema registries out there:
 - [Confluent's](http://docs.confluent.io/3.1.2/schema-registry/docs/index.html): integrated with the Confluent's Platform.
 - [schema-repo](https://github.com/schema-repo/schema-repo) which is the implementation of [AVRO-1124](https://issues.apache.org/jira/browse/AVRO-1124).
 
-Dealing with a SR enforces to code the version of the schema into the message payload, in the first bytes.
+Dealing with a SR enforces to code the version of the schema into the message, generally in the first bytes.
 
-- On serialization: we contact the SR to register (if not already) the Avro schema of the data we're going to write (to get an ID). We write this ID as the first bytes in the payload, then we append the data.
+- On serialization: we contact the SR to register (if not already) the Avro schema of the data we're going to write (to get a unique ID). We write this ID as the first bytes in the payload, then we append the data. A schema has a unique ID (so multiple messages use the same schema ID).
 
-- On deserialization: we read the first bytes of the payload to know what is the version of the Avro schema that was used to write the data. We contact the SR with this ID to grab the Schema (as JSON), then we parse it to a `org.apache.Schema` and we read the data using it. (or a compatible's one if we ensure backward/forward compatibility)
+- On deserialization: we read the first bytes of the payload to know what is the version of the schema that was used to write the data. We contact the SR with this ID to grab the Schema if we don't have it yet, then we parse it to a `org.apache.Schema` and we read the data using the Avro API and this `Schema` (or we can read with another compatible `Schema` if we know it's backward/forward compatible).
 
-To resume, the serialization/deserialization of the data must now deal with another step for each and every message, this will reduce performances.
+To resume, the serialization/deserialization of the data must now deal with another step for each and every message.
 Hopefully, the client API of the SR is always caching the requested schemas, to not call the SR server every time (HTTP API).
 
 ## Subjects
@@ -545,9 +572,9 @@ It's way more maintained than schema-repo as you can see on Github: [confluentin
 
 The platform with its schema registry is downloable here on Confluent's website: [confluent-oss-3.1.2-2.11.zip](http://packages.confluent.io/archive/3.1/confluent-oss-3.1.2-2.11.zip).
 
-Let's go into the wild and try to start the schema registry. We first need to start Zookeeper and Kafka. The schema registry depends on Zookeeper and look for Kafka brokers. If it can't find one, it won't start.
+Let's go into the wild and try to start the schema registry. We first need to start Zookeeper and Kafka. The schema registry depends on Zookeeper and looks for Kafka brokers. If it can't find one, it won't start.
 
-Confluent provides some default config files we can use to start the whole stack:
+The Confluent platform provides some default config files we can use to start the whole stack:
 
 ```xml
 $ cd confluent-3.1.2
@@ -566,13 +593,15 @@ $ ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties
 [2017-02-24 00:01:53,860] INFO Server started, listening for requests...
 ```
 
-I've kept only the interesting parts:
+There are also some official [Docker images](http://docs.confluent.io/3.1.2/cp-docker-images/docs/intro.html) available.{.info}
+
+I've kept only the interesting parts of the config:
 - It stores the schemas modifications into a kafka topic `_schemas`.
 - We can use JMX to check the internals of the registry.
 - In Zookeeper, we'll find the data in `/schema_registry`.
 - We can only insert backward compatible Avro schemas (in the subject) and it's configurable.
 
-We can check in Zookeeper:
+We can check in Zookeeper its state:
 
 ```bash
 $ ./bin/zookeeper-shell localhost
@@ -650,12 +679,12 @@ println("fully compatible? " + AvroCompatibilityChecker.FULL_CHECKER.isCompatibl
 
 By default, the client caches the schemas passing by to avoid querying the HTTP endpoint each time.
 
-And that's it, nothing more is provided. The schema validation is done on the schema registry itself according to its configuration.
+And that's it, nothing more is provided. The schema validation is done on the schema registry itself according to its configuration (none, backward, forward, full).
 There is no custom configuration as with schema-repo, because it's only Avro-based.
 
 ### With a nice UI
 
-There is an unofficial UI to go along: [Landoop/schema-registry-ui](https://github.com/Landoop/schema-registry-ui/).
+There is an unofficial UI to go along with it: [Landoop/schema-registry-ui](https://github.com/Landoop/schema-registry-ui/).
 
 We'll need to enable CORS on the Schema Registry server of allow cross-domain requests if needed:
 
@@ -675,20 +704,89 @@ $ docker run -d -p 8000:8000 -e "SCHEMAREGISTRY_URL=http://vps:8081" landoop/sch
 
 We have a nice UI to create/update schemas, access the configuration and so on. Much more practical than plain REST routes.
 
-# Scala code generation to the rescue
+## Encoding/decoding the messages with the schema ID
 
-Because we don't want to write the Avro schema ourself, we need something to write them for us, that can't do typos: the Scala macros.
+When we serialize/deserialize our data, we need to adjust to payload to write/read the schema id: the consumers must know how to read the data, what is the format.
+
+There is no standard around this, we can encode the data as we want, if we manage both sides (producer/consumer).
+But it's quite classic to encode the same way as Confluent does, because at least, we know what to expect, and it's quite popular.
+
+Details on this page: http://docs.confluent.io/3.1.2/schema-registry/docs/serializer-formatter.html
+
+Basically, the raw protocol is:
+
+| Bytes | Contains | Desc |
+|-|-|-|
+| 0 | Magic Byte | Confluent serialization format version number; currently always 0. |
+| 1-4 | Schema ID | 4-byte schema ID as returned by the Schema Registry |
+| 5-... | Data | Avro serialized data in Avro’s binary encoding. The only exception is raw bytes, which will be written directly without any special Avro encoding. |
+
+If we would write some Scala code corresponding to this encoding, we can take back our example at the beginning of this article and adapt it fairly easily to write the header of each message:
+
+```scala
+val MAGIC_BYTE: Byte = 0x0
+
+def toBytes(/* new */ schemaId: Int, record: GenericRecord): Array[Byte] = {
+  val writer = new GenericDatumWriter[GenericRecord](record.getSchema)
+  val out = new ByteArrayOutputStream()
+  /* new */ out.write(MAGIC_BYTE)
+  /* new */ out.write(ByteBuffer.allocate(4).putInt(schemaId).array())
+  val encoder = EncoderFactory.get().binaryEncoder(out, null)
+  writer.write(record, encoder)
+  encoder.flush()
+  out.toByteArray
+}
+```
+
+We should pass a subject and register the schema here instead of directly passing a schemaId, to save the new schemas transparently.{.info}
+
+It's along the line of the [Confluent's Avro Serializer](https://github.com/confluentinc/schema-registry/blob/master/avro-serializer/src/main/java/io/confluent/kafka/serializers/AbstractKafkaAvroSerializer.java) that we can use in our Kafka Producer config, which will take care of doing this transparently:
+
+```scala
+props.put("schema.registry.url", url)
+props.put("key.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer")
+props.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer")
+```
+
+Then, to read this payload, we need a little more work, because here, we must check the schema registry to get the schema back:
+
+```scala
+def toRecord(buffer: Array[Byte], registry: SchemaRegistryClient): GenericRecord = {
+  val bb = ByteBuffer.wrap(buffer)
+  bb.get() // consume MAGIC_BYTE
+  val schemaId = bb.getInt // consume schemaId
+  val schema = registry.getByID(schemaId) // consult the Schema Registry
+  val reader = new GenericDatumReader[GenericRecord](schema)
+  val decoder = DecoderFactory.get().binaryDecoder(buffer, bb.position(), bb.remaining(), null)
+  reader.read(null, decoder)
+}
+```
+
+The Confluent's deserializer [KafkaAvroDeserializer](https://github.com/confluentinc/schema-registry/blob/master/avro-serializer/src/main/java/io/confluent/kafka/serializers/AbstractKafkaAvroDeserializer.java) contains a bit more checks and logic such as the ability to provide another reader schema (ie: different of the one found in the payload, but still compatible), dealing with registry subject names (for Kafka messages key and value), and it can use Avro `SpecificData` (ie: not only `GenericData`).
+
+In the Confluent's way, we would configure our Kafka Consumer properties with:
+```scala
+props.put("schema.registry.url", url);
+props.put("key.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer")
+props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer")
+```
+
+# Generate schemas or case classes automatically
+
+Finally, because we don't want to write the Avro schema ourself, OR, we don't want to write the corresponding case classes ourself (to avoid typos and maintenance), we can use schema or case class generators.
 
 Here are 2 nice projects along this way:
 
-- [avro4s](https://github.com/sksamuel/avro4s)
-- [avrohugger](https://github.com/julianpeeters/avrohugger)
+- [avro4s](https://github.com/sksamuel/avro4s): both ways: Avro schema &#x21d4; case class + serialization/deserialization.
+- [avrohugger](https://github.com/julianpeeters/avrohugger): Avro schema to case class only.
 
-Generally, in our application, we have some `case class` and we want the Avro conversion to be transparent, this is the purpose of such projects.
-
-They don't provide the full power of Avro (aliases, defaults, enums, maps..) but still, they can come in handy for most cases.
+Both ways are valid. Generating the case classes from the schemas is more powerful and customizable because we can write the schemas with the full power of the Avro spec and generate the case classes from them whereas the inverse is more complex to handle in the code.
 
 ## avro4s
+
+```scala
+libraryDependencies += "com.sksamuel.avro4s" %% "avro4s-core" % "1.6.4"
+```
 
 avro4s can:
 - generate the Avro schema from any case class.
@@ -697,55 +795,29 @@ avro4s can:
 It also comes with an sbt plugin [sbt-avro4s](https://github.com/sksamuel/sbt-avro4s) that can generate case classes from existing Avro schemas.
 There are some limitations, like with nested generics, cycle references, but it works flawlessly for most cases.
 
-Here are some quick examples (the README of the project already covers everything):
+### Generate a schema from a case class
 
-```scala
-libraryDependencies += "com.sksamuel.avro4s" %% "avro4s-core" % "1.6.4"
-```
+Scala macros to the rescue:
 
 ```scala
 import com.sksamuel.avro4s.AvroSchema
 case class User(firstName: String, lastName: String, age: Int)
-val schema: Schema = AvroSchema[User] // replaced with Macros
+val schema: Schema = AvroSchema[User]
 println(schema)
-// {"type":"record","name":"User","namespace":"com.ctheu",
-//  "fields":[{"name":"firstName","type":"string"},...] }
 ```
 
-Serialization and deserialization in a nutshell:
-```scala
-// NO schema written. Uses Avro binaryEncoder.
-// Useful when combined to a Schema Registry that provides an ID instead.
-val bin = AvroOutputStream.binary[User](System.out)
- // Schema written. Uses Avro jsonEncoder.
-val json = AvroOutputStream.json[User](System.out)
-// Schema written. Store the schema first, then the records.
-val data = AvroOutputStream.data[User](System.out) 
+Output:
 
-val u = Seq(User("john", "doe", 66), User("mac", "king", 24))
-json.write(u)
-bin.write(u)
-data.write(u)
-
-val bytes: Array[Byte] = ???
-AvroInputStream.binary[User](bytes).iterator.foreach(println)
-AvroInputStream.json[User](bytes).iterator.foreach(println)
-AvroInputStream.data[User](bytes).iterator.foreach(println)
+```json
+{"type":"record","name":"User","namespace":"com.ctheu",
+ "fields":[{"name":"firstName","type":"string"},...] }
 ```
 
-It's also possible to work with `GenericRecord` directly:
+avro4s handles most Scala -> Avro types conversion: all the basic types and specials such as: trait to enum or union, map, option or either to union.
 
-```scala
-val u = User("john", "doe", 66)
+[All the type mappings here](https://github.com/sksamuel/avro4s#type-mappings).
 
-val genericRecord = RecordFormat[User].to(u)
-val u2 = RecordFormat[User].from(genericRecord)
-assert(u == u2)
-```
-
-There are a few more features available, take a peek at the [README](https://github.com/sksamuel/avro4s) (type precision, custom mapping).
-
-### Generate the case class from the schema
+### Generate a case class from a schema
 
 As we said, it's also possible to do the reverse transformation using [sbt-avro4s](https://github.com/sksamuel/sbt-avro4s), ie: generate the case class from a schema.
 
@@ -785,6 +857,43 @@ We can use it:
 val u = Usr("john", "doe", 66)
 ```
 
+There is even an online generator doing exactly this: http://avro4s-ui.landoop.com/.
+
+### Serialization and deserialization in a nutshell
+
+```scala
+// NO schema written. Uses Avro binaryEncoder.
+// Useful when combined to a Schema Registry that provides an ID instead.
+val bin = AvroOutputStream.binary[User](System.out)
+ // Schema written. Uses Avro jsonEncoder.
+val json = AvroOutputStream.json[User](System.out)
+// Schema written. Store the schema first, then the records.
+val data = AvroOutputStream.data[User](System.out) 
+
+val u = Seq(User("john", "doe", 66), User("mac", "king", 24))
+json.write(u)
+bin.write(u)
+data.write(u)
+
+val bytes: Array[Byte] = ???
+AvroInputStream.binary[User](bytes).iterator.foreach(println)
+AvroInputStream.json[User](bytes).iterator.foreach(println)
+AvroInputStream.data[User](bytes).iterator.foreach(println)
+```
+
+It's also possible to work with `GenericRecord` directly:
+
+```scala
+val u = User("john", "doe", 66)
+
+val genericRecord = RecordFormat[User].to(u)
+val u2 = RecordFormat[User].from(genericRecord)
+assert(u == u2)
+```
+
+There are a few more features available, take a peek at the [README](https://github.com/sksamuel/avro4s) (type precision, custom mapping).
+
+
 ## avrohugger
 
 Avrohugger does not rely on macros but on [treehugger](http://eed3si9n.com/treehugger/), which generates scala source code directly (whereas macros evaluation is just another phase in the compiler processing).
@@ -812,7 +921,7 @@ println(new Generator(format.Scavro).schemaToStrings(schema))
 new Generator(format.Standard).schemaToFile(schema /*, outDir = "target/generated-sources"*/)
 ```
 
-It handles properly Scala enums (avro4s too) and has some options to map the generated case classes:
+It handles properly Scala enums and has some options to map the generated case classes:
 
 ```scala
 val schema = new Schema.Parser().parse(
@@ -837,15 +946,16 @@ println(new Generator(format.Standard,
   avroScalaCustomEnumStyle = Map(),
   restrictedFieldNumber = false
 ).schemaToStrings(schema))
+```
 
-/* Output:
+Cleaned output:
+```scala
 object Suit extends Enumeration {
   type Suit = Value
   val SPADES, HEARTS, DIAMONDS, CLUBS = Value
 }
 
-case class Usr(firstName: String, lastName: String, age: Double, suit: Suit.Value))
-*/
+case class Usr(firstName: String, lastName: String, age: Double, suit: Suit.Value)
 ```
 
 - [sbt-avro-hugger](https://github.com/julianpeeters/sbt-avrohugger) `addSbtPlugin("com.julianpeeters" % "sbt-avrohugger" % "0.15.0")`: a plugin just to automatize these generations using sbt tasks.
@@ -863,37 +973,14 @@ case class User()
 // => case class User(firstName: String, age: Int)
 ```
 
-# TODO: schema registry and binary message? how to encode ??? 
-
-http://docs.confluent.io/3.1.2/schema-registry/docs/serializer-formatter.html
-
-schema registry:
-producer:
-props and "schema.registry.url"
-props.put("key.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
-props.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
-
-consumer:
-props.put("schema.registry.url", url);
-props.put("specific.avro.reader", true);
-KafkaAvroDecoder avroDecoder = new KafkaAvroDecoder(vProps);
-GenericRecord genericEvent = (GenericRecord) messageAndMetadata.message();
-LogLine event = (LogLine) SpecificData.get().deepCopy(LogLine.SCHEMA$, genericEvent);
-
-Raw "protocol":
-
-| | | |
-|-|-|-|
-| 0 | Magic Byte | Confluent serialization format version number; currently always 0. |
-| 1-4 | Schema ID | 4-byte schema ID as returned by the Schema Registry |
-| 5-... | Data | Avro serialized data in Avro’s binary encoding. The only exception is raw bytes, which will be written directly without any special Avro encoding. |
-
-
-# Having fun: Custom Encoder and OutputStream.
-
-Observable? Akka Streams?
-
-
 # Conclusion
 
-Buffers, caches, and a proper usage of the OutputStream is probably our best bet to get the better performance.
+It's time to forget about JSON (we already forgot about XML). It's nice for humans because it's verbose and readable, but it's not efficient to work with. We repeat the schema of the data in all messages, we can make typos and send crap over the wires..
+
+Avro fixes those issues:
+- Space and network efficience thanks to a reduced payload.
+- Schema evolution intelligence and compatibility enforcing.
+- Schema registry visibility, centralization, and reutilisation.
+- Kafka and Hadoop compliant.
+
+Note that it exists a lot of other communication protocol such as: MessagePack, Thrift, Protobuf, FlatBuffers, SBE, Cap'n Proto. Most of them supports schemas, some are much more efficient (zero-copy protocols), other are more human friendly, all depends on the needs.
