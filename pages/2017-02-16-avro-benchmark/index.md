@@ -8,7 +8,7 @@ tags: scala, avro, benchmark, schema registry, confluent
 ---
 
 This article started with only the benchmark part, because I was curious of the impact of some parameters of the API, and if I could make things go faster.
-One thing led to another, I was suddenly writing a lot of pieces around Avro, presenting different framework and way of doing things!
+One thing led to another, I was suddenly writing a lot of pieces around Avro, talking about different frameworks and several ways of doing things!
 
 This article does not explains what is Avro (ie: a data serialization system) and what are the use-cases. The best source for this is the official website: [Apache Avro](https://avro.apache.org/docs/current/).
 
