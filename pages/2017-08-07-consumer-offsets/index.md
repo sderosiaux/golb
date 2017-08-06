@@ -60,7 +60,7 @@ List all consumer groups, describe a consumer group, or delete consumer group in
 --zookeeper <urls> # Only without --new-consumer
 ```
 
-```
+```shell
 $ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 \
   --group mygroup \
   --new-consumer \
@@ -83,7 +83,7 @@ If you did migrated from a previous Kafka version, according to the brokers conf
 
 When we have several partitions, it's sometimes useful to just care about the sum of each partition's lag (0 meaning the group has catched up the latest messages):
 
-```
+```shell
 $ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 \
 --new-consumer \
 --group mygroup \
@@ -95,7 +95,7 @@ You know the whole group has _only_ 98 events still not consumed. If this is a t
 ### Trick: listing all the active groups
 
 This command is very useful to discover all the active groups on the cluster:
-```
+```shell
 $ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 --new-consumer --list
 money-streamers
 monitoring
@@ -110,11 +110,11 @@ Because it's a topic, it's possible to just consume it as any other topic.
 
 First of all, because it's an _internal_ Kafka topic, by default, the consumers can't see it, therefore they can't consume it.
 We must ask them to not exclude it (default is true). We must add to the consumer's props:
-```
+```shell
 $ echo "exclude.internal.topics=false" > /tmp/consumer.config`
 ```
 Then use it to consume the topic:
-```
+```shell
 $ kafka-console-consumer --consumer.config /tmp/consumer.config \
   --zookeeper localhost:2181 \
   --topic __consumer_offsets
@@ -130,7 +130,7 @@ WHAT KIND OF SORCERY IS THIS?
 
 Because it's saved as binary data, we need some kind of formatter to help us out:
 
-```
+```shell
 $ kafka-console-consumer --consumer.config /tmp/consumer.config \
   --formatter "kafka.coordinator.GroupMetadataManager\$OffsetsMessageFormatter" \
   --zookeeper localhost:2181 \
