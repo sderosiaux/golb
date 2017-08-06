@@ -4,7 +4,7 @@ date: "2017-08-07T02:08Z"
 layout: post
 path: "/2017/08/07/looking-at-kafka-s-consumers-offsets/"
 language: "en"
-tags: scala, kafka, consumers, offsets, lag
+tags: scala, kafka, stream, consumers, offsets, lag
 ---
 
 Kafka has quite evolved since some times. Its consuming model is very powerful, can greatly scale, is quite simple to understand.
@@ -56,9 +56,11 @@ List all consumer groups, describe a consumer group, or delete consumer group in
 --group <consumer group>
 --list
 --new-consumer
---topic <topic>
+--topic <topic>    # Only used with --delete
 --zookeeper <urls> # Only without --new-consumer
 ```
+
+A classic usage, to know how your consumer application behaves (it is fast?):
 
 ```shell
 $ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 \
@@ -74,6 +76,15 @@ mygroup   mytopic   4          unknown         6503476         unknown  consumer
 ```
 Note: some offsets are `unknown` (therefore the lag also) because the consumers did not consume all the partitions yet.
 
+If this group is consuming several topics, all will be seen in the list.
+
+I'm particularly fan of combining this with `watch`, to see the evolution without touching anything:
+
+```shell
+$ watch -n1 -t "kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 \
+  --new-consumer --group extranet --describe 2>/dev/null"
+```
+
 ### Legacy: migrating from Zookeeper
 
 Notice the `--new-consumer` and the Kafka's broker address, it does not need a Zookeeper address as before.
@@ -85,9 +96,9 @@ When we have several partitions, it's sometimes useful to just care about the su
 
 ```shell
 $ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 \
---new-consumer \
---group mygroup \
---describe 2>/dev/null | awk 'NR>1 { print $6 }' | paste -sd+ - | bc
+  --new-consumer \
+  --group mygroup \
+  --describe 2>/dev/null | awk 'NR>1 { print $6 }' | paste -sd+ - | bc
 98
 ```
 You know the whole group has _only_ 98 events still not consumed. If this is a topic with tons of real-time events, that's not bad!
@@ -96,7 +107,8 @@ You know the whole group has _only_ 98 events still not consumed. If this is a t
 
 This command is very useful to discover all the active groups on the cluster:
 ```shell
-$ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 --new-consumer --list
+$ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 \
+  --new-consumer --list
 money-streamers
 monitoring
 weather
@@ -111,7 +123,7 @@ Because it's a topic, it's possible to just consume it as any other topic.
 First of all, because it's an _internal_ Kafka topic, by default, the consumers can't see it, therefore they can't consume it.
 We must ask them to not exclude it (default is true). We must add to the consumer's props:
 ```shell
-$ echo "exclude.internal.topics=false" > /tmp/consumer.config`
+$ echo "exclude.internal.topics=false" > /tmp/consumer.config
 ```
 Then use it to consume the topic:
 ```shell
@@ -138,7 +150,7 @@ $ kafka-console-consumer --consumer.config /tmp/consumer.config \
 ```
 
 Here it is:
-```
+```shell
 [mygroup1,mytopic1,11]::[OffsetMetadata[55166421,NO_METADATA],CommitTime 1502060076305,ExpirationTime 1502146476305]
 [mygroup1,mytopic1,13]::[OffsetMetadata[55037927,NO_METADATA],CommitTime 1502060076305,ExpirationTime 1502146476305]
 [mygroup2,mytopic2,0]::[OffsetMetadata[126,NO_METADATA],CommitTime 1502060076343,ExpirationTime 1502146476343]
