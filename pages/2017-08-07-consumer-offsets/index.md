@@ -85,6 +85,18 @@ $ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:
 ```
 You know the whole group has _only_ 98 events still not consumed. If this is a topic with tons of real-time events, that's not bad!
 
+### Trick: listing all the active groups
+
+This command is very useful to discover all the active groups on the cluster:
+```
+$ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 --new-consumer --list
+money-streamers
+monitoring
+weather
+```
+
+Note that during a partition rebalancing, the affected group temporary disappears, because is not active anymore.
+
 ## Consuming __consumer_offsets
 
 Because it's a topic, it's possible to just consume it as any other topic.
