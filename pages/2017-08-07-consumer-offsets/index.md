@@ -1,10 +1,10 @@
 ---
-title: "Consuming Kafka's __consumer_offsets topic"
+title: "Looking at Kafka's consumers' offsets"
 date: "2017-08-07T02:08Z"
 layout: post
-path: "/2017/08/07/consuming-kafka-consumer-offsets-topic/"
+path: "/2017/08/07/looking-at-kafka-s-consumers-offsets/"
 language: "en"
-tags: scala, avro, benchmark, schema registry, confluent
+tags: scala, kafka, consumers, offsets, lag
 ---
 
 Never wondered what what inside the famous `__consumer_offsets` topic, that came in Kafka 0.9?
@@ -33,23 +33,41 @@ But consumers and offsets are actually formed of several components:
 
 # How to read it?
 
-## ConsumerGroupCommand
+## Admin command: ConsumerGroupCommand
 
-It's probably the simplest human-friendly way to do so. You don't even have to know it's coming from this topic. (it's an implementation detail after all).
+It's probably the simplest human-friendly way to do so. You don't even have to know it's coming from this topic. (this topic is an implementation detail after all). 
+
+Kafka has severals commands (available through the generic `kafka-run-class` script), here we care about `ConsumerGroupCommand`:
+
+```
+$ kafka-run-class kafka.admin.ConsumerGroupCommand
+List all consumer groups, describe a consumer group, or delete consumer group info.
+--bootstrap-server # Only with --new-consumer
+--command-config <command config property file>
+--delete
+--describe
+--group <consumer group>
+--list
+--new-consumer
+--topic <topic>
+--zookeeper <urls> # Only without --new-consumer
+```
 
 ```
 $ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 --group mygroup --new-consumer --describe
 
-GROUP              ** **           TOPIC                          PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             OWNER
-hadoopslave05.stg.ps:9092 (id: 2147483536) for group mygroup.
+GROUP             TOPIC               PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             OWNER
 mygroup           mytopic             0          unknown         6971670         unknown         consumer-1_/137.74.23.1
 mygroup           mytopic             1          6504514         6504514         0               consumer-1_/137.74.23.1
 mygroup           mytopic             2          unknown         6507388         unknown         consumer-1_/137.74.23.1
 mygroup           mytopic             3          6175879         6969711         793832          consumer-1_/172.16.10.5
 mygroup           mytopic             4          unknown         6503476         unknown         consumer-1_/172.16.10.5
 ```
+Note: some offsets are `unknown` (therefore the lag also) because the consumers did not consume all the partitions yet.
 
 Notice the `--new-consumer` and the kafka address, it does not need a Zookeeper address as before.
+
+If you did migrated from a previous Kafka version, according to the brokers configuration, Kafka can dual-writes the offsets into Zookeeper and `__consumer_offsets` (see `dual.commit.enabled=true` and `offsets.storage=kafka`).
 
 ## Trick: sum up the lag
 
@@ -70,7 +88,9 @@ $ echo "exclude.internal.topics=false" > /tmp/consumer.config`
 ```
 Then use it to consume the topic:
 ```
-$ kafka-console-consumer --consumer.config /tmp/consumer.config --zookeeper localhost:2181 --topic __consumer_offsets
+$ kafka-console-consumer --consumer.config /tmp/consumer.config \
+  --zookeeper localhost:2181 \
+  --topic __consumer_offsets
 ```
 
 Output:
@@ -84,8 +104,11 @@ WHAT KIND OF SORCERY IS THIS?
 Because it's saved as binary data, we need some kind of formatter to help us out:
 
 ```
-$ kafka-console-consumer --consumer.config /tmp/consumer.config --formatter "kafka.coordinator.GroupMetadataManager\$OffsetsMessageFormatter" --zookeeper localhost:2181 --topic __consumer_offsets
-``
+$ kafka-console-consumer --consumer.config /tmp/consumer.config \
+  --formatter "kafka.coordinator.GroupMetadataManager\$OffsetsMessageFormatter" \
+  --zookeeper localhost:2181 \
+  --topic __consumer_offsets
+```
 
 Here it is:
 ```
