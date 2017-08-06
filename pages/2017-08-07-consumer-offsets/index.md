@@ -39,7 +39,7 @@ It's probably the simplest human-friendly way to do so. You don't even have to k
 
 Kafka has severals commands (available through the generic `kafka-run-class` script), here we care about `ConsumerGroupCommand`:
 
-```
+```shell
 $ kafka-run-class kafka.admin.ConsumerGroupCommand
 List all consumer groups, describe a consumer group, or delete consumer group info.
 --bootstrap-server # Only with --new-consumer
@@ -54,28 +54,36 @@ List all consumer groups, describe a consumer group, or delete consumer group in
 ```
 
 ```
-$ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 --group mygroup --new-consumer --describe
-
-GROUP             TOPIC               PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             OWNER
-mygroup           mytopic             0          unknown         6971670         unknown         consumer-1_/137.74.23.1
-mygroup           mytopic             1          6504514         6504514         0               consumer-1_/137.74.23.1
-mygroup           mytopic             2          unknown         6507388         unknown         consumer-1_/137.74.23.1
-mygroup           mytopic             3          6175879         6969711         793832          consumer-1_/172.16.10.5
-mygroup           mytopic             4          unknown         6503476         unknown         consumer-1_/172.16.10.5
+$ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 \
+  --group mygroup \
+  --new-consumer \
+  --describe
+GROUP     TOPIC     PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG      OWNER
+mygroup   mytopic   0          unknown         6971670         unknown  consumer-1_/137.74.23.1
+mygroup   mytopic   1          6504514         6504514         0        consumer-1_/137.74.23.1
+mygroup   mytopic   2          unknown         6507388         unknown  consumer-1_/137.74.23.1
+mygroup   mytopic   3          6175879         6969711         793832   consumer-1_/172.16.10.5
+mygroup   mytopic   4          unknown         6503476         unknown  consumer-1_/172.16.10.5
 ```
 Note: some offsets are `unknown` (therefore the lag also) because the consumers did not consume all the partitions yet.
 
-Notice the `--new-consumer` and the kafka address, it does not need a Zookeeper address as before.
+### Legacy: migrating from Zookeeper
 
-If you did migrated from a previous Kafka version, according to the brokers configuration, Kafka can dual-writes the offsets into Zookeeper and `__consumer_offsets` (see `dual.commit.enabled=true` and `offsets.storage=kafka`).
+Notice the `--new-consumer` and the Kafka's broker address, it does not need a Zookeeper address as before.
+If you did migrated from a previous Kafka version, according to the brokers configuration, Kafka can dual-writes the offsets into Zookeeper and Kafka's `__consumer_offsets` (see `dual.commit.enabled=true` and `offsets.storage=kafka`).
 
-## Trick: sum up the lag
+### Trick: summing-up the lag
 
 When we have several partitions, it's sometimes useful to just care about the sum of each partition's lag (0 meaning the group has catched up the latest messages):
 
 ```
-$ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 --new-consumer --group mygroup --describe 2>/dev/null  | awk 'NR>1 { print $6 }' | paste -sd+ - | bc
+$ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 \
+--new-consumer \
+--group mygroup \
+--describe 2>/dev/null | awk 'NR>1 { print $6 }' | paste -sd+ - | bc
+98
 ```
+You know the whole group has _only_ 98 events still not consumed. If this is a topic with tons of real-time events, that's not bad!
 
 ## Consuming __consumer_offsets
 
@@ -117,7 +125,9 @@ Here it is:
 [mygroup2,mytopic2,0]::[OffsetMetadata[126,NO_METADATA],CommitTime 1502060076343,ExpirationTime 1502146476343]
 ```
 
-We can't really make some use of it, except playing with some regexes. Would it be better to get some nice JSON instead? (yes!)
+We can't really make any use of it, except playing with some regexes. Would it be better to get some nice JSON instead? (yes!)
+
+Note that each message in this topic has a key and a value. It's very important, as we'll see next in the following Compaction section.
 
 ## Kafka Streams: convert it to JSON
 
@@ -152,12 +162,22 @@ Who and when actually?
 
 # Compaction
 
-`__consumer_offsets` is a compacted topic.
+`__consumer_offsets` is a compacted topic. It's VERY useful, otherwise it could be very huge for no reason.
 
-It's VERY useful, otherwise it could be very huge for no reason.
+As we said, all the messages inside this topic have a key and a value.
+
+- The key is always the same for the combinaison `(group, topic, partition number)`.
+
+The purpose of the `__consumer_offsets` topic is to keep the latest state of each of these, which is why the key is the combinaison of them. Through the compaction, only the latest value will be saved into Kafka's data, the past offsets for a given combinaison are useless.
+
+- The value is basically the offset.
+
+
 
 # Usage of the JSON version
 
 It's another mean to monitor the evolution of the consumed offsets, and can easily be processed by any third-party program or database (such as timeseries database), because it's plain JSON.
 
 
+Draw a dRuid dashboard:
+----
