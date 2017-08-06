@@ -7,9 +7,13 @@ language: "en"
 tags: scala, kafka, consumers, offsets, lag
 ---
 
-Never wondered what what inside the famous `__consumer_offsets` topic, that came in Kafka 0.9?
-
+Kafka has quite evolved since some times. Its consuming model is very powerful, can greatly scale, is quite simple to understand.
+It has never changed from a external point of view, but internally, it did since Kafka 0.9, and the appearance of the `__consumer_offsets`.
 Before that, consumers offsets were stored in Zookeeper. Now, Kafka is eating its own dog food. Why is that?
+
+It's definitely an implementation detail we should not care about nor rely on, because it can change anytime soon in the newer versions, but it's also very interesting to know it's there, what does it contains, to understand the Kafka consuming model and its constraints.
+
+We'll start by looking at higher-level commands to check the offsets, then we'll go deeper with the `__consumer_offsets` topic, to finish by a Kafka Streams processor to convert it to a JSON-readable topic to finally be consumed by a timeseries database, for monitoring and alerting purpose.
 
 ---
 Summary {.summary}
@@ -19,19 +23,22 @@ Summary {.summary}
 ---
 
 
-# Why is it useful?
+# Eating its own dog food
 
-`__consumer_offsets` stores the offsets of the ... consumers (sic!).
-But consumers and offsets are actually formed of several components:
+The topic `__consumer_offsets` stores the offsets of the topics consumed by consumer applications (and even of itself, if someone consumes it!).
+
+Let's resume the vocabulary around the Kafka's consuming model, to understand what it should store:
 
 - A consumer consumes a `topic`.
 - A consumer belongs to a `groupId`. (Note that the same `groupId` can be used to consume different topics)
 - A consumer consumes topic's `partitions`. (and can consume only some of them)
-- Each consumed partitions has its own `offset` for the whole tuple `(topic, groupId)`.
+- Each consumed partitions has its own `offset` for each couple `(topic, groupId)`.
 
-`__consumer_offsets` is therefore the storage of the combinaison of all these things.
+`__consumer_offsets` is the storage of all these things through time.
 
-# How to read it?
+If we consume it, we can be aware of all the changes and progression of each consumers.
+
+# How to read the current offsets?
 
 ## Admin command: ConsumerGroupCommand
 
@@ -174,16 +181,9 @@ Who and when actually?
 
 # Compaction
 
-`__consumer_offsets` is a compacted topic. It's VERY useful, otherwise it could be very huge for no reason.
+`__consumer_offsets` is a compacted topic. It's useful to not consume too many disk space for no reason, because we don't care of the past state. The compaction is only possible because this topic has a fixed key for the same event: the combinaison `(group, topic, partition number)`.
 
-As we said, all the messages inside this topic have a key and a value.
-
-- The key is always the same for the combinaison `(group, topic, partition number)`.
-
-The purpose of the `__consumer_offsets` topic is to keep the latest state of each of these, which is why the key is the combinaison of them. Through the compaction, only the latest value will be saved into Kafka's data, the past offsets for a given combinaison are useless.
-
-- The value is basically the offset.
-
+The purpose of the `__consumer_offsets` topic is to keep the latest consumed offset per group/topic/partition, which is why the key is the combinaison of them. Through the compaction, only the latest value will be saved into Kafka's data, the past offsets are useless.
 
 
 # Usage of the JSON version
