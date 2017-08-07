@@ -187,21 +187,12 @@ It's a message saying that the group `console-consumer-26549` which consumes the
 
 The four other fields leads to some questions, what does they mean?
 
-- `"version":1`: the version `0` contained only a `timestamp`, and is deprecated.
-- `"metadata":""`: a `String` provided by the offset committer to store additional info.
-- `"commitTimestamp":1501542796444`: the time in millis before the offsets where effectively commited across replicas (ie: the time of the commit request).
-- `"expireTimestamp":1501629196444`: `commitTimestamp` + `offsets.retention.minutes` (default: 1 day)
+- `"version":1`: the version 0 contained only a timestamp, and is deprecated.
+- `"metadata":""`: a String provided by the offset committer to store additional info.
+- `"commitTimestamp":1501542796444`: the time in millis of the commit request (before the offsets where effectively commited across replicas).
+- `"expireTimestamp":1501629196444`: (`commitTimestamp` + `offsets.retention.minutes`) (default: 1 day)
 
-If a consumer group is inactive during this period, and start after the expiration, the coordinator won't find any offsets and Kafka will rely on the consumer `auto.offset.reset` property, to know if it needs to start from `earliest` or `latest`. This is very important to know, to avoid some surprises. 
-
-# Who sends the messages?
-
-Who and when actually?
-
-The Offset Manager is a dedicated broker that deals with this.
-Commit is done after all the replicas got the offsets to publish.
-
-+ in memory table in the offset manager
+> If a consumer group is inactive during this period, and start after the expiration, the coordinator won't find any offsets and Kafka will rely on the consumer `auto.offset.reset` property, to know if it needs to start from `earliest` or `latest`. This is very important to know, to avoid some surprises. 
 
 # What is a Group Coordinator / Offset Manager?
 
