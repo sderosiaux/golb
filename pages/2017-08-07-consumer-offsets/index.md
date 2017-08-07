@@ -9,11 +9,11 @@ tags: scala, kafka, stream, consumers, offsets, lag
 
 Kafka has quite evolved since some times. Its consuming model is very powerful, can greatly scale, is quite simple to understand.
 It has never changed from a external point of view, but internally, it did since Kafka 0.9, and the appearance of the `__consumer_offsets`.
-Before that, consumers offsets were stored in Zookeeper. Now, Kafka is eating its own dog food. Why is that?
+Before that, consumers offsets were stored in Zookeeper. Now, Kafka is eating its own dog food, to scale better.
 
 It's definitely an implementation detail we should not care about nor rely on, because it can change anytime soon in the newer versions, but it's also very interesting to know it's there, what does it contains, to understand the Kafka consuming model and its constraints.
 
-We'll start by looking at higher-level commands to check the offsets, then we'll go deeper with the `__consumer_offsets` topic, to finish by a Kafka Streams processor to convert it to a JSON-readable topic to finally be consumed by a timeseries database, for monitoring and alerting purpose.
+We'll start by looking at higher-level commands to check the offsets, then we'll go deeper with the `__consumer_offsets` topic and the Offset Manager logic. We'll finish by a Kafka Streams processor to convert this topic to a JSON-readable topic to finally be consumed by a timeseries database, for monitoring and alerting purpose.
 
 ---
 Summary {.summary}
@@ -25,11 +25,11 @@ Summary {.summary}
 
 # Eating its own dog food
 
-The topic `__consumer_offsets` stores the offsets of the topics consumed by consumer applications (and even of itself, if someone consumes it!).
+The topic `__consumer_offsets` stores the offsets of the topics partitions consumed by consumer applications (and even of itself, if someone consumes it!).
 
-Let's resume the vocabulary around the Kafka's consuming model, to understand what it should store:
+Let's resume the vocabulary around the Kafka's consuming model, to understand what it stores:
 
-- A consumer consumes a `topic`.
+- A (high-level) consumer consumes a `topic`.
 - A consumer belongs to a `groupId`. (Note that the same `groupId` can be used to consume different topics)
 - A consumer consumes topic's `partitions`. (and can consume only some of them)
 - Each consumed partitions has its own `offset` for each couple `(topic, groupId)`.
@@ -187,9 +187,51 @@ It's a recording that the group `console-consumer-26549` which consumes the topi
 
 Who and when actually?
 
+The Offset Manager is a dedicated broker that deals with this.
+Commit is done after all the replicas got the offsets to publish.
 
++ in memory table in the offset manager
+
+# What is an Offset Manager?
+
+It's a broker which is the leader for a group, that commits its consumers offsets.
+
+We can know which it is when using `ConsumerGroupCommand`:
+```
+GROUP                          TOPIC                          PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             OWNER
+17/08/07 23:54:32 INFO internals.AbstractCoordinator: Discovered coordinator broker01:9092 (id: 2147483519) for group mygroupid.
 ...
+```
 
+It's also simple to find it programmatically:
+
+Using Zookeeper to find the brokers, thanks to some Kafka client utils:
+```scala
+val channel = ClientUtils.channelToOffsetManager("mygroupid", ZkUtils("zk:2181", 30000, 30000, false))
+channel.disconnect()
+```
+Through the logs, we can see what's going on and who is the Offset Manager:
+```
+5825 [main] DEBUG kafka.network.BlockingChannel  - Created socket with SO_TIMEOUT = 3000 (requested 3000), SO_RCVBUF = 65536 (requested -1), SO_SNDBUF = 65536 (requested -1), connectTimeoutMs = 3000.
+5826 [main] DEBUG kafka.client.ClientUtils$  - Created channel to broker broker03:9092.
+5826 [main] DEBUG kafka.client.ClientUtils$  - Querying broker03:9092 to locate offset manager for mygroupid.
+5882 [main] DEBUG kafka.client.ClientUtils$  - Consumer metadata response: GroupCoordinatorResponse(Some(BrokerEndPoint(128,broker01,9092)),NONE,0)
+5882 [main] DEBUG kafka.client.ClientUtils$  - Connecting to offset manager broker01:9092.
+```
+
+Or at a more low level, by querying ourself a broker:
+
+```scala
+var channel = new BlockingChannel("broker03", 9092, UseDefaultBufferSize, UseDefaultBufferSize, readTimeoutMs = 5000)
+channel.connect()
+channel.send(GroupCoordinatorRequest("mygroupid"))
+val metadataResponse = GroupCoordinatorResponse.readFrom(channel.receive.payload())
+println(metadataResponse)
+channel2.disconnect()
+```
+```shell
+GroupCoordinatorResponse(Some(BrokerEndPoint(128,broker01,9092)),NONE,0)
+```
 
 # Compaction
 
