@@ -9,11 +9,11 @@ tags: scala, kafka, stream, consumers, offsets, lag
 
 Kafka has quite evolved since some times. Its consuming model is very powerful, can greatly scale, is quite simple to understand.
 It has never changed from a external point of view, but internally, it did since Kafka 0.9, and the appearance of the `__consumer_offsets`.
-Before that, consumers offsets were stored in Zookeeper. Now, Kafka is eating its own dog food, to scale better.
+Before that, consumers offsets were stored in Zookeeper. Now, Kafka is eating its own dog food, to *scale better*.
 
-It's definitely an implementation detail we should not care about nor rely on, because it can change anytime soon in the newer versions, but it's also very interesting to know it's there, what does it contains, to understand the Kafka consuming model and its constraints.
+It's definitely an implementation detail we should not care about nor rely on, because it can change anytime soon in the newer versions, but it's also very interesting to know it's there, what does it contains, how it is used, to understand the Kafka consuming model and its constraints.
 
-We'll start by looking at higher-level commands to check the offsets, then we'll go deeper with the `__consumer_offsets` topic and the Offset Manager logic. We'll finish by a Kafka Streams processor to convert this topic to a JSON-readable topic to finally be consumed by a timeseries database, for monitoring and alerting purpose.
+We'll start by looking at higher-level commands to check the offsets, then we'll go deeper with the `__consumer_offsets` topic and the Offset Manager/Group Coordinator logic. We'll finish by a Kafka Streams processor to convert this topic to a JSON-readable topic to finally be consumed by a timeseries database, for monitoring and alerting purpose.
 
 ---
 Summary {.summary}
@@ -25,24 +25,23 @@ Summary {.summary}
 
 # Eating its own dog food
 
-The topic `__consumer_offsets` stores the offsets of the topics partitions consumed by consumer applications (and even of itself, if someone consumes it!).
+The topic `__consumer_offsets` stores the consumers offsets (sic!). This provides a unique storage for the consumers to save until which message they read and in case of failure, to restart from there. Note that each consumer is free to NOT use what Kafka provides and deal with the offsets themselves (and using the low-level consumer).
 
 Let's resume the vocabulary around the Kafka's consuming model, to understand what it stores:
 
-- A (high-level) consumer consumes a `topic`.
-- A consumer belongs to a `groupId`. (Note that the same `groupId` can be used to consume different topics)
-- A consumer consumes topic's `partitions`. (and can consume only some of them)
+- A consumer consumes the `partitions` of some `topics`. (and can consume only a part of the whole partitions, to distribute the load among several consumers, thanks to the high-level consumer)
+- A consumer belongs to a `groupId`. Note that the same `groupId` can be used to consume different topics and are totally independent.
 - Each consumed partitions has its own `offset` for each couple `(topic, groupId)`.
 
 `__consumer_offsets` is the storage of all these things through time.
 
 If we consume it, we can be aware of all the changes and progression of each consumers.
 
-# How to read the current offsets?
+# How to know the current offsets of a group?
 
 ## Admin command: ConsumerGroupCommand
 
-It's probably the simplest human-friendly way to do so. You don't even have to know it's coming from this topic. (this topic is an implementation detail after all). 
+It's probably the simplest human-friendly way to do so. We don't even have to know it's coming from this topic: the topic is an implementation detail after all. Moreover, it's actually coming from a in-memory cache (which uses the topic as a cold storage).
 
 Kafka has severals commands (available through the generic `kafka-run-class` script), here we care about `ConsumerGroupCommand`:
 
@@ -60,7 +59,7 @@ List all consumer groups, describe a consumer group, or delete consumer group in
 --zookeeper <urls> # Only without --new-consumer
 ```
 
-A classic usage, to know how your consumer application behaves (it is fast?):
+A classic usage, to know how our consumer application behaves (it is fast?):
 
 ```shell
 $ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 \
@@ -88,7 +87,7 @@ $ watch -n1 -t "kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-ser
 ### Legacy: migrating from Zookeeper
 
 Notice the `--new-consumer` and the Kafka's broker address, it does not need a Zookeeper address as before.
-If you did migrated from a previous Kafka version, according to the brokers configuration, Kafka can dual-writes the offsets into Zookeeper and Kafka's `__consumer_offsets` (see `dual.commit.enabled=true` and `offsets.storage=kafka`).
+If we did migrated from a previous Kafka version, according to the brokers configuration, Kafka can dual-writes the offsets into Zookeeper and Kafka's `__consumer_offsets` (see `dual.commit.enabled=true` and `offsets.storage=kafka`).
 
 ### Trick: summing-up the lag
 
@@ -101,7 +100,7 @@ $ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:
   --describe 2>/dev/null | awk 'NR>1 { print $6 }' | paste -sd+ - | bc
 98
 ```
-You know the whole group has _only_ 98 events still not consumed. If this is a topic with tons of real-time events, that's not bad!
+We know the whole group has _only_ 98 events still not consumed. If this is a topic with tons of real-time events, that's not bad!
 
 ### Trick: listing all the active groups
 
@@ -192,7 +191,9 @@ Commit is done after all the replicas got the offsets to publish.
 
 + in memory table in the offset manager
 
-# What is an Offset Manager?
+# What is a Group Coordinator / Offset Manager?
+
+A Group Coordinator is an Offset Manager at the same time.
 
 It's a broker which is the leader for a group, that commits its consumers offsets.
 
@@ -232,6 +233,12 @@ channel2.disconnect()
 ```shell
 GroupCoordinatorResponse(Some(BrokerEndPoint(128,broker01,9092)),NONE,0)
 ```
+
+## GroupCoordinator / GroupMetadataManager
+
+Both classes deal with offsets commits, and everything related to the group management. `GroupMetadataManager` respond to the offsets queries and store the latest consumer offsets for the group it manages in a local cache.
+
+When a offset commit is asked by a client, the Group Coordinator waits for the replicas (generally, it's set to 3) to commit the offsets, to ensure it's properly committed everywhere before responding to the client. In case of failure, nothing is committed and an error is returned to the client, that must retry.
 
 # Compaction
 
