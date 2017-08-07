@@ -209,15 +209,14 @@ The four other fields leads to some questions, what does they mean?
 - `"commitTimestamp":1501542796444`: the time in millis of the commit request (before the offsets where effectively commited across replicas).
 - `"expireTimestamp":1501629196444`: (`commitTimestamp` + `offsets.retention.minutes`) (default: 1 day)
 
-> If a consumer group is inactive during this period, and start after the expiration, the coordinator won't find any offsets and Kafka will rely on the consumer `auto.offset.reset` property, to know if it needs to start from `earliest` or `latest`. This is very important to know, to avoid some surprises. 
+> If a consumer group is inactive during this period, and starts after the expiration, the coordinator won't find any offsets and Kafka will rely on the consumer `auto.offset.reset` property, to know if it needs to start from `earliest` or `latest`. This is very important to know, to avoid some surprises. 
 
 # What is a Group Coordinator / Offset Manager?
 
 A Group Coordinator is an Offset Manager at the same time.
+It's a broker which is the leader for a group, that caches and commits its consumers offsets.
 
-It's a broker which is the leader for a group, that commits its consumers offsets.
-
-We can know which it is when using `ConsumerGroupCommand`:
+We can know which broker it is when using `ConsumerGroupCommand`:
 ```
 GROUP                          TOPIC                          PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             OWNER
 17/08/07 23:54:32 INFO internals.AbstractCoordinator: Discovered coordinator broker01:9092 (id: 2147483519) for group mygroupid.
@@ -228,22 +227,24 @@ It's also simple to find it programmatically:
 
 Using Zookeeper to find the brokers, thanks to some Kafka client utils:
 ```scala
-val channel = ClientUtils.channelToOffsetManager("mygroupid", ZkUtils("zk:2181", 30000, 30000, false))
+val channel = ClientUtils.channelToOffsetManager("mygroupid",
+                                                 ZkUtils("zk:2181", 30000, 30000, false))
 channel.disconnect()
 ```
 Through the logs, we can see what's going on and who is the Offset Manager:
 ```
-5825 [main] DEBUG kafka.network.BlockingChannel  - Created socket with SO_TIMEOUT = 3000 (requested 3000), SO_RCVBUF = 65536 (requested -1), SO_SNDBUF = 65536 (requested -1), connectTimeoutMs = 3000.
-5826 [main] DEBUG kafka.client.ClientUtils$  - Created channel to broker broker03:9092.
-5826 [main] DEBUG kafka.client.ClientUtils$  - Querying broker03:9092 to locate offset manager for mygroupid.
-5882 [main] DEBUG kafka.client.ClientUtils$  - Consumer metadata response: GroupCoordinatorResponse(Some(BrokerEndPoint(128,broker01,9092)),NONE,0)
-5882 [main] DEBUG kafka.client.ClientUtils$  - Connecting to offset manager broker01:9092.
+- Created socket with SO_TIMEOUT = 3000 (requested 3000), SO_RCVBUF = 65536 (requested -1), SO_SNDBUF = 65536 (requested -1), connectTimeoutMs = 3000.
+- Created channel to broker broker03:9092.
+- Querying broker03:9092 to locate offset manager for mygroupid.
+- Consumer metadata response: GroupCoordinatorResponse(Some(BrokerEndPoint(128,broker01,9092)),NONE,0)
+- Connecting to offset manager broker01:9092.
 ```
 
-Or at a more low level, by querying ourself a broker:
+Or at a lower level, by querying ourself a broker:
 
 ```scala
-var channel = new BlockingChannel("broker03", 9092, UseDefaultBufferSize, UseDefaultBufferSize, readTimeoutMs = 5000)
+var channel = new BlockingChannel("broker03", 9092, UseDefaultBufferSize,
+                                  UseDefaultBufferSize, readTimeoutMs = 5000)
 channel.connect()
 channel.send(GroupCoordinatorRequest("mygroupid"))
 val metadataResponse = GroupCoordinatorResponse.readFrom(channel.receive.payload())
@@ -253,24 +254,24 @@ channel2.disconnect()
 ```shell
 GroupCoordinatorResponse(Some(BrokerEndPoint(128,broker01,9092)),NONE,0)
 ```
+Note: `None` corresponds to `Errors` and the 0 is the `correlationId` (a distinct ID per request, to know to which one it corresponds).
 
-## GroupCoordinator / GroupMetadataManager
+## In code: GroupCoordinator and GroupMetadataManager
 
-Both classes deal with offsets commits, and everything related to the group management. `GroupMetadataManager` respond to the offsets queries and store the latest consumer offsets for the group it manages in a local cache.
+Both classes deal with offsets commits, and everything related to the group management.
 
-When a offset commit is asked by a client, the Group Coordinator waits for the replicas (generally, it's set to 3) to commit the offsets, to ensure it's properly committed everywhere before responding to the client. In case of failure, nothing is committed and an error is returned to the client, that must retry.
+`GroupMetadataManager` responds to the offsets queries and store the latest consumer offsets for the group it manages in a local cache.
+
+When an offset commit is asked by a client, the Group Coordinator waits for the replicas (generally, it's set to 3) to commit the offsets, to ensure it's properly committed everywhere before responding to the client. In case of failure, nothing is committed and an error is returned to the client, that must retry.
 
 # Compaction
 
 `__consumer_offsets` is a compacted topic. It's useful to not consume too many disk space for no reason, because we don't care of the past state. The compaction is only possible because this topic has a fixed key for the same event: the combinaison `(group, topic, partition number)`.
 
-The purpose of the `__consumer_offsets` topic is to keep the latest consumed offset per group/topic/partition, which is why the key is the combinaison of them. Through the compaction, only the latest value will be saved into Kafka's data, the past offsets are useless.
+The purpose of the `__consumer_offsets` topic is to keep the latest consumed offset per group/topic/partition, which is why the key is the combinaison of them. Through the compaction, only the latest value will be saved into Kafka's data, the past offsets are useless. It's a complement to the auto-cleaning done via the `expireTimestamp`.
 
 
 # Usage of the JSON version
 
-It's another mean to monitor the evolution of the consumed offsets, and can easily be processed by any third-party program or database (such as timeseries database), because it's plain JSON.
+Let's use our JSON topic to fulfill a timeseries database!
 
-
-Draw a dRuid dashboard:
-----
