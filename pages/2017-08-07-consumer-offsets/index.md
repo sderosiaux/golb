@@ -165,6 +165,16 @@ Note that each message in this topic has a key and a value. It's very important,
 
 I've written a [Kafka's Streams app](https://github.com/chtefi/kafka-streams-consumer-offsets-to-json) that reads this topic and convert its `(key, val)` to another topic, JSON-readable.
 
+The core of the code is:
+```scala
+builder.stream[Array[Byte], Array[Byte]](INPUT_TOPIC)
+    .map[BaseKey, Array[Byte]](baseKey)
+    .filter(otherTopicsOnly(conf.outputTopic()))
+    .map[OffsetKey, Array[Byte]](offsetKey)
+    .map[Array[Byte], String](toJson)
+    .to(Serdes.ByteArray, Serdes.String, conf.outputTopic())
+```
+It consumes `__consumer_offsets`, map the content to the `BaseKey` case class, remove its own offsets to avoid an infinite loop, collect only the `OffsetKey` and serializes to Json (it really needs a Scala API with more functions, such as `collect` and intelligent types inferring).
 
 A typical converted message is:
 
