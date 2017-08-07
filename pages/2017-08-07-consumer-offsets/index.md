@@ -9,7 +9,7 @@ tags: scala, kafka, stream, consumers, offsets, lag
 
 Kafka has quite evolved since some times. Its consuming model is very powerful, can greatly scale, is quite simple to understand.
 It has never changed from a external point of view, but internally, it did since Kafka 0.9, and the appearance of the `__consumer_offsets`.
-Before that, consumers offsets were stored in Zookeeper. Now, Kafka is eating its own dog food, to *scale better*.
+Before that, consumers offsets were stored in Zookeeper. Now, Kafka is eating its own dog food, to _scale better_.
 
 It's definitely an implementation detail we should not care about nor rely on, because it can change anytime soon in the newer versions, but it's also very interesting to know it's there, what does it contains, how it is used, to understand the Kafka consuming model and its constraints.
 
@@ -25,13 +25,13 @@ Summary {.summary}
 
 # Eating its own dog food
 
-The topic `__consumer_offsets` stores the consumers offsets (sic!). This provides a unique storage for the consumers to save until which message they read and in case of failure, to restart from there. Note that each consumer is free to NOT use what Kafka provides and deal with the offsets themselves (and using the low-level consumer).
+The topic `__consumer_offsets` stores the consumers offsets (sic!). This provides a unique storage for the consumers to remember until which message they read and in case of failure, to restart from there. Note that each consumer is free to NOT use what Kafka provides and deal with the offsets themselves (and use the low-level consumer, asking for custom offsets).
 
-Let's resume the vocabulary around the Kafka's consuming model, to understand what it stores:
+Let's resume the vocabulary around the Kafka's consuming model, to understand what's in the game:
 
-- A consumer consumes the `partitions` of some `topics`. (and can consume only a part of the whole partitions, to distribute the load among several consumers, thanks to the high-level consumer)
+- A consumer consumes the `partitions` of some `topics`. (and can consume only a part of a topic partitions, to distribute the load among several consumers, thanks to the high-level consumer)
 - A consumer belongs to a `groupId`. Note that the same `groupId` can be used to consume different topics and are totally independent.
-- Each consumed partitions has its own `offset` for each couple `(topic, groupId)`.
+- Each consumed partitions has its own last `offset` consumed for each couple `(topic, groupId)`.
 
 `__consumer_offsets` is the storage of all these things through time.
 
@@ -84,10 +84,12 @@ $ watch -n1 -t "kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-ser
   --new-consumer --group extranet --describe 2>/dev/null"
 ```
 
-### Legacy: migrating from Zookeeper
+### Legacy: migration from Zookeeper
 
 Notice the `--new-consumer` and the Kafka's broker address, it does not need a Zookeeper address as before.
 If we did migrated from a previous Kafka version, according to the brokers configuration, Kafka can dual-writes the offsets into Zookeeper and Kafka's `__consumer_offsets` (see `dual.commit.enabled=true` and `offsets.storage=kafka`).
+
+Post Kafka-0.8, Zookeeper is only used for the brokers management (failures, discovery), not for the offsets management.
 
 ### Trick: summing-up the lag
 
@@ -113,18 +115,18 @@ monitoring
 weather
 ```
 
-Note that during a partition rebalancing, the affected group temporary disappears, because is not active anymore.
+Note that during a partition rebalancing, the affected group temporary disappears, because it is not active anymore.
 
 ## Consuming __consumer_offsets
 
 Because it's a topic, it's possible to just consume it as any other topic.
 
-First of all, because it's an _internal_ Kafka topic, by default, the consumers can't see it, therefore they can't consume it.
-We must ask them to not exclude it (default is true). We must add to the consumer's props:
+But because it's an _internal_ Kafka topic, by default, the consumers can't see it, therefore they can't consume it.
+We must ask them to not exclude it (default is true) by adding some props:
 ```shell
 $ echo "exclude.internal.topics=false" > /tmp/consumer.config
 ```
-Then use it to consume the topic:
+Then we use it to consume the topic:
 ```shell
 $ kafka-console-consumer --consumer.config /tmp/consumer.config \
   --zookeeper localhost:2181 \
@@ -155,7 +157,7 @@ Here it is:
 [mygroup2,mytopic2,0]::[OffsetMetadata[126,NO_METADATA],CommitTime 1502060076343,ExpirationTime 1502146476343]
 ```
 
-We can't really make any use of it, except playing with some regexes. Would it be better to get some nice JSON instead? (yes!)
+We can't really make any use of it (we'll explain the content just after), except playing with some regexes. Would it be better to get some nice JSON instead? (yes!)
 
 Note that each message in this topic has a key and a value. It's very important, as we'll see next in the following Compaction section.
 
@@ -168,8 +170,8 @@ A typical converted message is:
 
 ```json
 {
-    "topic":"WordsWithCountsTopic",
-    "partition":0,
+    "topic":"mytopic1",
+    "partition":11,
     "group":"console-consumer-26549",
     "version":1,
     "offset":95,
@@ -179,10 +181,20 @@ A typical converted message is:
 }
 ```
 
-It's a recording that the group `console-consumer-26549` which consumes the topic `WordsWithCountsTopic` has read until the offset `95` of its partition `0`.
+We can find back the info we saw just with a better presentation.
 
+It's a message saying that the group `console-consumer-26549` which consumes the topic `mytopic1` has read until the offset `95` of its partition `11`.
 
-# Who sends messages inside ?
+The four other fields leads to some questions, what does they mean?
+
+- `"version":1`: the version `0` contained only a `timestamp`, and is deprecated.
+- `"metadata":""`: a `String` provided by the offset committer to store additional info.
+- `"commitTimestamp":1501542796444`: the time in millis before the offsets where effectively commited across replicas (ie: the time of the commit request).
+- `"expireTimestamp":1501629196444`: `commitTimestamp` + `offsets.retention.minutes` (default: 1 day)
+
+If a consumer group is inactive during this period, and start after the expiration, the coordinator won't find any offsets and Kafka will rely on the consumer `auto.offset.reset` property, to know if it needs to start from `earliest` or `latest`. This is very important to know, to avoid some surprises. 
+
+# Who sends the messages?
 
 Who and when actually?
 
