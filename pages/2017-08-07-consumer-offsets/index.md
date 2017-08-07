@@ -174,7 +174,14 @@ builder.stream[Array[Byte], Array[Byte]](INPUT_TOPIC)
     .map[Array[Byte], String](toJson)
     .to(Serdes.ByteArray, Serdes.String, conf.outputTopic())
 ```
-It consumes `__consumer_offsets`, map the content to the `BaseKey` case class, remove its own offsets to avoid an infinite loop, collect only the `OffsetKey` and serializes to Json (it really needs a Scala API with more functions, such as `collect` and intelligent types inferring).
+It:
+- consumes `__consumer_offsets`
+- map the content to the `BaseKey` case class
+- remove its own offsets to avoid an infinite loop
+- collect only the `OffsetKey`
+- serializes to Json
+
+(Kafka Streams really needs a Scala API with more functions, such as `collect` and smart types inferring).
 
 A typical converted message is:
 
