@@ -275,3 +275,86 @@ The purpose of the `__consumer_offsets` topic is to keep the latest consumed off
 
 Let's use our JSON topic to fulfill a timeseries database!
 
+We're going to use [Druid](http://druid.io/) because it's a very good and realtime-json-ingestion-friendly database.
+We'll use it [Kafka Supervisor](http://druid.io/docs/0.10.0/development/extensions-core/kafka-ingestion.html) extension to listen to our Kafka `__consumer_offsets_json` topic in realtime and see the result in [Pivot](https://docs.imply.io/pivot/index).
+
+First, we need to tell Druid where and how to read our Kafka topic through some json specification.
+
+We'll set what are the names of the fields, which one is the timestamps, which ones are the dimensions, and which ones are the metrics:
+
+```json
+{
+  "type": "kafka",
+  "dataSchema": {
+    "dataSource": "consumer-offsets",
+    "parser": {
+      "type": "string",
+      "parseSpec": {
+        "format": "json",
+        "timestampSpec": { "column": "commitTimestamp", "format": "auto" },
+        "dimensionsSpec": { "dimensions": [ "topic", "partition", "group" ] }
+      }
+    },
+    "metricsSpec": [
+      { "type": "count", "name": "count" },
+      { "type": "doubleSum", "name": "offset", "fieldName": "offset" }
+    ],
+    "granularitySpec": {
+      "type": "uniform",
+      "segmentGranularity": "DAY",
+      "queryGranularity": "MINUTE"
+    }
+  },
+  "tuningConfig": {
+    "type": "kafka"
+  },
+  "ioConfig": {
+    "topic": "consumer_offsets_json",
+    "consumerProperties": {
+      "bootstrap.servers": "kafka01:9092"
+    }
+  }
+}
+```
+
+We can then use Pivot to see what's going on:
+
+![pivot.png][Pivot showing the evolution of the offsets for the partitions of the topic alerts]
+
+It's also possible to group by `groupId`, or both `groupId` and `topic`, according to your needs.
+
+Moreover, Pivot is not mandatory to query Druid. Everywhere goes through a JSON API (and SQL API since Druid 0.10.x).
+
+```shell
+$ curl -X POST 'http://druid.stg.ps:8082/druid/v2/?pretty=' \
+  -H 'content-type: application/json' \
+  -d '{
+  "queryType": "timeseries",
+  "dataSource": "kafkaoffsets",
+  "granularity": "minute",
+  "descending": "true",
+  "filter": { "type": "selector", "dimension": "group", "value": "super-streamer" },
+  "aggregations": [
+    { "type": "longSum", "name": "offset", "fieldName": "offset" }
+  ],
+  "postAggregations": [],
+  "intervals": [ "2017-08-09/2017-08-10" ]
+}'
+```
+```json
+[
+    {
+        "timestamp": "2017-08-09T00:26:00.000Z",
+        "result": {
+            "offset": 231966
+        }
+    },
+    {
+        "timestamp": "2017-08-09T00:25:00.000Z",
+        "result": {
+            "offset": 1312911
+        }
+    },
+    ...
+]
+```
