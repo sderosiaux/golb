@@ -13,7 +13,9 @@ Before that, consumers offsets were stored in Zookeeper. Now, Kafka is eating it
 
 It's definitely an implementation detail we should not care about nor rely on, because it can change anytime soon in the newer versions, but it's also very interesting to know it's there, what does it contains, how it is used, to understand the Kafka consuming model and its constraints.
 
-We'll start by looking at higher-level commands to check the offsets, then we'll go deeper with the `__consumer_offsets` topic and the Offset Manager/Group Coordinator logic. We'll finish by a Kafka Streams processor to convert this topic to a JSON-readable topic to finally be consumed by a timeseries database, for monitoring and alerting purpose.
+We'll start by looking at higher-level commands to check the offsets, then we'll go deeper with the `__consumer_offsets` topic and the Offset Manager/Group Coordinator logic.
+
+We'll finish by a Kafka Streams processor to convert this topic to a JSON-readable topic to finally be consumed by a timeseries database (Druid), for monitoring and alerting purpose.
 
 ---
 Summary {.summary}
@@ -32,6 +34,8 @@ Let's resume the vocabulary around the Kafka's consuming model, to understand wh
 - A consumer consumes the `partitions` of some `topics`. (and can consume only a part of a topic partitions, to distribute the load among several consumers, thanks to the high-level consumer)
 - A consumer belongs to a `groupId`. Note that the same `groupId` can be used to consume different topics and are totally independent.
 - Each consumed partitions has its own last `offset` consumed for each couple `(topic, groupId)`.
+
+![hop](consuming.png)
 
 `__consumer_offsets` is the storage of all these things through time.
 
@@ -89,7 +93,14 @@ $ watch -n1 -t "kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-ser
 Notice the `--new-consumer` and the Kafka's broker address, it does not need a Zookeeper address as before.
 If we did migrated from a previous Kafka version, according to the brokers configuration, Kafka can dual-writes the offsets into Zookeeper and Kafka's `__consumer_offsets` (see `dual.commit.enabled=true` and `offsets.storage=kafka`).
 
+```shell
+[zk: zk:2181(CONNECTED) 7] get /consumers/console-consumer-86714/offsets/__consumer_offsets/20
+18015941
+...
+```
+
 Post Kafka-0.8, Zookeeper is only used for the brokers management (failures, discovery), not for the offsets management.{.info}
+
 
 ### Trick: summing-up the lag
 
@@ -181,6 +192,8 @@ It:
 - collects only the `OffsetKey`
 - serializes them to JSON
 
+![Kafka Streams to convert __consumer_offsets to JSON](kafkastreams.png)
+
 (Kafka Streams really needs a Scala API with more functions, such as `collect` and smart types inferring).
 
 A typical converted message is:
@@ -215,6 +228,8 @@ If a consumer group is inactive during this period, and starts after the expirat
 
 A Group Coordinator is an Offset Manager at the same time.
 It's a broker which is the leader for a group, that caches and commits its consumers offsets.
+
+![How commits are happening](commit.png)
 
 We can know which broker it is when using `ConsumerGroupCommand`:
 ```
@@ -277,6 +292,8 @@ Let's use our JSON topic to fulfill a timeseries database!
 
 We're going to use [Druid](http://druid.io/) because it's a very good and realtime-json-ingestion-friendly database.
 We'll use it [Kafka Supervisor](http://druid.io/docs/0.10.0/development/extensions-core/kafka-ingestion.html) extension to listen to our Kafka `__consumer_offsets_json` topic in realtime and see the result in [Pivot](https://docs.imply.io/pivot/index).
+
+![Ingestion into Druid](druid.png)
 
 First, we need to tell Druid where and how to read our Kafka topic through some json specification.
 
@@ -359,6 +376,10 @@ $ curl -X POST 'http://druid.stg.ps:8082/druid/v2/?pretty=' \
 ]
 ```
 
+Thanks to this, it's possible to easily keep track of the evolution of all the consumer offsets. It does not take a lot of space because Druid mostly works on aggregated data (see the `queryGranularity` to `MINUTE` in the spec here).
+
+It's possible to use its query engine to trigger some alerts on a particular group or topic (if we didn't get any changes since 2min for instance). Only the sky's the limit.
+
 # Conclusion
 
 - `__consumer_offsets` is an implementation detail (came in 0.9) we should not rely on; it replaces the old system based on Zookeeper.
@@ -366,6 +387,6 @@ $ curl -X POST 'http://druid.stg.ps:8082/druid/v2/?pretty=' \
 - `ConsumerGroupCommand` can be used to retrieve the consumers offsets.
 - There is one broker that deals with offset commits: the GroupCoordinator / OffsetManager.
 - Low-level consumers can choose to not commit their offsets into Kafka (mostly to ensure at-least/exactly-once).
-- Kafka Streams is excellent are filling a topic from another one.
-- Druid is excellent at ingesting timeseries JSON;
+- Kafka Streams is excellent at filling a topic from another one.
+- Druid is excellent at ingesting timestamped JSON.
 
