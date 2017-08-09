@@ -89,7 +89,7 @@ $ watch -n1 -t "kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-ser
 Notice the `--new-consumer` and the Kafka's broker address, it does not need a Zookeeper address as before.
 If we did migrated from a previous Kafka version, according to the brokers configuration, Kafka can dual-writes the offsets into Zookeeper and Kafka's `__consumer_offsets` (see `dual.commit.enabled=true` and `offsets.storage=kafka`).
 
-Post Kafka-0.8, Zookeeper is only used for the brokers management (failures, discovery), not for the offsets management.
+Post Kafka-0.8, Zookeeper is only used for the brokers management (failures, discovery), not for the offsets management.{.info}
 
 ### Trick: summing-up the lag
 
@@ -176,10 +176,10 @@ builder.stream[Array[Byte], Array[Byte]](INPUT_TOPIC)
 ```
 It:
 - consumes `__consumer_offsets`
-- map the content to the `BaseKey` case class
-- remove its own offsets to avoid an infinite loop
-- collect only the `OffsetKey`
-- serializes to Json
+- maps the content to the `BaseKey` case class
+- removes its own offsets to avoid an infinite loop
+- collects only the `OffsetKey`
+- serializes them to JSON
 
 (Kafka Streams really needs a Scala API with more functions, such as `collect` and smart types inferring).
 
@@ -209,7 +209,7 @@ The four other fields leads to some questions, what does they mean?
 - `"commitTimestamp":1501542796444`: the time in millis of the commit request (before the offsets where effectively commited across replicas).
 - `"expireTimestamp":1501629196444`: (`commitTimestamp` + `offsets.retention.minutes`) (default: 1 day)
 
-> If a consumer group is inactive during this period, and starts after the expiration, the coordinator won't find any offsets and Kafka will rely on the consumer `auto.offset.reset` property, to know if it needs to start from `earliest` or `latest`. This is very important to know, to avoid some surprises. 
+If a consumer group is inactive during this period, and starts after the expiration, the coordinator won't find any offsets and Kafka will rely on the consumer `auto.offset.reset` property, to know if it needs to start from `earliest` or `latest`. This is very important to know, to avoid some surprises.{.info}
 
 # What is a Group Coordinator / Offset Manager?
 
@@ -271,7 +271,7 @@ When an offset commit is asked by a client, the Group Coordinator waits for the 
 The purpose of the `__consumer_offsets` topic is to keep the latest consumed offset per group/topic/partition, which is why the key is the combinaison of them. Through the compaction, only the latest value will be saved into Kafka's data, the past offsets are useless. It's a complement to the auto-cleaning done via the `expireTimestamp`.
 
 
-# Usage of the JSON version
+# Ingest the JSON into Druid
 
 Let's use our JSON topic to fulfill a timeseries database!
 
@@ -319,7 +319,7 @@ We'll set what are the names of the fields, which one is the timestamps, which o
 
 We can then use Pivot to see what's going on:
 
-![pivot.png](Pivot showing the evolution of the offsets for the partitions of the topic alerts)
+![Pivot showing the evolution of the offsets for the partitions of the topic alerts](pivot.png)
 
 It's also possible to group by `groupId`, or both `groupId` and `topic`, according to your needs.
 
