@@ -358,3 +358,14 @@ $ curl -X POST 'http://druid.stg.ps:8082/druid/v2/?pretty=' \
     ...
 ]
 ```
+
+# Conclusion
+
+- `__consumer_offsets` is an implementation detail (came in 0.9) we should not rely on; it replaces the old system based on Zookeeper.
+- `__consumer_offsets` is binary encoded. It keeps the latest consumed offsets for each topic/group/partition for a certain time only (1d).
+- `ConsumerGroupCommand` can be used to retrieve the consumers offsets.
+- There is one broker that deals with offset commits: the GroupCoordinator / OffsetManager.
+- Low-level consumers can choose to not commit their offsets into Kafka (mostly to ensure at-least/exactly-once).
+- Kafka Streams is excellent are filling a topic from another one.
+- Druid is excellent at ingesting timeseries JSON;
+
