@@ -319,7 +319,7 @@ We'll set what are the names of the fields, which one is the timestamps, which o
 
 We can then use Pivot to see what's going on:
 
-![pivot.png][Pivot showing the evolution of the offsets for the partitions of the topic alerts]
+![pivot.png](Pivot showing the evolution of the offsets for the partitions of the topic alerts)
 
 It's also possible to group by `groupId`, or both `groupId` and `topic`, according to your needs.
 
