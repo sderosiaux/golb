@@ -102,7 +102,7 @@ If we did migrated from a previous Kafka version, according to the brokers confi
 Post Kafka-0.8, Zookeeper is only used for the brokers management (failures, discovery), not for the offsets management.{.info}
 
 
-### Trick: summing-up the lag
+### Tip: summing-up the lag
 
 When we have several partitions, it's sometimes useful to just care about the sum of each partition's lag (0 meaning the group has catched up the latest messages):
 
@@ -115,7 +115,7 @@ $ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:
 ```
 We know the whole group has _only_ 98 events still not consumed. If this is a topic with tons of real-time events, that's not bad!
 
-### Trick: listing all the active groups
+### Tip: listing all the active groups
 
 This command is very useful to discover all the active groups on the cluster:
 ```shell
