@@ -343,7 +343,7 @@ It's also possible to group by `groupId`, or both `groupId` and `topic`, accordi
 Moreover, Pivot is not mandatory to query Druid. Everywhere goes through a JSON API (and SQL API since Druid 0.10.x).
 
 ```shell
-$ curl -X POST 'http://druid.stg.ps:8082/druid/v2/?pretty=' \
+$ curl -X POST 'http://druidbroker:8082/druid/v2/?pretty=' \
   -H 'content-type: application/json' \
   -d '{
   "queryType": "timeseries",
