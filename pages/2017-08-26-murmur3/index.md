@@ -341,7 +341,7 @@ The advantage is that it's a space-bound data-structure, inserts and lookups are
 
 Having multiple hashes is necessary to avoid too many false positives: one hash function implies to check only one bit. With 2 hash functions, it needs to check 2 bits, therefore, there are less chance to have both set. The other extreme is not good neither, to have tons of hash functions means the bitset is going to be filled quickly of 1, therefore the rate of false positives is going to grow. It's a delicate equilibrium.
 
-## Optimal number of bits
+### Optimal number of bits
 
 When we create a Bloom filter, we normally provide an _expected number of insertions_ and a desired probability of false positives.
 A formula will then determine the size of the Bloom filter bitset. Here is the formula and a small generator to see the values:
