@@ -36,6 +36,8 @@ murmur3 is NOT a cryptographic hash function: meaning it MUST NOT be used when s
 
 ![HashDOS](hashdos.png)
 
+There is this very nice article explaining how to make collisions at will: [Breaking Murmur: Hash-flooding DoS Reloaded](http://emboss.github.io/blog/2012/12/14/breaking-murmur-hash-flooding-dos-reloaded/).
+
 murmur3 is mostly used for lookups (in datastructures that supports it, such as hashtables, bloom filters etc.).
 
 ## Principle
