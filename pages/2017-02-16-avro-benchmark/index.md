@@ -782,6 +782,8 @@ Here are 2 nice projects along this way:
 
 Both ways are valid. Generating the case classes from the schemas is more powerful and customizable because we can write the schemas with the full power of the Avro spec and generate the case classes from them whereas the inverse is more complex to handle in the code.
 
+_edit 2018-01-07_: A new comer: [formulation](https://github.com/vectos/formulation), more expressive, no macros, shapeless based, also integrated with [refined](https://github.com/fthomas/refined) (constraints on types).
+
 ## avro4s
 
 ```scala
