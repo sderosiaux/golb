@@ -315,6 +315,8 @@ To do so, it relies on some smart observations at the binary level. All the deta
 > "the new algorithm makes it possible to estimate cardinalities well beyond 10^9
 with a typical accuracy of 2% while using a memory of only 1.5 kilobytes."
 
+There is also this nice [playground](https://djhworld.github.io/hyperloglog/) to really understand and see the whole thing detailed.
+
 - [Druid](druid.io) is using it to estimate the cardinality of the values of a column.
 - [Hive](https://github.com/apache/hive) has a HLL operator to avoid using `COUNT(DISTINCT)`: `SELECT hll_approx_count(to_hll(user_id)) ...`
 - [Redis](http://antirez.com/news/75) has a HLL type (`PF` as Philippe Flajolet): `PFADD var element element … element` and `PFCOUNT var`
