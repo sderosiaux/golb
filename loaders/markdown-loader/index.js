@@ -4,6 +4,10 @@ var hljs = require('highlight.js')
 var objectAssign = require('object-assign')
 
 var highlight = function (str, lang) {
+  if (lang === 'raw') {
+    return str
+  }
+
   if ((lang !== null) && hljs.getLanguage(lang)) {
     try {
       return hljs.highlight(lang, str, true, false).value
@@ -35,6 +39,9 @@ var md = markdownIt({
   .use(require('markdown-it-attrs'))
   .use(require('markdown-it-task-lists'))
   .use(require("markdown-it-anchor"), {})
+  .use(require('markdown-it-emoji'))
+  .use(require('markdown-it-checkbox'))
+  .use(require('markdown-it-container', 'info'))
   .use(require('markdown-it-link-attributes'), {
     target: '_blank',
     rel: 'noopener'

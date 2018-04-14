@@ -72,6 +72,7 @@
 
 .fr { float: right; padding-left: 20px; padding-bottom: 20px; }
 .fl { float: left;  padding-right: 20px; padding-bottom: 20px;}
+.c { text-align: center; }
 
 .tags {
   font-size: 12px;
@@ -125,13 +126,13 @@
 .hljs, .markdown > div > pre   {
   display: block;
   overflow-x: auto;
-  color: #abb2bf;
+  color: rgb(171, 178, 191);
   background: #282c34;
 }
 
 .hljs-comment,
 .hljs-quote {
-  color: #5c6370;
+  color: #6c7380;
   font-style: italic;
 }
 

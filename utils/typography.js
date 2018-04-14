@@ -9,7 +9,7 @@ import Theme from 'typography-theme-sutro'
 //import Theme from 'typography-theme-moraga'
 //import Theme from 'typography-theme-kirkham'
 
-Theme.plugins = [ new CodePlugin ]
+Theme.plugins = [new CodePlugin]
 
 const options = {
   googleFonts: [
