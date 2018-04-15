@@ -8,12 +8,12 @@ import typography from './utils/typography'
 const BUILD_TIME = new Date().getTime()
 
 module.exports = React.createClass({
-  propTypes () {
+  propTypes() {
     return {
       body: React.PropTypes.string,
     }
   },
-  render () {
+  render() {
     const head = Helmet.rewind()
 
     let css
@@ -25,7 +25,7 @@ module.exports = React.createClass({
       <html lang="en">
         <head>
           <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-          <link rel="preconnect" href="//fonts.googleapis.com" />  
+          <link rel="preconnect" href="//fonts.googleapis.com" />
           <meta charSet="utf-8" />
           <meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
           <meta httpEquiv="Content-Language" content="en" />
@@ -35,8 +35,8 @@ module.exports = React.createClass({
           <meta name="keywords" content="javascript, reactjs, java, scala, hadoop, spark, hbase, flume, webpack, gulp, nodejs" />
           <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, minimal-ui" />
           <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-          <link rel="icon" sizes="32x32" href="/m32.png" />
-          <link rel="icon" sizes="192x192"  href="/m192.jpg" />
+          <link rel="icon" sizes="32x32" href="/m32.jpg" />
+          <link rel="icon" sizes="192x192" href="/m192.jpg" />
           <link rel="apple-touch-icon-precomposed" href="/m.jpg" />
           <meta name="msapplication-TileImage" content="/m.jpg" />
           <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
