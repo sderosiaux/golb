@@ -1,19 +1,103 @@
-ul.index > li {
- padding: 10px;
- margin: 10px;
+.my-presentation {
+    padding: 20px;
+    font-size:  1.68rem;
+    font-weight: 100;
+    line-height: 1.5em;
+    font-family: 'Bitter';
+}
+.my-presentation h2 {
+    margin: 0;
+    margin-bottom: 40px;
+    font-family: 'Bitter';
+    color: rgba(0, 0, 0, 0.9);
+    font-weight: 700;
+    font-size: 3.157rem;
+    text-shadow: rgba(0, 0, 0, 0.1) 10px 12px 25px;
+    text-rendering: optimizeLegibility;
+}
+/***/
 
+
+
+/***/
+
+.nice-btn:hover {
+    color: white !important;
+}
+.nice-btn {
+    display: inline-block;
+    background: rgb(97, 174, 238);
+    border-radius: 20px;
+    padding: 0 20px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 1em;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 -1px 0 1px rgba(0, 0, 0, 0.1), inset 0 -10px 20px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s;
+}
+
+/***/
+
+ul.index > li {
+ margin-bottom: 40px;
  overflow: hidden;
 }
 
 ul.index > li > a {
-    font-size: 22px;    
+    font-family: 'Bitter', sans-serif;
+    font-size: 1.99326rem;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.9);
+    line-height: 1.1;
+    text-shadow: rgba(0, 0, 0, 0.1) 1px 4px 10px;
+    transition: color 0.1s;
+}
+
+.subtitle {
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 0.9rem;
+}
+
+.latest {
+    padding-top: 2rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    font-weight: bold;
+    text-align: center;
+    color: rgba(0, 0, 0, 0.9);
+    position: relative;
+    padding-bottom: 1rem;
+    margin-bottom: 4rem;
+}
+
+.latest:after {
+    content: "";
+    height: 1px;
+    width: 50px;
+    position: absolute;
+    bottom: 0px;
+    left: 50%;
+    margin-left: -25px;
+    background: rgba(0, 0, 0, 0.25);
 }
 
 a {
     color: #2A5DB0;
 }
 
+a:hover {
+    text-decoration: none;
+    color: rgb(97, 174, 238) !important;
+}
+
 @media (max-width: 480px) {
     ul { margin: 0; }
     ul.index > li { padding: 0; margin: 0; margin-bottom: 20px; }
+}
+
+@media (max-width: 1200px) {
+    .social { display: none }
 }

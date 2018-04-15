@@ -3,21 +3,6 @@
   box-shadow: 0 2px 2px -2px rgba(0,0,0,.15);
 }
 
-.headroom .index {
-  display: inline-block;
-  border: 1px solid rgba( 36, 142, 94, 0.3);
-  letter-spacing: 0.3px;
-  border-radius: 24px;
-  padding: 0 16px !important;
-  font-size: 16px;
-}
-.headroom .index:hover {
-  border-color: rgba( 36, 142, 94, 0.8);
-}
-.headroom .index > a {
-  text-decoration: none;
-}
-
 @media (max-width: 780px) {
   .headroom .index { display: none; }
 }
@@ -30,24 +15,28 @@
 
 #mce-EMAIL {
   -webkit-appearance: none;
-  -webkit-border-radius: 0;
+  border-radius: 6px;
   border: 1px solid #ccc;
-  padding: 0 2px;
+  box-shadow: none;
+  padding: 0 4px;
   margin: 0;
   line-height: 26px;
   height: 26px;
-  border-right: 0;
+  margin-right: 4px;
 }
 
 #mc-embedded-subscribe {
   -webkit-appearance: none;
-  -webkit-border-radius: 0;
-  border: 1px solid #ccc;
-  background: #eee;
-  background: linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(246,246,246,1) 47%, rgba(237,237,237,1) 100%); 
+  border-radius: 6px;
   padding: 0 10px;
   line-height: 1;
   height: 26px;  
+  border: none;
+  background: rgb(97, 174, 238);
+  color: white;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 -1px 0 1px rgba(0, 0, 0, 0.1), inset 0 -10px 20px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
 }
 
 @media (max-width: 480px) {
