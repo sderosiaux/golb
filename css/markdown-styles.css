@@ -102,6 +102,7 @@
 }
 
 .warning, .warn {
+  border-radius: 10px;
   color: #9F6000;
   background-color: #FEEFB3;
   padding: 18px;
@@ -111,13 +112,10 @@
   margin-right: 9px;
 }
 .info {
-  color: #00609F;
-  background-color: #B3EFFE;
+  border-radius: 10px;
+  color: #eee;
+  background-color:  #18C795;
   padding: 18px;
-}
-.info:before {
-  content:'\1F6C8';
-  margin-right: 9px;
 }
 
 .rfc-page pre {
