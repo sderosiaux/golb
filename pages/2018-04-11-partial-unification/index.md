@@ -12,7 +12,7 @@ background: 'background.jpg'
 The [kind-projector sbt plugin](https://github.com/non/kind-projector) is quite ubiquitous in the Scala world.
 So much that we won't need it in the future! Its features will be [native in Dotty/Scala 3](https://github.com/lampepfl/dotty/issues/2041) as we'll see. :pray: But we're not there yet.
 
-This plugin introduces new keywords to provide some sugar syntax for advanced type-related usage. It does _not_ provide any new feature but simplifies how to write and read code that is hardly readable without.
+This plugin introduces new keywords to provide some syntactic sugar for advanced type-related usage. It does _not_ provide any new feature but simplifies how to write and read code that is hardly readable without.
 
 If you've seen code like:
 
@@ -232,7 +232,7 @@ The kind-projector provides advanced type features and reserves some identifiers
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4")
 ```
 
-As we said, it provides sugar syntax around advanced typing. For future reference, all these lines are equivalent:
+As we said, it provides syntactic sugar around advanced typing. For future reference, all these lines are equivalent:
 
 ```scala
 ({ type F[E] = Either[E, A] })#F // lambda types and type projection "#F", scalac native
