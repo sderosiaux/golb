@@ -15,10 +15,16 @@
     text-shadow: rgba(0, 0, 0, 0.1) 10px 12px 25px;
     text-rendering: optimizeLegibility;
 }
-.my-presentation .contact:hover {
+/***/
+
+
+
+/***/
+
+.nice-btn:hover {
     color: white !important;
 }
-.my-presentation .contact span {
+.nice-btn {
     display: inline-block;
     background: rgb(97, 174, 238);
     border-radius: 20px;
@@ -33,9 +39,7 @@
     transition: all 0.3s;
 }
 
-.my-presentation .contact:hover span {
-    transform: translateY(-2px);
-}
+/***/
 
 ul.index > li {
  margin-bottom: 40px;
@@ -92,4 +96,8 @@ a:hover {
 @media (max-width: 480px) {
     ul { margin: 0; }
     ul.index > li { padding: 0; margin: 0; margin-bottom: 20px; }
+}
+
+@media (max-width: 1200px) {
+    .social { display: none }
 }
