@@ -25,7 +25,7 @@ We'll also learn how it's linked to the _Partial Unification_ feature of scalac 
 
 The kind-projector and the partial-unification are powerful features that push the limits of the Scala type system. It lets us —the developers— abstract our work to reuse (compose) it easily. It limits the scope of possibilities when we code: when everything is abstract, it's less bug-prone. It lets the compiler help us to check if the types make sense.
 
-They are heavily used in libraries because they need to be the most generic possible for us to work with them (and even with themselves..). But they will also find their ways into real projects and applications. We must be aware of what the partial-unification is. We must consider the kind-projector as native, nor fear it, and totally embrase it. :heart_eyes_cat:
+They are heavily used in libraries because they need to be the most generic possible for us to work with them (and even with themselves..). But they will also find their ways into real projects and applications. We must be aware of what the partial-unification is. We must consider the kind-projector as native, nor fear it, and totally embrace it. :heart_eyes_cat:
 
 ---
 Summary {.summary}
