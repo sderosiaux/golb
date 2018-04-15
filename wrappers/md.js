@@ -36,12 +36,12 @@ module.exports = React.createClass({
             { name: "twitter:site", content: "@ChtefiD" },
             { name: "twitter:title", content: title },
             { name: "twitter:description", content: description || title },
-            { name: "twitter:image", content: "/m.jpg" },
+            { name: "twitter:image", content: fullUrl + post.background },
             { property: "og:title", content: title },
             { property: "og:type", content: "article" },
             { property: "og:url", content: fullUrl },
             { property: "og:description", content: description || title },
-            { property: "og:image", content: "/m.jpg" }
+            { property: "og:image", content: fullUrl + post.background }
           ]}
         />
         {post.background && <div className="article-image" style={{ backgroundImage: 'url(' + post.background + ')' }}></div>}
