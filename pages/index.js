@@ -8,6 +8,7 @@ import format from 'date-fns/format'
 import parse from 'date-fns/parse'
 import compareDesc from 'date-fns/compare_desc'
 import { Flex, Box } from 'reflexbox'
+import { SocialIcon } from 'react-social-icons'
 
 import "css/index"
 
@@ -28,7 +29,7 @@ export default (props) => {
       <div className="my-presentation">
         <h2>Bonjour,</h2>
         <p>I'm Stéphane, a Senior Scala and Data Engineer from France, and previously Front-End Developer. Passionated about everything related to IT, I try to provide you some feedback about what I learned. I hope you'll enjoy it.</p>
-        <p>Feel free to <a href="/contact" className="contact"><span>Contact me</span></a></p>
+        <p>Feel free to come say Hi <SocialIcon url="https://twitter.com/ChtefiD" style={{ height: 32, width: 32, verticalAlign: 'text-top' }} />&nbsp;</p>
       </div>
       <div style={{
         boxShadow: 'rgba(0, 0, 0, 0.1) 0px 4px 120px',

@@ -2,7 +2,7 @@ import React from 'react'
 import 'css/markdown-styles.css'
 import Helmet from 'react-helmet'
 import { config } from 'config'
-import ReadTime from 'react-read-time'
+import ReadTime from 'components/ReadTime'
 import format from 'date-fns/format'
 import parse from 'date-fns/parse'
 import ShareButtons from 'components/ShareButtons'
@@ -51,7 +51,7 @@ module.exports = React.createClass({
           <Flex>
             <Box>{format(post.date, 'MMM Do, YYYY')}</Box>
             <Box>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="clock"></span>&nbsp;</Box>
-            <Box><ReadTime content={post.body} /></Box>
+            <Box><ReadTime text={post.body} /></Box>
             <Box flexAuto={true}></Box>
             <Box><ShareButtons url={fullUrl} title={title} /></Box>
           </Flex>
