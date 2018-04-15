@@ -1,5 +1,5 @@
 .clock:before {
-  content: '🕒';
+  //content: '🕒';
   font-size: 14px;
 }
 .table-of-contents ul {
@@ -76,20 +76,16 @@
 .c { text-align: center; }
 
 .tags {
-  font-size: 12px;
-  color: #aaa;
+  font-size: 14px;
+  color: #444;
   list-style-type: none;
   margin: 0;
-  line-height: 1;
-  margin-bottom: 10px;
 }
-.tags > li {
-  line-height: 1;
+.tags > span {
   display: inline-block;
-  margin: 0 4px 0 0;
-  padding: 2px 0px;
+  padding-right: 4px;
 }
-.tags > li:not(:last-child):after {
+.tags > span:not(:last-child):after {
   content: ', '
 }
 

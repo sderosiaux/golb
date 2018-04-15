@@ -22,11 +22,18 @@ const options = {
     {
       name: 'Open Sans',
       styles: [
+        '100',
         '400',
         '400i',
         '700',
       ],
     },
+    {
+      name: 'Bitter',
+      styles: [
+        '400', '700'
+      ]
+    }
   ],
   headerFontFamily: ['Montserrat', 'sans-serif'],
   bodyFontFamily: ['Open Sans', 'sans-serif'],
