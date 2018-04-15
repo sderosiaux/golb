@@ -12,12 +12,12 @@ import ReactDisqusThread from 'components/DisqusThread'
 import Subscribe from 'components/Subscribe'
 
 module.exports = React.createClass({
-  propTypes () {
+  propTypes() {
     return {
       router: React.PropTypes.object,
     }
   },
-  render () {
+  render() {
     const { route } = this.props
     const post = route.page.data
     const { title, description, tags } = post;
@@ -44,23 +44,23 @@ module.exports = React.createClass({
           ]}
         />
         <h1>{post.title}</h1>
-        { post.tags && <ul className="tags">{ post.tags.split(',').map(t => <li>{t}</li>) }</ul> }
-        <div style={{color: '#aaa', fontSize: 'small', marginBottom: 20}}>
+        {post.tags && <ul className="tags">{post.tags.split(',').map(t => <li>{t}</li>)}</ul>}
+        <div style={{ color: '#aaa', fontSize: 'small', marginBottom: 20 }}>
           <Flex>
             <Box>{format(post.date, 'MMM Do, YYYY')}</Box>
             <Box>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="clock"></span>&nbsp;</Box>
-            <Box><ReadTime content={post.body} /></Box>          
+            <Box><ReadTime content={post.body} /></Box>
             <Box flexAuto={true}></Box>
             <Box><ShareButtons url={fullUrl} title={title} /></Box>
           </Flex>
-        </div>        
+        </div>
         <div dangerouslySetInnerHTML={{ __html: post.body }} />
-        <ShareButtons url={fullUrl} title={title} />        
+        <ShareButtons url={fullUrl} title={title} />
         <ReadNext post={post} pages={route.pages} />
-        <div style={{height: 20}} />
+        <div style={{ height: 20 }} />
         <Subscribe />
-        <div style={{height: 20}} />
-        <ReactDisqusThread url={fullUrl} shortname="ctheu" title={title} />        
+        <div style={{ height: 20 }} />
+        <ReactDisqusThread url={fullUrl} shortname="ctheu" title={title} />
       </div>
     )
   },

@@ -1,3 +1,11 @@
+/*
+
+List of emojis:
+
+https://github.com/markdown-it/markdown-it-emoji/blob/master/lib/data/full.json
+
+*/
+
 var frontMatter = require('front-matter')
 var markdownIt = require('markdown-it')
 var hljs = require('highlight.js')
@@ -41,7 +49,6 @@ var md = markdownIt({
   .use(require("markdown-it-anchor"), {})
   .use(require('markdown-it-emoji'))
   .use(require('markdown-it-checkbox'))
-  .use(require('markdown-it-container', 'info'))
   .use(require('markdown-it-link-attributes'), {
     target: '_blank',
     rel: 'noopener'

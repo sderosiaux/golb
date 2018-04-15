@@ -1,14 +1,14 @@
 ---
-title: "Kind Projection and Partial Unification caveats"
+title: "An ode to the kind-projector and the partial-unification of Scala"
 date: "2018-04-12T12:08Z"
 layout: post
 path: "/2018/04/12/kind-projection-and-partial-unification-caveats/"
 language: "en"
-tags: scala, partial-unification, kind-projector
+tags: scala, partial-unification, kind-projector, cats, scalaz, dotty, typeclass, hkt
 ---
 
 The [kind-projector sbt plugin](https://github.com/non/kind-projector) is quite ubiquitous in the Scala world.
-So much that we won't need it in the future! Its features will be [native in Dotty/Scala 3](https://github.com/lampepfl/dotty/issues/2041) as we'll see. But we're not there yet.
+So much that we won't need it in the future! Its features will be [native in Dotty/Scala 3](https://github.com/lampepfl/dotty/issues/2041) as we'll see. :pray: But we're not there yet.
 
 This plugin introduces new keywords to provide some sugar syntax for advanced type-related usage. It does _not_ provide any new feature but simplifies how to write and read code that is barely readable without.
 
@@ -25,7 +25,7 @@ We'll also learn how it's deeply linked to the _Partial Unification_ feature of 
 
 The kind-projector and the partial-unification are truly powerful features that push the limits of the type system of the Scala compiler. It lets us, the developers, abstract more of our work to reuse (compose) it easily, limit the scope of possibilities when we code (when everything is abstract, it's less bug-prone) and have the compiler tell us if the types make sense, all that without verbosity.
 
-They are heavily used in libraries because they need to be the most generic possible for us to work with them (and even with themselves..). But they will also find their ways into real projects and applications. You must be aware of what the partial-unification is, and consider the kind-projector as scalac native to use it where you should.
+They are heavily used in libraries because they need to be the most generic possible for us to work with them (and even with themselves..). But they will also find their ways into real projects and applications. You must be aware of what the partial-unification is, and consider the kind-projector as scalac native to use it where you should. :heart_eyes_cat:
 
 ---
 Summary {.summary}
@@ -40,7 +40,7 @@ First, we'll study partial-unification on its own by going through some examples
 
 ## What's the problem?
 
-Let's say with have a simple function that works with any type constructor `F[_]` (`* -> *` / a higher kinded types / a HKT):
+Let's say with have a simple function that works with any type constructor `F[_]` (`* -> *` / a higher kinded type / a HKT):
 
 ```scala
 def show[F[_], A](f: F[A]) = println(f) // we can't do much more with `f` except use it as `Any`
@@ -60,7 +60,7 @@ val err: Either[Error, String] = Left(new Error("boom"))
 show(err) // doesn't not compile!
 ```
 
-Without partial-unification, we can't compile this code:
+Without partial-unification, we can't compile this code: :cry:
 
 ```raw
 no type parameters for method show: (f: F[A])Unit exist so that it can be applied to arguments (Either[Error,String]).
@@ -91,7 +91,7 @@ show(Left(5): R[String])        // "Left(5)"
 
 ## Partial unification to the rescue
 
-With partial-unification flag enabled, the same code works without declaring the useless types or any types trick:
+With partial-unification flag enabled, the same code works without declaring the useless types or any types trick: :muscle:
 
 ```scala
 // build.sbt
@@ -121,7 +121,7 @@ show(err)           // "Either[Error,String] and A: String"
 
 The compiler used the right type of `Either[_, _]`, the left one does not exist from the `show()` perspective.
 
-Let's try with more complex types:
+Let's try with more complex types: :scream_cat:
 
 ```scala
 show(Triple(1, "2", true)) // "Triple[Int,String,Boolean] and A: Boolean"
@@ -204,7 +204,7 @@ At the end, it's a feature of the compiler to treat `F[A, B]` as `F[A][B]` and a
 Now we have seen what's partial-unification is all about, let's resume its history and what's going to happen:
 
 - the types partial-unification was introduced on April 2016 in the PR [#5102 | SI-2712 Add support for partial unification of type constructors](https://github.com/scala/scala/pull/5102) ([SI-2712 | Implement higher-order unification for type constructor inference](https://issues.scala-lang.org/browse/SI-2712));
-- on the 11 April 2018, the PR [#6309 | Partial unification unconditional](https://github.com/scala/scala/pull/6309) was merged in the compiler to use it by default and remove the flag! Why anybody would want to disable it anyway. It only brings fixes.
+- on the 11 April 2018, the PR [#6309 | Partial unification unconditional](https://github.com/scala/scala/pull/6309) was merged in the compiler to use it by default and remove the flag! Why anybody would want to disable it anyway. It only brings fixes. :muscle:
 
 **Scala 2.12.6 will be the first release where -Ypartial-unification flag won't be needed.**
 
@@ -212,7 +212,7 @@ Now we have seen what's partial-unification is all about, let's resume its histo
 
 Now we can tackle the other part of this article. The [kind-projector](https://github.com/non/kind-projector) is unrelated to the partial-unification and is more fun! It just happens that the combinaison of the two is verbose-code saving. (and let Intellij troubled with the correctness validation of the program)
 
-As said, the kind-projector is simply a sbt plugin. It is NOT part of scalac for now, but this will [eventually arrive in Dotty/Scala 3](https://github.com/lampepfl/dotty/issues/2041) with some minor adjustements I guess.
+As said, the kind-projector is simply a sbt plugin. It is NOT part of scalac for now, but this will [eventually arrive in Dotty/Scala 3](https://github.com/lampepfl/dotty/issues/2041) with some minor adjustements I guess. :pray:
 
 ## What does it offer?
 
@@ -221,7 +221,7 @@ The kind-projector provides advanced type features and reserves some identifiers
 - `Lambda/λ`: hopefully, Intellij can change to `λ`;
 - `?` keyword: to not be confused with `_`, both have different purposes (well, `_` has a tons of them according to where it is used, that's another story).
 
-`Lambda/λ` is just a generalization of `?`. We'll mostly used the latter to keep it simple.
+`Lambda/λ` is just a generalization of `?`. We'll mostly used the latter to keep it simple. :flushed:
 
 ## After "_" we have "?"
 
@@ -321,11 +321,11 @@ For the first call, we pass an `Either[Int, String]` to `f` asking for a `F[A]`.
 
 ## NO to left-biased!
 
-If we still had our left-biased `Functor[Either[?, U]]`, we wouldn't be able to compile:
+If we still had our left-biased `Functor[Either[?, U]]`, we wouldn't be able to compile: :cry:
 
 - through the partial-unification, `f` is (still) using `F[_]=[T]Either[Int, T]` and `A=String`;
 - therefore, it provides us with a `Functor[Either[Int, ?]]`;
-- ... and it fails! Because our implicit provides only `Functor[Either[?, Int]]`.
+- ... and it fails! :no_entry: Because our implicit provides only `Functor[Either[?, Int]]`.
 
 A left-biased instance can't been found by the partial-unification process. We need to hijack the game as we saw earlier:
 
@@ -339,7 +339,7 @@ f(Right(42): R[Error], (_: Error).getMessage) // Right(42)
 
 Now you probably understand better why [@djspiewak](https://github.com/djspiewak) said "You should always, always order the type parameters in your type constructor from least-to-most specific.".
 
-We present a way to deal with the left-biased types at the end of this article.
+We present a way to deal with the left-biased types afterwards. :arrow_down:
 
 
 ## Usage in inheritance
@@ -410,7 +410,7 @@ def kEither[A]: Kleisli[Either[Throwable, ?], A, A] = Kleisli(_.asRight[Throwabl
 kEither.stringify(kleisliStringify("hello world")) // Kleisli: Right: hello world
 ```
 
-As you can see, it's exactly the same principle with inheritance or not. I hope all those examples have triggered your "Eureka"!
+As you can see, it's exactly the same principle with inheritance or not. I hope all those examples have triggered your "Eureka"! :grinning:
 
 Remember that it's still possible to not use `?` in your code, and replace it with the lambda types but...:
 
@@ -439,7 +439,7 @@ As we seen, we can't rely on partial-unification:
 
 We can apply some trick (see this [SO](https://stackoverflow.com/questions/46263931/higher-order-unification-for-type-constructor-inference/46265914#46265914)) to reverse the types to enjoy the right-biaised types. Let's make our code compile!
 
-We need a structure to invert the types:
+We need a structure to invert the types: :smiling_imp:
 
 ```scala
 implicit class InferToLeft[M[_, _, _], A, B, C](a: M[A, B, C]) {
@@ -464,13 +464,9 @@ It works because:
 - `InferToLeft.U[Tuple3, Boolean, String, Int]` <=> `(Int, String, Boolean)`;
 - it's messed up (Intellij sees red);
 - the partial-unification resolves: `[T]InferToLeft.U[Tuple3, Boolean, String, T]` which is equivalent to `[T](T, String, Boolean)`;
-- therefore it can create the `Functor`: `new Functor[(?, B, C)]`, brillant!
+- therefore it can create the `Functor`: `new Functor[(?, B, C)]`, brillant! :clap:
 
 <p class="c"><img src="mindblow.gif" alt="Mindblow" /></p>
-
-::: info
-toto va
-:::
 
 Note this another trick if you want to do the same with a `Bifunctor`:
 
@@ -503,30 +499,121 @@ object InferToLeft {
 (1, "2", true).lefty2.bimap(_ + 10, _.length) // it works!
 ```
 
-The partial-unification resolves: `[T, U]InferToLeft.V[Tuple3, Boolean, T, U]` <=> `[T, U](T, U, Boolean)`, the definition of our `Bifunctor`.
+The partial-unification resolves: `[T, U]InferToLeft.V[Tuple3, Boolean, T, U]` <=> `[T, U](T, U, Boolean)`, the definition of our `Bifunctor`. :muscle:
 
 With `lefty`, it would resolved `[T, U]InferToLeft.V[Tuple3, Boolean, T, U]` <=> `[T, U](U, T, Boolean)`, NOT our definition!
 
-## Real cases: cats and scalaz
+## Real cases study: cats and scalaz
 
-Let's try to understand this (scalaz):
+Now that we understand both concepts, let's quickly practice on existing code from cats and scalaz.
+
+In cats, the `Traverse[F[_]]` typeclass has a `compose` method:
 
 ```scala
-def subst1[G[_], F[_[_]], T](fa: F[G]): F[λ[α => G[α] @@ T]] = {
-    fa.asInstanceOf[F[λ[α => G[α] @@ T]]]
-}
+def compose[G[_]: Traverse]: Traverse[λ[α => F[G[α]]]] = ???
 ```
 
+It's using the `λ` syntax because it's not possible to use `?` here. Why?
+
+`Traverse[F[G[?]]]` won't compile: `F[[?$2$]G[?$2$]] takes no type parameters, expected: one`: it doesn't fit what's expected: `Traverse[[?]F[G[?]]]`.
+
+`Traverse` expects a `F[_]`, but `G[?]` is interpreted as ... `G[A]`! As the [documentation](https://github.com/non/kind-projector#type-lambda-gotchas) says: _`?` always binds at the tightest level_. Therefore it's still giving `F[G[A]]` instead of `F[G]`.
+
+We can easily correlate with what is generated with one level only and common classes:
+
 ```scala
-Traverse[λ[α => F[G[α]]]] 
+// one nested: OK!
+def f: Traverse[List[?]]
+➔ def f: Traverse[[?]List[?]]
+
+// nested of nested using the inner scope: FAIL!
+def f: Traverse[List[Future[?]]] // the equivalent of what we saw: Traverse[F[G[?]]]
+➔     Traverse[List[[?]Future[?]]] // FAIL!
+
+// nested of nested using the outer scope: OK!
+def f: Traverse[λ[A => List[Future[A]]]]
+➔ def f: Traverse[[A]List[Future[A]]]
+```
+
+Finally, it all makes sense: `Traverse.compose` composes two `Traverse[F[_]]` into one (`x => traverseF(traverseG(x))`). The end type would result in `Traverse[Traverse[F[_]]]`.
+
+Therefore, to fit the type parameter of `Traverse[F[_]]`, `compose` needs to project the inner `Traverse[_[_]]` into a simple higher-kinded type `_[_]`:
+
+---
+
+A last and more complicated example in appearance, from scalaz:
+
+```scala
+// Tag.scala
+def subst1[G[_], F[_[_]], T](fa: F[G]): F[λ[α => G[α] @@ T]] = ???
+```
+
+This one is part of the "tag" feature of scalaz.
+It allows to _tag_ a type with another type.
+This way, we can distinguish same types at compile-time without creating dedicated useless classes for each "subtypes".
+
+```scala
+sealed trait Kg
+val kgTag = Tag.of[Kg]
+
+// will only accept List[Int] tagged with Kg
+def process(kgs: List[Int] @@ Kg) = ???
+
+// different level of tagging possible:
+       kgTag(List(1, 2, 3)) : List[Int] @@ Kg                // F[_] @@ tag
+ kgTag.subst(List(1, 2, 3)) : List[Int @@ Kg]                // F[_ @@ tag]
+kgTag.subst1(Functor[List]) : Functor[λ[α => List[α] @@ Kg]] // F[G @@ tag] with G[_]
+
+// our signature is actually this one:
+Tag.subst1[Option, Functor, Kg](Functor[Option]) : Functor[λ[α => List[α] @@ Kg]]
+```
+
+With the last example, it's quite straightforward to understand the signature of `Tag.subst1`: it returns a `F[G @@ T]` where `G` has one type parameter `G[_]` and is tagged with `T`.
+
+But we must undertand what is a tag: it's actually a type alias of a structural type :cold_sweat:: 
+
+```scala
+type @@[T, Tag] = Tagged[T, Tag]
+type Tagged[A, T] = {type Tag = T; type Self = A}
+```
+
+If we replace the alias:
+
+```scala
+def subst1[G[_], F[_[_]], T](fa: F[G]): F[λ[α => Tagged[G[α], T]]] = ???
+```
+
+We stumbled upon exactly the same case as with our cats example!
+
+```scala
+// look at the return types
+def subst1[G[_], F[_[_]], T](fa: F[G]): F[λ[α => Tagged[G[α], T]]]
+           def compose[G[_]: Traverse]: Traverse[λ[α => F[G[α]]]]
+```
+
+If you squeeze your eyes enough (ie: in `compose`, replace `F` by `Tagged` and `Traverse` by `F`): you get the same case! (ignoring the `T`)
+So I don't need to explain more of it, we already did it. :grin:
+
+I hope you enjoyed those cases. At the end, everything looks the same, it's always the same logic, just presented differently.
+
+# Dotty
+
+Dotty [will](https://github.com/lampepfl/dotty/issues/2041) probably implement `?`.
+[Type lambdas](http://dotty.epfl.ch/docs/reference/type-lambdas.html) are already implemented.
+
+For instance, our previous cats example should be written:
+
+```scala
+// original: def compose[G[_]: Traverse]: Traverse[λ[α => F[G[α]]]] = ???
+def compose[G[_]: Traverse]: Traverse[[α] => F[G[α]]] = ???
 ```
 
 # Conclusion
 
-Dotty [will](https://github.com/lampepfl/dotty/issues/2041) implement `?` and [type lambdas](http://dotty.epfl.ch/docs/reference/type-lambdas.html):
+The partial-unification works with higher-kinded types and allows us to pass more complex types (such as `Either[_,_]`) to functions (expecting a `F[_]` for instance). The compiler will always favor right-biased type constructors by leaving the right-most types _free_ (ignoring the left-most). We can use the `InferToLeft` trick to revert the types for the partial-unification to work properly with the left-biased types. In Scala 2.12.6, it will be automatically enabled at compile-time. Until then: `scalacOptions += "-Ypartial-unification"`. :weary:
 
-```scala
-type T = [X] => (X, X)
-```
+The kind-projector allows us to declare _free types_ in higher-kinded types to "fit" their container, using `?` or `λ` for more complex cases. `?` is NOT `_`. Always favor right-most free types to avoid partial-unification issues. Cats and scalaz relies a LOT on that, but as we saw, it's not that complicated to decrypt. [Read the documentation of the kind-projector](https://github.com/non/kind-projector), it goes deeper than what we saw here (such as the [polymorphic lambdas](https://github.com/non/kind-projector#polymorphic-lambda-values)).
 
+Don't be scared of Intellij Idea: it's often all red but it compiles. :grin:
 
+Wait for Dotty/Scala3. :pray: The documentation of Dotty contains tons of interesting insights about types and is quite accessible. For instance, about the [Kind polymorphism here](http://dotty.epfl.ch/docs/reference/kind-polymorphism.html) (expand the menus on the left).

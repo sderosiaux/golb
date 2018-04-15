@@ -1,5 +1,6 @@
 .clock:before {
-  content: '\25F7';
+  content: '🕒';
+  font-size: 14px;
 }
 .table-of-contents ul {
   list-style-type: none;
