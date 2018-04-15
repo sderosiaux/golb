@@ -10,6 +10,7 @@ import { Flex, Box } from 'reflexbox'
 import ReadNext from 'components/ReadNext'
 import ReactDisqusThread from 'components/DisqusThread'
 import Subscribe from 'components/Subscribe'
+import NProgress from 'components/NProgress'
 
 module.exports = React.createClass({
   propTypes() {
@@ -44,6 +45,7 @@ module.exports = React.createClass({
           ]}
         />
         <h1>{post.title}</h1>
+        <NProgress />
         {post.tags && <ul className="tags">{post.tags.split(',').map(t => <li>{t}</li>)}</ul>}
         <div style={{ color: '#aaa', fontSize: 'small', marginBottom: 20 }}>
           <Flex>

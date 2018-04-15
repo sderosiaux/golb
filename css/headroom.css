@@ -53,3 +53,22 @@
 @media (max-width: 480px) {
   .headroom .social { display: none; }
 }
+
+
+
+.KW_progressContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: transparent;
+}
+
+.KW_progressBar {
+  width: 0%;
+  height: 100%;
+  max-width: 100%;
+  background-color:lightgreen;
+  transition: width .3s ease;
+}
