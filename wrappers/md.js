@@ -44,24 +44,27 @@ module.exports = React.createClass({
             { property: "og:image", content: "/m.jpg" }
           ]}
         />
-        <h1>{post.title}</h1>
-        <NProgress />
-        <div style={{ color: '#aaa', fontSize: 'small', marginBottom: 20 }}>
-          <Flex>
-            <Box><span className="subtitle">{format(post.date, 'DD MMM YYYY')} — <ReadTime text={post.body} /></span></Box>
-            <Box flexAuto={true}></Box>
-            <Box><ShareButtons url={fullUrl} title={title} /></Box>
-          </Flex>
-          {post.tags && <div className="tags">➡️ {post.tags.split(',').map(t => <span>{t}</span>)}</div>}
+        {post.background && <div className="article-image" style={{ backgroundImage: 'url(' + post.background + ')' }}></div>}
+        <div className="content">
+          <h1>{post.title}</h1>
+          <NProgress />
+          <div style={{ color: '#aaa', fontSize: 'small', marginBottom: 20 }}>
+            <Flex>
+              <Box><span className="subtitle">{format(post.date, 'DD MMM YYYY')} — <ReadTime text={post.body} /></span></Box>
+              <Box flexAuto={true}></Box>
+              <Box><ShareButtons url={fullUrl} title={title} /></Box>
+            </Flex>
+            {post.tags && <div className="tags">➡️ {post.tags.split(',').map(t => <span>{t}</span>)}</div>}
+          </div>
+          <hr />
+          <div dangerouslySetInnerHTML={{ __html: post.body }} />
+          <ShareButtons url={fullUrl} title={title} />
+          <ReadNext post={post} pages={route.pages} />
+          <div style={{ height: 20 }} />
+          <Subscribe />
+          <div style={{ height: 20 }} />
+          <ReactDisqusThread url={fullUrl} shortname="ctheu" title={title} />
         </div>
-        <hr />
-        <div dangerouslySetInnerHTML={{ __html: post.body }} />
-        <ShareButtons url={fullUrl} title={title} />
-        <ReadNext post={post} pages={route.pages} />
-        <div style={{ height: 20 }} />
-        <Subscribe />
-        <div style={{ height: 20 }} />
-        <ReactDisqusThread url={fullUrl} shortname="ctheu" title={title} />
       </div>
     )
   },

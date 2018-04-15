@@ -5,6 +5,7 @@ layout: post
 path: "/2015/02/12/how-to-communicate-between-react-components/"
 language: en
 tags: javascript, es6, reactjs, context, redux, mobx, pubsub
+background: 'background.jpg'
 ---
 
 As a starter, I already wrote a smaller article about [Ownership and children in ReactJS](https://www.ctheu.com/2015/02/10/ownership-and-children-in-reactjs/) to differenciate between parent/child relationship and React ownership.

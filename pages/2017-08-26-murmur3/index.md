@@ -5,6 +5,7 @@ layout: post
 path: "/2017/08/26/the-murmur3-hash-function--hashtables-bloom-filters-hyperloglog/"
 language: "en"
 tags: scala, java, guava, murmur3, hash, hashtable, bloom filters, hyperloglog, term frequency, spark, cassandra, druid, akka
+background: 'background.jpg'
 ---
 
 > "A hash function is any algorithm or subroutine that maps large data sets of variable length, called keys, to smaller data sets of a fixed length."

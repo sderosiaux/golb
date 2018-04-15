@@ -5,6 +5,7 @@ layout: post
 path: "/2018/04/12/an-ode-to-the-kind-projector-and-to-the-partial-unification-of-scala/"
 language: "en"
 tags: scala, partial-unification, kind-projector, cats, scalaz, dotty, typeclass, hkt
+background: 'background.jpg'
 ---
 
 The [kind-projector sbt plugin](https://github.com/non/kind-projector) is quite ubiquitous in the Scala world.

@@ -5,6 +5,7 @@ layout: post
 path: "/2017/08/07/looking-at-kafka-s-consumers-offsets/"
 language: "en"
 tags: scala, kafka, stream, consumers, offsets, lag
+background: "background.jpg"
 ---
 
 Kafka has quite evolved since some times. Its consuming model is very powerful, can greatly scale, is quite simple to understand.

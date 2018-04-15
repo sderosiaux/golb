@@ -5,6 +5,7 @@ layout: post
 path: "/2017/03/02/serializing-data-efficiently-with-apache-avro-and-dealing-with-a-schema-registry/"
 language: "en"
 tags: scala, avro, benchmark, schema registry, confluent
+background: 'background.jpg'
 ---
 
 This article started with only the benchmark part, because I was curious of the impact of some parameters of the API, and if I could make things go faster.
