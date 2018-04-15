@@ -28,7 +28,7 @@ export default (props) => {
       />
       <div className="my-presentation">
         <h2>Bonjour,</h2>
-        <p>I'm Stéphane, a Senior Scala and Data Engineer from France, and previously Front-End Developer. Passionated about everything related to IT, I try to provide you some feedback about what I learned. I hope you'll enjoy it.</p>
+        <p>I'm Stéphane, a Senior Scala and Data Engineer from France, and previously Front-End Developer. Passionated about everything related to IT, I <a href="https://github.com/chtefi/every-single-day-i-tldr">read a lot</a> and to provide you some feedback about what I learned. I hope you'll enjoy it.</p>
         <div>Feel free to come say Hi <SocialIcon url="https://twitter.com/ChtefiD" style={{ height: 32, width: 32, verticalAlign: 'text-top' }} /></div>
       </div>
       <div style={{
