@@ -6,10 +6,10 @@ export default class NProgress extends React.Component {
         this.state = { width: 0 }
     }
     componentWillMount() {
-        window.addEventListener('scroll', this.handleScroll)
+        if (typeof window !== 'undefined') window.addEventListener('scroll', this.handleScroll)
     }
     componentWillUnmount() {
-        window.removeEventListener("scroll", this.handleScroll)
+        if (typeof window !== 'undefined') window.removeEventListener("scroll", this.handleScroll)
     }
     handleScroll = (e) => {
         const wintop = window.scrollY
