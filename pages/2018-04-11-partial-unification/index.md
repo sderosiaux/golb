@@ -1,8 +1,8 @@
 ---
-title: "An ode to the kind-projector and the partial-unification of Scala"
+title: "An ode to the kind-projector and to the partial-unification of Scala"
 date: "2018-04-12T12:08Z"
 layout: post
-path: "/2018/04/12/kind-projection-and-partial-unification-caveats/"
+path: "/2018/04/12/an-ode-to-the-kind-projector-and-to-the-partial-unification-of-scala/"
 language: "en"
 tags: scala, partial-unification, kind-projector, cats, scalaz, dotty, typeclass, hkt
 ---
