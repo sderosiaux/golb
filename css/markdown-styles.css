@@ -132,9 +132,9 @@
   font-family: inherit;
 }
 
-.hljs, .markdown > div > pre   {
+.hljs, .markdown > div > div > pre   {
   display: block;
-  overflow-x: auto;
+  overflow-x: hidden;
   color: rgb(171, 178, 191);
   background: #282c34;
   border-radius: 10px;
