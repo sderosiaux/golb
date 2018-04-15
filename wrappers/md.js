@@ -46,16 +46,15 @@ module.exports = React.createClass({
         />
         <h1>{post.title}</h1>
         <NProgress />
-        {post.tags && <ul className="tags">{post.tags.split(',').map(t => <li>{t}</li>)}</ul>}
         <div style={{ color: '#aaa', fontSize: 'small', marginBottom: 20 }}>
           <Flex>
-            <Box>{format(post.date, 'MMM Do, YYYY')}</Box>
-            <Box>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="clock"></span>&nbsp;</Box>
-            <Box><ReadTime text={post.body} /></Box>
+            <Box><span className="subtitle">{format(post.date, 'DD MMM YYYY')} — <ReadTime text={post.body} /></span></Box>
             <Box flexAuto={true}></Box>
             <Box><ShareButtons url={fullUrl} title={title} /></Box>
           </Flex>
+          {post.tags && <div className="tags">➡️ {post.tags.split(',').map(t => <span>{t}</span>)}</div>}
         </div>
+        <hr />
         <div dangerouslySetInnerHTML={{ __html: post.body }} />
         <ShareButtons url={fullUrl} title={title} />
         <ReadNext post={post} pages={route.pages} />

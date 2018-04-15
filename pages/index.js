@@ -33,7 +33,8 @@ export default (props) => {
       </div>
       <div style={{
         boxShadow: 'rgba(0, 0, 0, 0.1) 0px 4px 120px',
-        borderRadius: '1rem'
+        borderRadius: '1rem',
+        padding: '10px 80px'
       }}>
         <div className="latest">Latest articles</div>
         <ul className="index">

@@ -38,8 +38,7 @@
 }
 
 ul.index > li {
- padding: 10px 80px;
-
+ margin-bottom: 40px;
  overflow: hidden;
 }
 
