@@ -1,5 +1,6 @@
 ---
 title: "An ode to the kind-projector and to the partial-unification of Scala"
+description: "The kind-projector sbt plugin is quite ubiquitous in the Scala world. It introduces new keywords to provide some syntactic sugar for advanced type-related usage. It's also depends on the partial-unification done by scalac, which has some caveats."
 date: "2018-04-12T12:08Z"
 layout: post
 path: "/2018/04/12/an-ode-to-the-kind-projector-and-to-the-partial-unification-of-scala/"
