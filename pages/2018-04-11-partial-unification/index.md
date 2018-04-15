@@ -165,7 +165,7 @@ show2((str: String) => str.length) // F[_,_],A,B = Function1, String, Int // per
 show2(Triple(1, "2", true))        // F[_,_],A,B = [T, U](Int, T, U), String, Boolean
 ```
 
-When you try to trigger the partial unification on a nested type constructor, it's not what you expect:
+When we try to trigger the partial unification on a nested type constructor, it's not what we expect:
 
 ```scala
 def show3[F[_[_]], G[_]](f: F[G]) = ???
@@ -189,7 +189,7 @@ show4(Some((1, true)))           // F[_],G[_] = Some, [T](Int, T) -- partial uni
                                  // Note that Intellij IDEA thinks it's a type mismatch.
 ```
 
-Anyway, we get to the very important rule that will bite you later (when using the kind-projector, we'll see):
+Anyway, we get to the very important rule that will bite us later (when using the kind-projector, we'll see):
 
 **The type constructors are partially applied from left to right leaving the rightmost type parameters free, therefore favorising the right-biaised type constructors.**
 
@@ -343,7 +343,7 @@ f(Right(42): R[Error], (_: Error).getMessage) // Right(42)
 
 **This is the major pain point of the relation between kind-projector and the partial-unification.**
 
-Now you probably understand better why [@djspiewak](https://github.com/djspiewak) said "You should always, always order the type parameters in your type constructor from least-to-most specific.".
+Now we understand better why [@djspiewak](https://github.com/djspiewak) said "You should always, always order the type parameters in your type constructor from least-to-most specific.".
 
 We present a way to deal with the left-biased types afterwards. :arrow_down:
 
@@ -416,9 +416,9 @@ def kEither[A]: Kleisli[Either[Throwable, ?], A, A] = Kleisli(_.asRight[Throwabl
 kEither.stringify(kleisliStringify("hello world")) // Kleisli: Right: hello world
 ```
 
-As you can see, it's exactly the same principle with inheritance or not. I hope all those examples have triggered your "Eureka"! :grinning:
+As we can see, it's exactly the same principle with inheritance or not. I hope all those examples have triggered your "Eureka"! :grinning:
 
-Remember that it's still possible to not use `?` in your code, and replace it with the lambda types but...:
+Remember that it's still possible to not use `?` in our code, and replace it with the lambda types but...:
 
 ```scala
 implicit def eitherStringify[T]: Stringify[Either[T, ?]] = new Stringify[Either[T, ?]] { ... }
@@ -474,7 +474,7 @@ It works because:
 
 <p class="c"><img src="mindblow.gif" alt="Mindblow" /></p>
 
-Note this another trick if you want to do the same with a `Bifunctor`:
+Note this another trick if we want to do the same with a `Bifunctor`:
 
 ```scala
 implicit def leftBiasedBifunctor[C]: Bifunctor[(?, ?, C)] = new Bifunctor[(?, ?, C)] {
@@ -597,7 +597,7 @@ def subst1[G[_], F[_[_]], T](fa: F[G]): F[λ[α => Tagged[G[α], T]]]
            def compose[G[_]: Traverse]: Traverse[λ[α => F[G[α]]]]
 ```
 
-If you squeeze your eyes enough (ie: in `compose`, replace `F` by `Tagged` and `Traverse` by `F`): you get the same case! (ignoring the `T`)
+If we squeeze our eyes enough (ie: in `compose`, replace `F` by `Tagged` and `Traverse` by `F`): we get the same case! (ignoring the `T`)
 So I don't need to explain more of it, we already did it. :grin:
 
 I hope you enjoyed those examples. At the end, everything looks the same, it's always the same logic, from a different angle.
