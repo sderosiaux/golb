@@ -4,6 +4,7 @@ date: "2016-07-25T19:38:39Z"
 layout: post
 path: "/2016/07/25/demystifying-openssl/"
 language: "en"
+background: "background.jpg"
 ---
 
 I always saw openssl as a complicated beast.

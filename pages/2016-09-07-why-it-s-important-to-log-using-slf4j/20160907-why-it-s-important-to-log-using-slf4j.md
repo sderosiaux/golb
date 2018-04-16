@@ -5,6 +5,7 @@ date: "2016-09-07T22:12:03.284Z"
 layout: post
 path: "/2016/09/07/why-it-s-important-to-log-using-slf4j/"
 tags: java, scala, slf4j, log4j, logback
+background: "background.jpg"
 ---
 
 You are a Java or Scala developer.

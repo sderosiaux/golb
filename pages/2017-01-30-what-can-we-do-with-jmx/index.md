@@ -5,6 +5,7 @@ layout: post
 path: "/2017/02/14/all-the-things-we-can-do-with-jmx/"
 language: "en"
 tags: java, scala, jmx, rmi, monitoring, kafka, akka, camel, kamon, jolokia, jmxtrans
+background: "background.jpg"
 ---
 
 If you're working with Java or Scala, you probably already heard of JMX or already using it. Most of us probably already used `jconsole` or `jvisualvm` to access the "JMX data", to get some insights about the internals of a Java process. If you did not, you're going to wonder why you never did. If you did, you may be interested by all the integrations we're going to show.
