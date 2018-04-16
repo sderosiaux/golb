@@ -83,6 +83,13 @@
   .newsletter input[type=submit] {
     margin-top: 20px;
   }
+  .markdown > .content {
+    padding: 0 10px; 
+  }
+  .article-image {
+    height: 200px;
+  }
+  .scrollUp { display: none; }
 }
 
 .fr { float: right; padding-left: 20px; padding-bottom: 20px; }

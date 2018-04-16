@@ -68,7 +68,7 @@ module.exports = React.createClass({
         <Container style={{ maxWidth: 1024 }}>
           {this.props.children}
         </Container>
-        <ScrollUp showUnder={3000} easing={'easeOutCubic'} duration={500}>
+        <ScrollUp style={{ bottom: 20, right: 20 }} showUnder={3000} easing={'easeOutCubic'} duration={500}>
           <img src={img} className="scrollUp" />
         </ScrollUp>
       </div>
