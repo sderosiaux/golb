@@ -59,7 +59,8 @@ module.exports = React.createClass({
                 <div>
                   <SocialIcon url="https://twitter.com/ChtefiD" style={{ height: 32, width: 32 }} />&nbsp;
                   <SocialIcon url="https://medium.com/@ChtefiD/" style={{ height: 32, width: 32 }} />&nbsp;
-                  <SocialIcon url="https://github.com/chtefi" style={{ height: 32, width: 32 }} />
+                  <SocialIcon url="https://github.com/chtefi" style={{ height: 32, width: 32 }} />&nbsp;
+                  <SocialIcon url="https://www.linkedin.com/in/st%C3%A9phane-derosiaux-525404106/" style={{ height: 32, width: 32 }} />
                 </div>
               </Box>
             </Flex>
