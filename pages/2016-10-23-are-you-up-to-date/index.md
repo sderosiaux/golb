@@ -5,6 +5,7 @@ layout: post
 path: "/2016/10/23/are-you-up-to-date/"
 language: "en"
 tags: technology, watch, newsletter, update, engineering, big data, 
+background: 'background.jpg'
 ---
 
 A few weeks ago, I've created a repo on Github resuming how I stay up to date: [chtefi/how-i-stay-updated](https://github.com/chtefi/how-i-stay-updated).
