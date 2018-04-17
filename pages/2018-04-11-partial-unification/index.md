@@ -9,7 +9,7 @@ tags: scala, partial-unification, kind-projector, cats, scalaz, dotty, typeclass
 background: 'background.jpg'
 ---
 
-The [kind-projector sbt plugin](https://github.com/non/kind-projector) is quite ubiquitous in the Scala world.
+The [kind-projector Scalac plugin](https://github.com/non/kind-projector) is quite ubiquitous in the Scala world.
 So much that we won't need it in the future! Its features will be [native in Dotty/Scala 3](https://github.com/lampepfl/dotty/issues/2041) as we'll see. :pray: But we're not there yet.
 
 This plugin introduces new keywords to provide some syntactic sugar for advanced type-related usage. It does _not_ provide any new feature but simplifies how to write and read code that is hardly readable without.
