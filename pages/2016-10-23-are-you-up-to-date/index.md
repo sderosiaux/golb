@@ -4,6 +4,7 @@ date: "2016-10-23T16:54:22Z"
 layout: post
 path: "/2016/10/23/are-you-up-to-date/"
 language: "en"
+tags: technology, watch, newsletter, update, engineering, big data, 
 ---
 
 A few weeks ago, I've created a repo on Github resuming how I stay up to date: [chtefi/how-i-stay-updated](https://github.com/chtefi/how-i-stay-updated).
@@ -78,8 +79,9 @@ I also found a nice platform to `git clone` and install ourself, to save the boo
 
 # Newsletters
 
-There are easy to subscribe and forget.
-The emails are where I got tons of links. I don't spend the same time on every one of them, it would be too damn time consuming! 
+Subscribe and forget.
+
+The emails are the source I got tons of links. I don't spend the same time on every one of them, it would be too damn time consuming! 
 
 - <http://highscalability.com/>: stuff-the-internet-says-on-scalability, quotes and numbers. A LOT of links to blogs and articles.
 - <http://www.confluent.io/blog/>: top quality articles about confluent platform (kafka, streams, connect..)
