@@ -141,7 +141,7 @@
 
 .hljs, .markdown > div > div > pre   {
   display: block;
-  overflow-x: hidden;
+  overflow-x: auto;
   color: rgb(171, 178, 191);
   background: #282c34;
   border-radius: 10px;
