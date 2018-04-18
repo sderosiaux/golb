@@ -79,7 +79,7 @@ type ErrorEither[A] = Either[Error, A]
 show(err: ErrorEither[String]) // "Left(java.lang.Error: boom)"
 ```
 
-We can also generalize this type to ignore its left parametric type (all three notations does the same):
+We can also generalize this type to ignore its left parametric type (all three notations do the same):
 
 ```scala
 type R[A] = Either[_, A] // basically, "Any"
@@ -214,7 +214,7 @@ We have seen what's partial-unification is all about. Let's resume its history a
 
 Now we can tackle the other part of this article. The [kind-projector](https://github.com/non/kind-projector) is unrelated to the partial-unification and is more fun! The combinaison of both features make the code really verbose saving. (and can sometimes let Intellij troubled when it tries to validate the code, red everywhere)
 
-As said, the kind-projector is simply a sbt plugin. It is NOT part of scalac for now, but this will [eventually arrive in Dotty/Scala 3](https://github.com/lampepfl/dotty/issues/2041) with some minor adjustements I guess. :pray:
+As said, the kind-projector is simply a scalac plugin. It is NOT part of scalac for now, but this will [eventually arrive in Dotty/Scala 3](https://github.com/lampepfl/dotty/issues/2041) with some minor adjustements I guess. :pray:
 
 ## What does it offer?
 
@@ -393,7 +393,7 @@ implicit def listStringify: Stringify[List] = new Stringify[List] {
 }
 ```
 
-Here, we need more parameter, a `Comonad`, to be able to run the `Free[S[_], A]`:
+Here, we need one more parameter, a `Comonad`, to be able to run the `Free[S[_], A]`:
 
 ```scala
 implicit def freeStringify[F[_]: Comonad]: Stringify[Free[F, ?]] = new Stringify[Free[F, ?]] {
@@ -509,7 +509,7 @@ object InferToLeft {
 
 The partial-unification resolves: `[T, U]InferToLeft.V[Tuple3, Boolean, T, U]` <=> `[T, U](T, U, Boolean)`, the definition of our `Bifunctor`. :muscle:
 
-With `lefty`, it would resolved `[T, U]InferToLeft.V[Tuple3, Boolean, T, U]` <=> `[T, U](U, T, Boolean)`, NOT our definition!
+With `lefty`, it would have resolved `[T, U]InferToLeft.V[Tuple3, Boolean, T, U]` <=> `[T, U](U, T, Boolean)`, NOT our definition!
 
 ## Real cases study: cats and scalaz
 
