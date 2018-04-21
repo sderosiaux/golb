@@ -40,7 +40,7 @@ module.exports = React.createClass({
           <link rel="apple-touch-icon-precomposed" href="/m.jpg" />
           <meta name="msapplication-TileImage" content="/m.jpg" />
           <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
-          <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="/rss.xml" />
+          <link rel="alternate" type="application/rss+xml" title="ctheu.com" href="/rss.xml" />
           {head.title.toComponent()}
           {head.meta.toComponent()}
           <TypographyStyle typography={typography} />
