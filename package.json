@@ -37,6 +37,7 @@
     "react-social-icons": "^2.5.1",
     "react-typography": "^0.15.0",
     "reflexbox": "^2.2.3",
+    "rss": "^1.2.2",
     "toml-js": "0.0.8",
     "typography": "^0.15.0",
     "typography-plugin-code": "^0.15.0",

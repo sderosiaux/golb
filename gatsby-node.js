@@ -1,8 +1,9 @@
 var fs = require('fs-extra-promise') //install this package
 var sm = require('sitemap') // install this package
+var rss = require('rss')
 
 function pagesToSitemap(pages) {
-  var urls = pages.map(function(p) {
+  var urls = pages.map(function (p) {
     if (p.path !== undefined) {
       return {
         url: p.path,
@@ -12,7 +13,7 @@ function pagesToSitemap(pages) {
     }
   })
   // remove undefined (template pages)
-  return urls.filter(function(u) { return u !== undefined})
+  return urls.filter(function (u) { return u !== undefined })
 }
 
 function generateSiteMap(pages) {
@@ -28,20 +29,48 @@ function generateSiteMap(pages) {
   )
 }
 
-module.exports.postBuild = function(pages, callback) {
+function generateRss(pages) {
+  const feed = new rss({
+    title: "Blog ctheu.com",
+    description: "A technical blog talking about Scala, Java, Hadoop, Spark, React, JavaScript, and much more",
+    feed_url: 'https://www.ctheu.com/rss.xml',
+    site_url: 'https://www.ctheu.com'
+  })
+
+  pages.map(p => {
+    if (p.data && p.data.title) {
+      feed.item({
+        title: p.data.title,
+        description: p.data.description,
+        url: 'https://www.ctheu.com' + p.data.path,
+        categories: p.data.tags ? p.data.tags.split(',').map(s => s.trim()) : [],
+        date: p.data.date
+      })
+    }
+  })
+
+  console.log('Generating rss.xml')
+  fs.writeFileSync(
+    `${__dirname}/public/rss.xml`,
+    feed.xml({ indent: true }).toString()
+  )
+}
+
+module.exports.postBuild = function (pages, callback) {
   generateSiteMap(pages)
+  generateRss(pages)
   callback()
 }
 
-exports.modifyWebpackConfig = function(config, env) {
+exports.modifyWebpackConfig = function (config, env) {
   if (env == 'AAbuild-javascript') {
     config.merge({
       resolve: {
         alias: {
-            'react': 'preact-compat',
-            'react-dom': 'preact-compat'
+          'react': 'preact-compat',
+          'react-dom': 'preact-compat'
         }
-      } 
+      }
     })
     return config;
   }
