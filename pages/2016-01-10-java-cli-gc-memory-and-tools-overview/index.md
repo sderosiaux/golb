@@ -478,7 +478,7 @@ It's a good idea to set a max metaspace size, to be sure the JVM will never take
 
 ### How many classes can we load?
 
-I have a program that create dynamically classes on the fly and load them up. (https://gist.github.com/chtefi/018493089f4c75f36662)
+I have a program that create dynamically classes on the fly and load them up. (https://gist.github.com/sderosiaux/018493089f4c75f36662)
 
 ```c
 $ java -XX:MaxMetaspaceSize=10m

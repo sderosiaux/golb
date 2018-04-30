@@ -8,7 +8,7 @@ tags: technology, watch, newsletter, update, engineering, big data,
 background: 'background.jpg'
 ---
 
-A few weeks ago, I've created a repo on Github resuming how I stay up to date: [chtefi/how-i-stay-updated](https://github.com/chtefi/how-i-stay-updated).
+A few weeks ago, I've created a repo on Github resuming how I stay up to date: [sderosiaux/how-i-stay-updated](https://github.com/sderosiaux/how-i-stay-updated).
 I thought it would be nice to write a blog post on that, with more details.
 
 ---
@@ -26,7 +26,7 @@ Those days, I'm working as a *Java/Scala back-batch-streaming-architecture-ops-b
 
 Before that, I did a lot of front-end: therefore I also keep my front-end knowledge up to date.
 It's still helpful to share and talk with the front-end teams. And it's especially useful when I want some quick UI to simplify a workflow.
-I even created a repo where I put everything I know about the [Guidelines to create a strong website](https://github.com/chtefi/guidelines-to-create-a-strong-website). Don't hesitate to PR! I may be a little rusty over some things.
+I even created a repo where I put everything I know about the [Guidelines to create a strong website](https://github.com/sderosiaux/guidelines-to-create-a-strong-website). Don't hesitate to PR! I may be a little rusty over some things.
 
 ## Boring means quitting
 
@@ -48,7 +48,7 @@ It's rare that tech people don't have a Twitter account. This is often where thi
 
 The characters limit is like a continuous TLDR feed, because we don't have time to read everything. We just want to be aware it exists, and refer to it when we need to.
 
-We don't know if Twitter is still going to be there in 10 years. I sometimes wonder how we were doing before! Personally, I'm posting a lot of links, everything I find interesting, also baked by another of my repo: [every single day I tldr](https://github.com/chtefi/every-single-day-i-tldr).
+We don't know if Twitter is still going to be there in 10 years. I sometimes wonder how we were doing before! Personally, I'm posting a lot of links, everything I find interesting, also baked by another of my repo: [every single day I tldr](https://github.com/sderosiaux/every-single-day-i-tldr).
 
 # Chrome
 
@@ -180,7 +180,7 @@ For instance:
 - Devops softwares (I mean chef, puppet, ansible, this kind): No problem to use them, but I don't want to learn the internals, I just don't care. I just love Docker. :-)
 - Datascientism: I LOVE to work with datascientists, they are awesome people. They know the data better than anyone else in the company. But the ML and Deep Learning pieces are a huge world. We all should definitely learn a lot in this domain, this is the present, and it's our future. Even Google wants to be a [*ML Company First*](https://backchannel.com/how-google-is-remaking-itself-as-a-machine-learning-first-company-ada63defcb70), betting on the right horse.
 - Design: I LOVE to work with designers, they are awesome people. Without them, we'll still be working with green on black screens. I LOVE watching and studying the work they are doing. I LOVE to criticize visuals.
-- Networking: I know the basics and how to debug a bit [chtefi/curated-system-tools](https://github.com/chtefi/curated-system-tools) but it's a very complex world. I suck at understanding company's architectures and acronyms, how it works etc.
+- Networking: I know the basics and how to debug a bit [sderosiaux/curated-system-tools](https://github.com/sderosiaux/curated-system-tools) but it's a very complex world. I suck at understanding company's architectures and acronyms, how it works etc.
 - The cloud: I barely played with AWS, I want to know more, but I'm waiting to have some use cases :).
 
 Each job needs specialized people after all.
@@ -188,7 +188,7 @@ Each job needs specialized people after all.
 # Blog
 
 As you can see, I also *maintain* this blog.
-I pick a topic or a framework I want to learn and share my findings. (I'm using a lot of [gists](https://gist.github.com/chtefi) too)
+I pick a topic or a framework I want to learn and share my findings. (I'm using a lot of [gists](https://gist.github.com/sderosiaux) too)
 
 It's useful because we try to not say stupid things and we must verify our affirmations.
 [Why you should write blogs](https://sites.google.com/site/steveyegge2/you-should-write-blogs).

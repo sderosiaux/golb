@@ -32,8 +32,8 @@ module.exports = React.createClass({
           meta={[
             { name: "description", content: description || title },
             { name: "twitter:card", value: "summary" },
-            { name: "twitter:creator", content: "@ChtefiD" },
-            { name: "twitter:site", content: "@ChtefiD" },
+            { name: "twitter:creator", content: "@sderosiaux" },
+            { name: "twitter:site", content: "@sderosiaux" },
             { name: "twitter:title", content: title },
             { name: "twitter:description", content: description || title },
             { name: "twitter:image", content: fullUrl + post.background },

@@ -199,7 +199,7 @@ Now, we can `node server.js`:
 - our expressjs API is working (`/api`).
 - we can edit our components and they will be updated in live.
 
-You can checkout the code here: https://github.com/chtefi/blog-react-hot-reloading
+You can checkout the code here: https://github.com/sderosiaux/blog-react-hot-reloading
 
 # react-hot-loader V3
 

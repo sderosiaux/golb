@@ -720,7 +720,7 @@ JMXTrans is mostly a scheduler (based on [quartz](https://github.com/quartz-sche
 
 We just have to set some config file and start the application anywhere, it will try to connect to the sources and the sinks at a regular pace (1min by default).
 
-I've created a repository [chtefi/jmxtrans-docker](https://github.com/chtefi/jmxtrans-docker) for this part, feel free to use it.{.info}
+I've created a repository [sderosiaux/jmxtrans-docker](https://github.com/sderosiaux/jmxtrans-docker) for this part, feel free to use it.{.info}
 
 We can download JMXTrans here http://central.maven.org/maven2/org/jmxtrans/jmxtrans/263/, specifically the built distribution archive: [jmxtrans-263-dist.tar.gz](http://central.maven.org/maven2/org/jmxtrans/jmxtrans/263/jmxtrans-263-dist.tar.gz).
 

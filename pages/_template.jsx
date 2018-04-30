@@ -41,7 +41,7 @@ module.exports = React.createClass({
               <Box>
                 <Flex>
                   <Box px={1}>
-                    <a target="_blank" href="https://twitter.com/ChtefiD" style={{ color: 'black', textDecoration: 'none', }}>
+                    <a target="_blank" href="https://twitter.com/sderosiaux" style={{ color: 'black', textDecoration: 'none', }}>
                       <img src={m} height={32} style={{ borderRadius: 100, margin: 0, display: 'block' }} />
                     </a>
                   </Box>
@@ -57,9 +57,9 @@ module.exports = React.createClass({
               {pathname !== '/' && <Box px={1} className="index">Check out my <Link to={prefixLink('/')}><span className="nice-btn">Latest articles</span></Link></Box>}
               <Box px={1} className="social">
                 <div>
-                  <SocialIcon url="https://twitter.com/ChtefiD" style={{ height: 32, width: 32 }} />&nbsp;
-                  <SocialIcon url="https://medium.com/@ChtefiD/" style={{ height: 32, width: 32 }} />&nbsp;
-                  <SocialIcon url="https://github.com/chtefi" style={{ height: 32, width: 32 }} />&nbsp;
+                  <SocialIcon url="https://twitter.com/sderosiaux" style={{ height: 32, width: 32 }} />&nbsp;
+                  <SocialIcon url="https://medium.com/@sderosiaux/" style={{ height: 32, width: 32 }} />&nbsp;
+                  <SocialIcon url="https://github.com/sderosiaux" style={{ height: 32, width: 32 }} />&nbsp;
                   <SocialIcon url="https://www.linkedin.com/in/st%C3%A9phane-derosiaux-525404106/" style={{ height: 32, width: 32 }} />&nbsp;
                   <SocialIcon url="https://www.sderosiaux.com/rss.xml" network="rss" style={{ height: 32, width: 32 }} />
                 </div>

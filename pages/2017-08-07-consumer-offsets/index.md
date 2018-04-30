@@ -175,7 +175,7 @@ Note that each message in this topic has a key and a value. It's very important,
 
 ## Kafka Streams: convert it to JSON
 
-I've written a [Kafka's Streams app](https://github.com/chtefi/kafka-streams-consumer-offsets-to-json) that reads this topic and convert its `(key, val)` to another topic, JSON-readable.
+I've written a [Kafka's Streams app](https://github.com/sderosiaux/kafka-streams-consumer-offsets-to-json) that reads this topic and convert its `(key, val)` to another topic, JSON-readable.
 
 The core of the code is:
 ```scala
