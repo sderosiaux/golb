@@ -79,7 +79,7 @@ this.setState({ values: update(this.state.values, {$push: [4]}) });
 
 # How to communicate between components ?
 
-I've written a whole post about that: https://www.ctheu.com/2015/02/12/how-to-communicate-between-react-components/
+I've written a whole post about that: https://www.sderosiaux.com/2015/02/12/how-to-communicate-between-react-components/
 
 # How to handle the data coming from a webservice ?
 

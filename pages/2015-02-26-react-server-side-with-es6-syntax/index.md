@@ -77,7 +77,7 @@ $ node -p process.versions.v8
 
 ## Transpilation automation
 
-It's possible to translate ES2015 source code to ES5 on the fly with browserify (check out [Browserify in depth](https://www.ctheu.com/2015/02/14/browserify-in-depth/)).
+It's possible to translate ES2015 source code to ES5 on the fly with browserify (check out [Browserify in depth](https://www.sderosiaux.com/2015/02/14/browserify-in-depth/)).
 
 In particular, applications using React must be converted anyway, because they rely on the JSX syntax, which is outside of ES2015 scope.
 

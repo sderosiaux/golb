@@ -21,7 +21,7 @@ We'll see how to enable HR from an existing application using webpack, expressjs
 
 ---
 
-If you want to know more about how Webpack does HR (low-level), how `webpack-[hot|dev]-middleware` work, I suggest you to read: [Webpack Hot Reloading and React: how ?](https://www.ctheu.com/2015/12/29/webpack-hot-reloading-and-react-how/).
+If you want to know more about how Webpack does HR (low-level), how `webpack-[hot|dev]-middleware` work, I suggest you to read: [Webpack Hot Reloading and React: how ?](https://www.sderosiaux.com/2015/12/29/webpack-hot-reloading-and-react-how/).
 
 A previous version of this post was using the `WebpackDevServer` with the `proxy` option. I decided to remove it and present this other solution instead, being simpler.{.info}
 

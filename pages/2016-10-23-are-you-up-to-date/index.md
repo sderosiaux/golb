@@ -30,7 +30,7 @@ I even created a repo where I put everything I know about the [Guidelines to cre
 
 ## Boring means quitting
 
-In my previous experience, after a while [I was bored and wanted to try something new](https://www.ctheu.com/2015/05/09/the-comfort-zone-is-evil/). Reading all those news and stuff about bigdata made me wanting to go there and see what was the deal with that. I've challenged myself, decided to resign from my job (5 years there), and found a job in an amazing company in Paris, [Powerspace](http://powerspace.com/). The boss was kind enough to let me in, despite the fact that I didn't had a lot of experiences with their current stack. He accepted the challenge, because he knew I was able to learn quickly and that I definitely wanted to learn. 
+In my previous experience, after a while [I was bored and wanted to try something new](https://www.sderosiaux.com/2015/05/09/the-comfort-zone-is-evil/). Reading all those news and stuff about bigdata made me wanting to go there and see what was the deal with that. I've challenged myself, decided to resign from my job (5 years there), and found a job in an amazing company in Paris, [Powerspace](http://powerspace.com/). The boss was kind enough to let me in, despite the fact that I didn't had a lot of experiences with their current stack. He accepted the challenge, because he knew I was able to learn quickly and that I definitely wanted to learn. 
 
 ## Engineering means learning
 

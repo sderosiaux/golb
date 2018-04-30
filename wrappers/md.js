@@ -23,7 +23,7 @@ module.exports = React.createClass({
     const post = route.page.data
     const { title, description, tags } = post;
 
-    const fullUrl = `https://www.ctheu.com${post.path}`
+    const fullUrl = `https://www.sderosiaux.com${post.path}`
 
     return (
       <div className="markdown">

@@ -7,7 +7,7 @@ language: "en"
 tags: circuit-breakers, netflix, hystrix, archaius, akka, lagom
 ---
 
-_The previous part of this series: [How to communicate between micro-services — Part 2 — Retryers](https://www.ctheu.com/2017/01/22/how-to-communicate-between-micro-services-part-2-retryers/)_.
+_The previous part of this series: [How to communicate between micro-services — Part 2 — Retryers](https://www.sderosiaux.com/2017/01/22/how-to-communicate-between-micro-services-part-2-retryers/)_.
 
 We saw in the previous article the Retryer pattern which is quite simple but can be insufficient to be fully resilient.
 

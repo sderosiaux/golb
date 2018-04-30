@@ -7,7 +7,7 @@ language: "en"
 tags: micro-services, retryers, couchbase, spark, guava, akka, akka streams, lagom
 ---
 
-_The introduction of this series: [How to communicate between micro-services — Part 1](https://www.ctheu.com/2017/01/18/how-to-communicate-between-micro-services-part-1/)_.
+_The introduction of this series: [How to communicate between micro-services — Part 1](https://www.sderosiaux.com/2017/01/18/how-to-communicate-between-micro-services-part-1/)_.
 
 We tend to not write any monolithic application nowadays, that provides all the features at once.
 

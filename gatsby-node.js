@@ -18,7 +18,7 @@ function pagesToSitemap(pages) {
 
 function generateSiteMap(pages) {
   var sitemap = sm.createSitemap({
-    hostname: 'https://www.ctheu.com',
+    hostname: 'https://www.sderosiaux.com',
     cacheTime: '60000',
     urls: pagesToSitemap(pages),
   })
@@ -31,10 +31,10 @@ function generateSiteMap(pages) {
 
 function generateRss(pages) {
   const feed = new rss({
-    title: "Blog ctheu.com",
+    title: "Blog sderosiaux.com",
     description: "A technical blog talking about Scala, Java, Hadoop, Spark, React, JavaScript, and much more",
-    feed_url: 'https://www.ctheu.com/rss.xml',
-    site_url: 'https://www.ctheu.com'
+    feed_url: 'https://www.sderosiaux.com/rss.xml',
+    site_url: 'https://www.sderosiaux.com'
   })
 
   pages.map(p => {
@@ -42,7 +42,7 @@ function generateRss(pages) {
       feed.item({
         title: p.data.title,
         description: p.data.description,
-        url: 'https://www.ctheu.com' + p.data.path,
+        url: 'https://www.sderosiaux.com' + p.data.path,
         categories: p.data.tags ? p.data.tags.split(',').map(s => s.trim()) : [],
         date: p.data.date
       })

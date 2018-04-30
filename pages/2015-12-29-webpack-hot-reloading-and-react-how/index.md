@@ -228,7 +228,7 @@ You can notice its `.babelrc` is using [`react-hmre`](https://github.com/danmart
 Update.
 
 It appears that `babel-plugin-react-transform` is now deprecated and `react-hot-loader` is rising from its ashes.
-I'll quickly go through what we already explained in a previous article [Using react-hot-loader with webpack#react-hot-loader-v3](https://www.ctheu.com/2015/05/14/using-react-hot-loader-with-a-webpack-dev-server-and-a-node-server/#react-hot-loader-v3).
+I'll quickly go through what we already explained in a previous article [Using react-hot-loader with webpack#react-hot-loader-v3](https://www.sderosiaux.com/2015/05/14/using-react-hot-loader-with-a-webpack-dev-server-and-a-node-server/#react-hot-loader-v3).
 
 In order to use it, we simply cleanup our config by removing the references to `babel-plugin-react-transform` in `.babelrc` and `package.json`.
 The webpack plugins stay, there are not related to React in particular.
