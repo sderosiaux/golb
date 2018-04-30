@@ -56,9 +56,18 @@ function generateRss(pages) {
   )
 }
 
+function generateRedirect() {
+  console.log('Generating _redirects for Netlify')
+  fs.writeFileSync(
+    `${__dirname}/public/_redirects`,
+    "https://www.ctheu.com/* https://www.sderosiaux.com/:splat 301!"
+  )
+}
+
 module.exports.postBuild = function (pages, callback) {
   generateSiteMap(pages)
   generateRss(pages)
+  generateRedirect()
   callback()
 }
 
