@@ -36,7 +36,7 @@ module.exports = React.createClass({
     return (
       <div>
         <Headroom wrapperStyle={{ marginBottom: rhythm(1) }}>
-          <Container style={{ maxWidth: null, padding: '16px 20px' }}>
+          <Container style={{ maxWidth: null, padding: '16px 5px' }}>
             <Flex align="center" col="3" justify="space-between">
               <Box>
                 <Flex>
@@ -69,7 +69,7 @@ module.exports = React.createClass({
                         placeholder="i.subscribe@email.com"
                         id="mce-EMAIL"
                       />
-                      <input type="submit" value="Yes, please!" name="subscribe" id="mc-embedded-subscribe" />
+                      <input type="submit" value="Yes please!" name="subscribe" id="mc-embedded-subscribe" />
                       <div style={{ position: 'absolute', left: -5000 }} aria-hidden="true">
                         <input type="text" name="b_10fa09a0a644f563c084ab3fd_32c9c3f4b2" tabindex="-1" value="" />
                       </div>
