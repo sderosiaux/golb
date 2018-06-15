@@ -1,11 +1,11 @@
 ---
-title: "Using the State monad to write parsers"
+title: "A simple way to write parsers: using the State monad"
 description: ""
 date: "2018-06-15T12:00Z"
 layout: post
-path: "/2018/06/15/using-the-state-monad-to-write-parsers/"
+path: "/2018/06/15/a-simple-way-to-write-parsers-using-the-state-monad/"
 language: "en"
-tags: scala, cats, scalaz, typeclass, state
+tags: scala, cats, scalaz, typeclass, state, monad, parser, combinators, whitespace, brainfuck
 background: 'background.jpg'
 ---
 
