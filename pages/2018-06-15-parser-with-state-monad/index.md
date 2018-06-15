@@ -1,6 +1,6 @@
 ---
 title: "A simple way to write parsers: using the State monad"
-description: ""
+description: "Who said parsers had to be complicated to write? We'll see how we can use the State monad to write mini-parsers (to recognize letters, digits), combine them (to recognize words, numbers), then finally parser a complete language."
 date: "2018-06-15T12:00Z"
 layout: post
 path: "/2018/06/15/a-simple-way-to-write-parsers-using-the-state-monad/"
