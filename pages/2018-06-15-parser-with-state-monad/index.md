@@ -18,6 +18,8 @@ Hopefully, we know the `State` monad (because shared state is evil) or not (we'l
 
 We'll slowly implement an arithmetic parser from scratch, then we'll see a [Whitespace](https://en.wikipedia.org/wiki/Whitespace_(programming_language)) (the programming language, composed only of... whitespaces!) parser implementation using this technique.
 
+Finally, we'll take a look around some battle-tested parsing libraries, to get serious.
+
 > This article is shamelessly inspired by Leif Battermann's article: [Parsers in Scala built upon existing abstractions](http://blog.leifbattermann.de/2018/02/03/parsers-in-scala-built-upon-existing-abstractions/). Thanks!
 
 ---
