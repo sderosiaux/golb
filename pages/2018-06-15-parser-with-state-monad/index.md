@@ -13,7 +13,7 @@ Sometimes, we just want to _parse_ and process lines from a text file without re
 
 Sometimes, regexes are enough but they can be obscure and way too complicated or maintenable.
 
-We remember parsers as huge auto-generated file with some grammar as entrypoint and we don't want to get there.
+We remember parsers as huge auto-generated files with some grammar as entry point and we don't want to get there.
 Hopefully, we know the `State` monad (because shared state is evil) or not (we'll quickly present it). We'll see how easy it is to write parsers using the State monad.
 
 We'll slowly implement an arithmetic parser from scratch, then we'll see a [Whitespace](https://en.wikipedia.org/wiki/Whitespace_(programming_language)) (the programming language, composed only of... whitespaces!) parser implementation using this technique.
@@ -41,8 +41,8 @@ A parser works with a grammar, to recognize the language used. For instance, one
 
 This is a grammar under the Backus–Naur form (BNF).
 
-It's quite _easy_ to understand what is represents.
-Each symbol `<Exp>` `<Term>` `<Factor>` is defined `"::="` by an expression (symbols, literals, combinaisons).
+It's quite _easy_ to understand what it represents.
+Each symbol `<Exp>` `<Term>` `<Factor>` is defined `"::="` by an expression (symbols, literals, combinations).
 
 Where it hurts the brain is that it's all recursive! (`Exp` uses `Term`, which uses `Factor`, which uses `Exp` and `Factor`, ...)
 
@@ -59,7 +59,7 @@ Here are the steps parsing `5 + ( -3 / 2 )`:
 5 + ( - 3 / 2 )
 ```
 
-There are tons of frameworks able to read a BNF file to generate a parser in the language of your choice. In Java, we have [ANTLR](http://www.antlr.org/) for instance.
+There are tons of frameworks able to read a BNF file to generate a parser in the language of our choice. In Java, we have [ANTLR](http://www.antlr.org/) for instance.
 
 A parser consumes a text then it tries to match its grammar. If it successfully matches some expressions and symbols, we can then interpret them (do something, like setting some value into the memory, here, we'll `.modify` our `State` monad!).
 
@@ -92,9 +92,9 @@ AorB.parse("123") = "123"
 AorB.parse("toto") = "toto"
 ```
 
-Here, we are creating 2 parsers `A` and `B`, then we create another one `AB` from their combinaison using `<+>` (let's say it's an operator available on `Parser`).
+Here, we are creating 2 parsers `A` and `B`, then we create another one `AB` from their combination using `<+>` (let's say it's an operator available on `Parser`).
 
-`A`, `B`, and `AorB` are all typed the same `Parser[String]` because they return a `String` as result. A parser can be seen as a simple function: `String => Option[A]`. You give it an input, it outputs a value or not (a parser is not total: when it can't match its input, then you have an error or a fallback). It's easy to combine such parsers using `PartialFunction`'s `orElse`:
+`A`, `B`, and `AorB` are all typed the same `Parser[String]` because they return a `String` as result. A parser can be seen as a simple function: `String => Option[A]`. We give it an input, it outputs a value or not (a parser is not total: when it can't match its input, then we have an error or a fallback). It's easy to combine such parsers using `PartialFunction`'s `orElse`:
 
 ```scala
 val A: PartialFunction[String, Int] = { case s if s.matches("[0-9]+") => s.toInt }
@@ -114,7 +114,7 @@ We'll do exactly the same when combining our "parsers" (represented by a `StateT
 
 A quick note on inversible parsers because it's quite powerful.
 
-When you parse a language, you provide the parser some input. It matches and converts the input into some objects in-memory. What if you want to serialize the result back into to JSON or to the original format (altered, optimized maybe) for instance? You need to write the _inverse_ operation of the parsing, the serialization.
+When we parse a language, we provide the parser some input. It matches and converts the input into some objects in-memory. What if we want to serialize the result back into to JSON or to the original format (altered, optimized maybe) for instance? We need to write the _inverse_ operation of the parsing, the serialization.
 
 Inversible parsers kill two birds with one stone, and ensure the isomorphism of both forms.
 
@@ -187,7 +187,7 @@ product(initialState) // "150" ("2" * 3 = 50 * 3)
 
 Clearly, the `State` monad removes tons of boilerplate and even provides way more than just state and value management. (more on this in [cats documentation](https://typelevel.org/cats/datatypes/state.html))
 
-It also encapsulate the value into an effect! This is why we used `product.run(...).value`. We need to add `.value` because `State` is an alias for `StateT[Eval, S, A]`: therefore it returns an `Eval` (an `Eval` is a monad containing a computation or value, strict or lazy).
+It also encapsulates the value into an effect! This is why we used `product.run(...).value`. We need to add `.value` because `State` is an alias for `StateT[Eval, S, A]`: therefore it returns an `Eval` (an `Eval` is a monad containing a computation or value, strict or lazy).
 
 Down to the rabbit hole, `StateT` is also an alias for `IndexedStateT[F, S, S, A]` which can have a different state type in input and output. More on this later (or not).{.info}
 
@@ -283,7 +283,7 @@ implicit val stateAE = new ApplicativeError[State[String, ?], Unit] {
 All this is because `State` depends upon `Eval`, which is not a `MonadError` as we said. It can't represent an error state.
 We need to change our inner monad. :sunglasses:
 
-## Distinguish empty result from error
+## Distinguish empty result from an error
 
 We'll need to go deeper and use `StateT` to change it. We'll naturally switch to `Option` which implements `MonadError` with `None` as "error" hence short-circuitable.
 
@@ -309,9 +309,9 @@ c.run("")
 
 It's working! Now, we can short-circuit our parsers when they can't match the content.
 
-Note: we use `()` as error, because `Option` implements only the `Unit` type as "error": `MonadError[Option, Unit]`. It makes sense, because `None` can't contain any value, therefore, you can't provide any message or anything.{.info}
+Note: we use `()` as error, because `Option` implements only the `Unit` type as "error": `MonadError[Option, Unit]`. It makes sense, because `None` can't contain any value, therefore, we can't provide any message or anything.{.info}
 
-This tiny parser is the root of everything. It is the ones that consumes a `Char` if it can.
+This tiny parser is the root of everything. It is the one that consumes a `Char` if it can.
 Let's build more specific parsers on top of it and build a real parser.
 
 # Implementing an arithmetic parser
@@ -376,7 +376,7 @@ string("toto").run("titi") // None
 number.run("123to") // Some((to,123))
 ```
 
-## Combinaison using Applicatives
+## Combination using Applicatives
 
 We need a way to combine them, in the sense of "concatenation" (not fallback).
 This is where the `Applicative` magic shines, because it's its purpose to combine stuff.
@@ -422,7 +422,7 @@ array.run("toto[42]")
 // Some((,(toto,42)))
 ```
 
-## Fallbacking using SemigroupK
+## Fallback using SemigroupK
 
 In the same way we previously used `orElse` to "fallback" on another `PartialFunction` when the first one couldn't handle the input, it's possible to provide a fallback to our parsers (`StateT`). This is called _backtracking_: the 1st parser fails to match, then the 2nd parser starts from the same beginning.
 
@@ -434,7 +434,7 @@ totoOrTiti.run("C")    // None
 ```
 
 `<+>` is syntax sugar coming from `SemigroupK`.
-It is defined as `def <+>(y : F[A]) : F[A]`. It's just a synonym of `combineK`: combining two `F[A]`s to get a `F[A]`. (`Semigroup` combines two `A` only)
+It is defined as `def <+>(y : F[A]) : F[A]`. It's just a synonym of `combineK`: combining two `F[A]`s to get an `F[A]`. (`Semigroup` combines two `A` only)
 
 `List` is a simple example of that: `List(1) <+> List(2, 3)` is `List(1, 2, 3)`.
 
@@ -503,7 +503,7 @@ def nbDigits(rest: Int) = if (rest == 0) 0 else math.ceil(math.log10(rest))
 digits.run("123a") // Some((a,123))
 ```
 
-If we don't find a 2nd digit, we fallback to `0`. At the end, everything is summed up so `0` has no impact.
+If we don't find a 2nd digit, we fallback to `0`. In the end, everything is summed up so `0` has no impact.
 
 Because we decided that our `State` would be `Int`-based, we must do some maths to find back the number from a `Char` (`head`) + a number (`rest`).
 Here, `123 = (1 * 100) + (2 * 10) + (3 * 1) + 0`.
@@ -609,7 +609,7 @@ expr.run("2*5+8*2") // Some((,42)): KO! It did: 2*(5 + (8*2)) = 2*(5 + 16) = 2*2
 ```
 
 The arithmetic operator precedence is not respected. Our implementation tries to do `+` first, then `*`.
-Inversing both lines won't do a thing neither: the fact is that the processing (the + or *) is done "backwards" (recursion goes the deepest it can, then goes up).
+Inversing both lines won't do a thing neither: the fact is that the processing (the + or *) is done "backward" (recursion goes the deepest it can, then goes up).
 
 A working implementation is to prioritize the multiplications first: we want to finish the `*` recursion first, to compute the value, before getting back to the other parsers (`+`):
 
@@ -687,7 +687,7 @@ expr.runA("3-2-1")   // Some(2) KO!
 It's more complicated because `"-"` is not associative.
 Right now, our parser evaluates `"3-2-1"` as `(3-(2-1))` whereas it should be `((3-2)-1)`.
 
-It's because we have a right-recursion. So it goes deeper to the right, compute, then sends the values up. It's okay for '+' but not for '-'.
+It's because we have a right-recursion. So it goes the deepest it can to the right, compute, then sends the values up. It's okay for '+' but not for '-'.
 
 If we try to build the smallest parser, just to deal with `"-"`, it would be:
 
@@ -735,7 +735,7 @@ I let the reader exercises its talent over this issue (probably using `IO`, or a
 
 # A Whitespace parser
 
-[Whitespace](https://en.wikipedia.org/wiki/Whitespace_(programming_language)) is a terrible programming language dealingonly with whitespaces! Three of them actually: " ", "\t", "\n". It can print to the screen, do arithmetic operation, keep values in memory, do condition, etc.
+[Whitespace](https://en.wikipedia.org/wiki/Whitespace_(programming_language)) is a terrible programming language dealingonly with whitespaces! Three of them actually: " ", "\t", "\n". It can print to the screen, do some arithmetic operation, keep values in memory, do condition, etc.
 
 Here is its documentation: https://hackage.haskell.org/package/whitespace-0.4/src/docs/tutorial.html. As you can see, not that complicated as language!
 
@@ -772,7 +772,7 @@ println(s"Output: $output")
 // Output: Hello, world!
 ```
 
-As you can see, the inner monad is generic and given at call-site.
+As we can see, the inner monad is generic and given at call-site.
 That complexifies a bit the code but it offers more latitude to use any `MonadError` as result, and forces us to use generic methods from the typeclasses, instead of relying on implementation details.
 
 # A Brainfuck parser
@@ -795,7 +795,7 @@ scala> (letter ~ digit).parse("a1")
 res13: atto.ParseResult[(Char, Char)] = Done(,(a,1))
 ```
 
-Here, `~` is _equivalent_ to our combinaisons like: `(digits *> word)`.
+Here, `~` is _equivalent_ to our combinations like: `(digits *> word)`.
 
 When we need to write lightweight parsers, then [atto](http://tpolecat.github.io/atto/) is definitely a good solution (ported from the Haskell world [attoparsec](http://hackage.haskell.org/package/attoparsec)).
 
@@ -822,7 +822,7 @@ def eval(i: Instruction): F[Unit] = i match {
 Splitting parsing and evaluation are better for tons of reasons:
 
 - do one thing and do it well;
-- more maintenable (less moving pieces);
+- more maintainable (less moving pieces);
 - operations processing can be optimized (because we have the "full" view of what they contain) instead of working piece by piece.
 
 # Alternatives
@@ -858,7 +858,7 @@ Make your choice!
 
 # Takeaways
 
-When you work with text files or any structured file, it can sometimes be easier to write a little parser to process it instead of trying your best with `if` or regexes.
+When we work with text files or any structured file, it can sometimes be easier to write a little parser to process it instead of trying your best with `if` or regexes.
 
 - You have something simple to parse? Use [atto](http://tpolecat.github.io/atto/);
 - You want speed or special features? Use [fastparse](http://www.lihaoyi.com/fastparse/);
@@ -868,4 +868,4 @@ The `State` monad can be used with tons of patterns, isolating the mutating stat
 
 Thanks to the monadic flow, we don't have to think about passing the current state again and again. We just act as if it was "given" and keep on writing our code without boilerplate.
 
-It's important to be aware of the `Applicative`, `MonadError`, `SemigroupK` implications, because they provide great features around `State` to combine them and to handle errors. Always think which monad is contained inside the `State`, that will determine which "power" your `State` offers.
+It's important to be aware of the `Applicative`, `MonadError`, `SemigroupK` implications, because they provide great features around `State` to combine them and to handle errors. Always think which monad is contained inside the `State`, that will determine which "power" our `State` offers.
