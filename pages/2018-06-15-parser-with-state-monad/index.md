@@ -14,7 +14,7 @@ Sometimes, we just want to _parse_ and process lines from a text file without re
 Sometimes, regexes are enough but they can be obscure and way too complicated or maintenable.
 
 We remember parsers as huge auto-generated files with some grammar as entry point and we don't want to get there.
-Hopefully, we know the `State` monad (because shared state is evil) or not (we'll quickly present it). We'll see how easy it is to write parsers using the State monad.
+Hopefully, we know the `State` monad (because shared state is evil) or not (we'll quickly present it). We'll see how "easy" it is to write parsers using the State monad.
 
 We'll slowly implement an arithmetic parser from scratch, then we'll see a [Whitespace](https://en.wikipedia.org/wiki/Whitespace_(programming_language)) (the programming language, composed only of... whitespaces!) parser implementation using this technique.
 
@@ -45,8 +45,7 @@ A parser works with a grammar, to recognize the language used. For instance, one
 
 This is a grammar under the Backus–Naur form (BNF).
 
-It's quite _easy_ to understand what it represents.
-Each symbol `<Exp>` `<Term>` `<Factor>` is defined `"::="` by an expression (symbols, literals, combinations).
+Each symbol `<Exp>` `<Term>` `<Factor>` is defined (ie: `"::="`) by an expression (symbols, literals, or a combination).
 
 Where it hurts the brain is that it's all recursive! (`Exp` uses `Term`, which uses `Factor`, which uses `Exp` and `Factor`, ...)
 
@@ -98,7 +97,7 @@ AorB.parse("toto") = "toto"
 
 Here, we are creating 2 parsers `A` and `B`, then we create another one `AB` from their combination using `<+>` (let's say it's an operator available on `Parser`).
 
-`A`, `B`, and `AorB` are all typed the same `Parser[String]` because they return a `String` as result. A parser can be seen as a simple function: `String => Option[A]`. We give it an input, it outputs a value or not (a parser is not total: when it can't match its input, then we have an error or a fallback). It's easy to combine such parsers using `PartialFunction`'s `orElse`:
+`A`, `B`, and `AorB` are all typed the same `Parser[String]` because they return a `String` as result. A parser can be seen as a function: `String => Option[A]`. We give it an input, it outputs a value or not (a parser is not total: when it can't match its input, then we have an error or a fallback). It's easy to combine such parsers using `PartialFunction`'s `orElse`:
 
 ```scala
 val A: PartialFunction[String, Int] = { case s if s.matches("[0-9]+") => s.toInt }
@@ -150,7 +149,7 @@ I'll just quote their introduction because it's clear and concise:
 
 > `State` is a structure that provides a functional approach to handling application state. `State[S, A]` is basically a function `S => (S, A)`, where `S` is the type that represents your state and `A` is the result the function produces. In addition to returning the result of type `A`, the function returns a new `S` value, which is the updated state.
 
-For instance, a simple `State` we're going to rely on is:
+For instance, we can rely on `State` like this:
 
 ```scala
 val c = State[String, Char](s => (s.tail, s.head))
@@ -174,7 +173,7 @@ product.run(initialState).value // "2" * 3 = 50 * 3 = 150
 
 Clear and concise, right? Also easy to test! No need to think of anything else, all is "contained".
 
-What does it bring on the table compared to simple functions? Ouch...
+What does it bring on the table compared to a function? Ouch...
 
 ```scala
 val head: String => (String, Char) = s => (s.tail, s.head)
@@ -226,7 +225,7 @@ Back to our parsers: we'll create mini-parsers to parse digits, letters, words e
 
 ## How to deal with errors
 
-Back to our simple parser:
+Back to our initial parser:
 
 ```scala
 val c = State[String, Char](s => (s.tail, s.head))
@@ -440,9 +439,9 @@ totoOrTiti.run("C")    // None
 `<+>` is syntax sugar coming from `SemigroupK`.
 It is defined as `def <+>(y : F[A]) : F[A]`. It's just a synonym of `combineK`: combining two `F[A]`s to get an `F[A]`. (`Semigroup` combines two `A` only)
 
-`List` is a simple example of that: `List(1) <+> List(2, 3)` is `List(1, 2, 3)`.
+`List` is a ubiquitous example: `List(1) <+> List(2, 3)` is `List(1, 2, 3)`.
 
-Without using the `SemigroupK` thing, we could also configure a simple fallback using `Option.orElse` (because our `F` is `Option`, that's not always the case!):
+Without using the `SemigroupK` thing, we could also configure a fallback using `Option.orElse` (because our `F` is `Option`, that's not always the case!):
 
 ```scala
 val aOrB = StateT[Option, String, String](s => string("A").run(s) orElse string("B").run(s))
@@ -646,7 +645,7 @@ We didn't introduce `(` or `)` in our grammar yet. Easy? Let's find out:
 // - product := parens [ '*' product ]
 // - parens := '(' + expr + ')' | digits
 
-// first, a simple parser: '(' expr ')' => expr (">>" is `flatMap` ignoring the lhs value)
+// the parser: '(' expr ')' => expr (">>" is `flatMap` ignoring the lhs value)
 def parens: Parser[Int] = (ch('(') >> expr << ch(')')) <+> digits
 ```
 
