@@ -1,0 +1,87 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Users\Cthulhu\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js
+
+PATH: 
+  C:\FUSION\sderosiaux-2\node_modules\.bin;C:\FUSION\node_modules\.bin;C:\node_modules\.bin;C:\Program Files\nodejs;D:\Softwares\cmder\bin;D:\Softwares\cmder\vendor\conemu-maximus5\ConEmu\Scripts;C:\Program Files\Docker\Docker\Resources\bin;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\ProgramData\Oracle\Java\javapath;C:\tools\ruby21\bin;C:\ProgramData\Oracle\Java\javapathAAAAAA;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files\OpenVPN\bin;C:\Users\Cthulhu\AppData\Roaming\npm;C:\Program Files (x86)\scala\bin;C:\Program Files (x86)\Heroku\bin;C:\Program Files (x86)\git\cmd;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files (x86)\Windows Kits\8.1\Windows Performance Toolkit\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\WinSCP\;C:\Program Files\Git\cmd;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files (x86)\sbt\bin;C:\Program Files\Microsoft VS Code;C:\Users\Cthulhu\AppData\Roaming\nvm;C:\Program Files\nodejs;D:\Softwares\cmder\bin;D:\Softwares\cmder\vendor\conemu-maximus5\ConEmu\Scripts;D:\Softwares\cmder\vendor\conemu-maximus5;D:\Softwares\cmder\vendor\conemu-maximus5\ConEmu;C:\Program Files\Docker\Docker\Resources\bin;C:\ProgramData\Oracle\Java\javapath;C:\tools\ruby21\bin;C:\ProgramData\Oracle\Java\javapathAAAAAA;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files\OpenVPN\bin;C:\Program Files (x86)\scala\bin;C:\Program Files (x86)\Heroku\bin;C:\Program Files (x86)\git\cmd;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files (x86)\Windows Kits\8.1\Windows Performance Toolkit\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\WinSCP\;C:\Program Files\Git\cmd;C:\Program;C:\Program Files\Microsoft VS Code\bin;C:\Users\Cthulhu\AppData\Roaming\npm;C:\Users\Cthulhu\AppData\Roaming\nvm;;C:\Program Files\Git\usr\bin;C:\Program Files\Git\usr\share\vim\vim74;D:\Softwares\cmder\
+
+Yarn version: 
+  0.17.9
+
+Node version: 
+  8.11.3
+
+Platform: 
+  win32 x64
+
+npm manifest: 
+  {
+    "name": "gatsby-starter-blog",
+    "description": "Starter Gatsby Blog",
+    "version": "1.0.0",
+    "author": "Kyle Mathews <mathews.kyle@gmail.com>",
+    "bugs": {
+      "url": "https://github.com/gatsbyjs/gatsby-starter-blog/issues"
+    },
+    "dependencies": {
+      "gatsby": "next",
+      "gatsby-plugin-feed": "next",
+      "gatsby-plugin-google-analytics": "next",
+      "gatsby-plugin-offline": "next",
+      "gatsby-plugin-react-helmet": "next",
+      "gatsby-plugin-sharp": "next",
+      "gatsby-plugin-typography": "next",
+      "gatsby-remark-copy-linked-files": "next",
+      "gatsby-remark-images": "next",
+      "gatsby-remark-prismjs": "next",
+      "gatsby-remark-responsive-iframe": "next",
+      "gatsby-remark-smartypants": "next",
+      "gatsby-source-filesystem": "next",
+      "gatsby-transformer-remark": "next",
+      "gatsby-transformer-sharp": "next",
+      "lodash": "^4.17.5",
+      "prismjs": "^1.15.0",
+      "react": "^16.3.2",
+      "react-dom": "^16.3.2",
+      "react-helmet": "^5.2.0",
+      "react-typography": "^0.16.13",
+      "typeface-merriweather": "0.0.43",
+      "typeface-montserrat": "0.0.43",
+      "typography": "^0.16.17",
+      "typography-theme-wordpress-2016": "^0.15.10"
+    },
+    "devDependencies": {
+      "eslint": "^4.19.1",
+      "eslint-plugin-react": "^7.7.0",
+      "gh-pages": "^1.1.0",
+      "prettier": "^1.12.0"
+    },
+    "homepage": "https://github.com/gatsbyjs/gatsby-starter-blog#readme",
+    "keywords": [
+      "gatsby"
+    ],
+    "license": "MIT",
+    "main": "n/a",
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/gatsbyjs/gatsby-starter-blog.git"
+    },
+    "scripts": {
+      "dev": "gatsby develop",
+      "lint": "./node_modules/.bin/eslint --ext .js,.jsx --ignore-pattern public .",
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "format": "prettier --trailing-comma es5 --no-semi --single-quote --write 'src/**/*.js' 'src/**/*.md'",
+      "develop": "gatsby develop",
+      "build": "gatsby build",
+      "deploy": "gatsby build --prefix-paths && gh-pages -d public",
+      "fix-semi": "eslint --quiet --ignore-pattern node_modules --ignore-pattern public --parser babel-eslint --no-eslintrc --rule '{\"semi\": [2, \"never\"], \"no-extra-semi\": [2]}' --fix gatsby-node.js"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
+
+Trace: 
+  Error: ENOENT: no such file or directory, open 'C:\FUSION\sderosiaux-2\node_modules\@babel\helper-remap-async-to-generator\node_modules\to-fast-properties\license'

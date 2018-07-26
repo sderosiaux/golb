@@ -1,88 +1,112 @@
-var fs = require('fs-extra-promise') //install this package
-var sm = require('sitemap') // install this package
-var rss = require('rss')
+const _ = require('lodash')
+const Promise = require('bluebird')
+const path = require('path')
+const { createFilePath } = require('gatsby-source-filesystem')
 
-function pagesToSitemap(pages) {
-  var urls = pages.map(function (p) {
-    if (p.path !== undefined) {
-      return {
-        url: p.path,
-        changefreq: 'monthly',
-        priority: 0.5
-      }
-    }
-  })
-  // remove undefined (template pages)
-  return urls.filter(function (u) { return u !== undefined })
-}
+exports.createPages = ({ graphql, actions }) => {
+  const { createPage } = actions
 
-function generateSiteMap(pages) {
-  var sitemap = sm.createSitemap({
-    hostname: 'https://www.sderosiaux.com',
-    cacheTime: '60000',
-    urls: pagesToSitemap(pages),
-  })
-  console.log('Generating sitemap.xml')
-  fs.writeFileSync(
-    `${__dirname}/public/sitemap.xml`,
-    sitemap.toString()
-  )
-}
+  return new Promise((resolve, reject) => {
+    const blogPost = path.resolve('./src/templates/blog-post.js')
+    const simpleTpl = path.resolve('./src/templates/simple.js')
+    const tagTpl = path.resolve('./src/templates/tags.js')
 
-function generateRss(pages) {
-  const feed = new rss({
-    title: "Blog sderosiaux.com",
-    description: "A technical blog talking about Scala, Java, Hadoop, Spark, React, JavaScript, and much more",
-    feed_url: 'https://www.sderosiaux.com/rss.xml',
-    site_url: 'https://www.sderosiaux.com'
-  })
-
-  pages.map(p => {
-    if (p.data && p.data.title) {
-      feed.item({
-        title: p.data.title,
-        description: p.data.description,
-        url: 'https://www.sderosiaux.com' + p.data.path,
-        categories: p.data.tags ? p.data.tags.split(',').map(s => s.trim()) : [],
-        date: p.data.date
-      })
-    }
-  })
-
-  console.log('Generating rss.xml')
-  fs.writeFileSync(
-    `${__dirname}/public/rss.xml`,
-    feed.xml({ indent: true }).toString()
-  )
-}
-
-function generateRedirect() {
-  console.log('Generating _redirects for Netlify')
-  fs.writeFileSync(
-    `${__dirname}/public/_redirects`,
-    "https://www.ctheu.com/* https://www.sderosiaux.com/:splat 301!"
-  )
-}
-
-module.exports.postBuild = function (pages, callback) {
-  generateSiteMap(pages)
-  generateRss(pages)
-  generateRedirect()
-  callback()
-}
-
-exports.modifyWebpackConfig = function (config, env) {
-  if (env == 'AAbuild-javascript') {
-    config.merge({
-      resolve: {
-        alias: {
-          'react': 'preact-compat',
-          'react-dom': 'preact-compat'
+    resolve(
+      graphql(
+        `
+          {
+            allMarkdownRemark(
+              sort: { fields: [frontmatter___date], order: DESC }
+              limit: 1000
+            ) {
+              edges {
+                node {
+                  fields {
+                    slug
+                  }
+                  frontmatter {
+                    title
+                    tags
+                    path
+                    is_blog
+                  }
+                }
+              }
+            }
+          }
+        `
+      ).then(result => {
+        if (result.errors) {
+          console.log(result.errors)
+          reject(result.errors)
         }
-      }
-    })
-    return config;
-  }
 
-  return config
+        // Create blog posts pages.
+        const posts = result.data.allMarkdownRemark.edges
+
+        _.each(
+          posts.filter(p => p.node.frontmatter.is_blog === true),
+          (post, index) => {
+            const previous =
+              index === posts.length - 1 ? null : posts[index + 1].node
+            const next = index === 0 ? null : posts[index - 1].node
+
+            const path = post.node.frontmatter.path // post.node.fields.slug,
+            createPage({
+              path,
+              component: blogPost,
+              context: {
+                slug: post.node.fields.slug,
+                previous,
+                next,
+              },
+            })
+          }
+        )
+
+        let tags = []
+        _.each(posts, edge => {
+          if (_.get(edge, 'node.frontmatter.tags')) {
+            tags = tags.concat(edge.node.frontmatter.tags)
+          }
+        })
+        tags = _.uniq(tags)
+
+        // Make tag pages
+        tags.forEach(tag => {
+          createPage({
+            path: `/tags/${_.kebabCase(tag)}/`,
+            component: tagTpl,
+            context: {
+              tag,
+            },
+          })
+        })
+
+        // simple pages
+        posts.filter(p => p.node.frontmatter.is_blog !== true).forEach(post => {
+          createPage({
+            path: post.node.fields.slug,
+            component: simpleTpl,
+            context: {
+              slug: post.node.fields.slug,
+            },
+          })
+        })
+      })
+    )
+  })
+}
+
+exports.onCreateNode = ({ node, actions, getNode }) => {
+  const { createNodeField } = actions
+
+  if (node.internal.type === `MarkdownRemark`) {
+    const value = createFilePath({ node, getNode })
+    createNodeField({
+      name: `slug`,
+      node,
+      value,
+    })
+  }
 }

@@ -1,0 +1,45 @@
+.custom-block-hero {
+  padding: 20px;
+}
+
+.custom-block-hero.centered {
+  text-align: center;
+}
+.custom-block-hero.centered > div {
+  display: inline-block;
+}
+
+.custom-block-hero > div,
+.marginAuto {
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.custom-block-hero a {
+  color: white;
+}
+.custom-block-hero a:hover {
+  color: rgb(2, 136, 209) !important;
+  background-color: white;
+}
+
+.custom-block-hero1 {
+  background-color: rgb(2, 136, 209);
+  color: #eee;
+}
+.custom-block-hero2 {
+  background-color: rgb(2, 136, 209);
+  color: #eee;
+}
+.custom-block-hero3 {
+  background-color: rgb(2, 136, 209);
+  color: #eee;
+}
+.custom-block-hero4 {
+  background-color: rgb(2, 136, 209);
+  color: #eee;
+}
+.custom-block-hero5 {
+  background-color: #ddd;
+  color: #666;
+}

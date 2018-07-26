@@ -1,0 +1,14 @@
+.custom-block-info {
+  border: 1px solid #ccc;
+  padding: 10px;
+  background-color: #f0f0fc;
+}
+
+.custom-block-warn {
+  border: 1px solid #ccc;
+  padding: 10px;
+  background-color: #fcf0f0;
+}
+
+.tag {
+}
