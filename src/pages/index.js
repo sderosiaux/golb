@@ -116,25 +116,66 @@ export const pageQuery = graphql`
       }
     }
 
-    back1: markdownRemark(id: { eq: "728cf2d0-36b1-5923-9be8-eb9446735c91" }) {
+    back1: markdownRemark(
+      frontmatter: {
+        path: {
+          eq: "/articles/2018/06/15/a-simple-way-to-write-parsers-using-the-state-monad/"
+        }
+      }
+    ) {
       ...ArticleFrontmatter
     }
-    back2: markdownRemark(id: { eq: "734c8aaa-b533-5499-bdbe-8e1eeb1c56c9" }) {
+
+    back2: markdownRemark(
+      frontmatter: {
+        path: {
+          eq: "/articles/2018/04/12/an-ode-to-the-kind-projector-and-to-the-partial-unification-of-scala/"
+        }
+      }
+    ) {
       ...ArticleFrontmatter
     }
-    data1: markdownRemark(id: { eq: "17398135-4de2-57e7-8ddf-ba65d97e6bd8" }) {
+    data1: markdownRemark(
+      frontmatter: {
+        path: {
+          eq: "/articles/2017/08/07/looking-at-kafka-s-consumers-offsets/"
+        }
+      }
+    ) {
       ...ArticleFrontmatter
     }
-    data2: markdownRemark(id: { eq: "78d9bfb9-de32-5919-99ab-7894d42dd4bd" }) {
+    data2: markdownRemark(
+      frontmatter: {
+        path: {
+          eq: "/articles/2017/03/02/serializing-data-efficiently-with-apache-avro-and-dealing-with-a-schema-registry/"
+        }
+      }
+    ) {
       ...ArticleFrontmatter
     }
-    back3: markdownRemark(id: { eq: "0601275c-ebb9-5790-9f7c-cc5e1df0ea83" }) {
+    back3: markdownRemark(
+      frontmatter: {
+        path: {
+          eq: "/articles/2016/01/10/java-cli-gc-memory-and-tools-overview/"
+        }
+      }
+    ) {
       ...ArticleFrontmatter
     }
-    back4: markdownRemark(id: { eq: "b1486cf5-616b-5432-a666-327de067b6b5" }) {
+    back4: markdownRemark(
+      frontmatter: {
+        path: { eq: "/articles/2017/02/14/all-the-things-we-can-do-with-jmx/" }
+      }
+    ) {
       ...ArticleFrontmatter
     }
-    frnt1: markdownRemark(id: { eq: "0a8bb89a-e611-50ed-b84d-f492aee9d265" }) {
+    frnt1: markdownRemark(
+      frontmatter: {
+        path: {
+          eq: "/articles/2015/02/12/how-to-communicate-between-react-components/"
+        }
+      }
+    ) {
       ...ArticleFrontmatter
     }
   }
