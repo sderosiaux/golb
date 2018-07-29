@@ -106,62 +106,62 @@ module.exports = {
     },
     {
       resolve: `gatsby-plugin-feed`,
-      options: {
-        setup(ref) {
-          const ret = ref.query.site.siteMetadata.rssMetadata
-          ret.allMarkdownRemark = ref.query.allMarkdownRemark
-          ret.generator = 'GatsbyJS Material Starter'
-          return ret
-        },
-        query: `
-          {
-            site {
-              siteMetadata {
-                title
-                description
-                siteUrl
-                author
-              }
-            }
-          }
-        `,
-        feeds: [
-          {
-            serialize: ({ query: { site, allMarkdownRemark } }) => {
-              return allMarkdownRemark.edges.map(edge => {
-                return Object.assign({}, edge.node.frontmatter, {
-                  author: site.siteMetadata.author,
-                  url: site.siteMetadata.siteUrl + edge.node.fields.slug,
-                  guid: site.siteMetadata.siteUrl + edge.node.fields.slug,
-                  custom_elements: [{ 'content:encoded': edge.node.html }],
-                })
-              })
-            },
-            query: `
-              {
-                allMarkdownRemark(
-                  limit: 1000,
-                  sort: { order: DESC, fields: [frontmatter___date] },
-                  filter: {frontmatter: { is_blog: { eq: true } }}
-                ) {
-                  edges {
-                    node {
-                      html
-                      fields { slug }
-                      frontmatter {
-                        title
-                        date
-                        description
-                      }
-                    }
-                  }
-                }
-              }
-            `,
-            output: '/rss.xml',
-          },
-        ],
-      },
+      // options: {
+      //   //setup(ref) {
+      //     // const ret = ref.query.site.siteMetadata.rssMetadata
+      //     // ret.allMarkdownRemark = ref.query.allMarkdownRemark
+      //     // ret.generator = 'GatsbyJS Material Starter'
+      //     // return ret
+      //   //},
+      //   query: `
+      //     {
+      //       site {
+      //         siteMetadata {
+      //           title
+      //           description
+      //           siteUrl
+      //           author
+      //         }
+      //       }
+      //     }
+      //   `,
+      //   feeds: [
+      //     {
+      //       serialize: ({ query: { site, allMarkdownRemark } }) => {
+      //         return allMarkdownRemark.edges.map(edge => {
+      //           return Object.assign({}, edge.node.frontmatter, {
+      //             author: site.siteMetadata.author,
+      //             url: site.siteMetadata.siteUrl + edge.node.fields.slug,
+      //             guid: site.siteMetadata.siteUrl + edge.node.fields.slug,
+      //             custom_elements: [{ 'content:encoded': edge.node.html }],
+      //           })
+      //         })
+      //       },
+      //       query: `
+      //         {
+      //           allMarkdownRemark(
+      //             limit: 1000,
+      //             sort: { order: DESC, fields: [frontmatter___date] },
+      //             filter: {frontmatter: { is_blog: { eq: true } }}
+      //           ) {
+      //             edges {
+      //               node {
+      //                 html
+      //                 fields { slug }
+      //                 frontmatter {
+      //                   title
+      //                   date
+      //                   description
+      //                 }
+      //               }
+      //             }
+      //           }
+      //         }
+      //       `,
+      //       output: '/rss.xml',
+      //     },
+      //   ],
+      // },
     },
     `gatsby-plugin-offline`,
     `gatsby-plugin-react-helmet`,

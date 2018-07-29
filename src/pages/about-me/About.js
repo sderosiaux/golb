@@ -1,4 +1,7 @@
+import React from 'react'
 import { graphql } from 'gatsby'
+
+export default () => <div />
 
 export const blockImageFragment = graphql`
   fragment BlockImage on File {
