@@ -10,12 +10,12 @@ export default ({}) => (
   <div
     className={css`
       text-align: center;
-      padding: 10px;
+      padding: 30px;
       background: linear-gradient(to bottom, ${dark}, ${light}, ${dark});
       color: #d0d0d0;
       font-size: 16px;
     `}
   >
-    © 2018 · Stéphane Derosiaux · All Rights Reserved.
+    © Copyright 2018 · Stéphane Derosiaux · All Rights Reserved.
   </div>
 )

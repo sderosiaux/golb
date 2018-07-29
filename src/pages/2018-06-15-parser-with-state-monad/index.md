@@ -6,6 +6,7 @@ is_blog: true
 path: "/articles/2018/06/15/a-simple-way-to-write-parsers-using-the-state-monad/"
 language: "en"
 tags: ['scala', 'cats', 'scalaz', 'typeclass', 'state', 'monad', 'parser', 'combinators', 'whitespace', 'brainfuck']
+category: 'Scala'
 background: 'background.jpg'
 ---
 
@@ -270,7 +271,7 @@ We'll run into troubles if we try, because we can't set any value to the `State`
 ```scala
 implicit val stateAE = new ApplicativeError[State[String, ?], Unit] {
   override def raiseError[A](e: Unit): State[String, A] =
-    State[String, A](s => ("", ???)) 
+    State[String, A](s => ("", ???))
     // We can't construct any State because we can't construct any A!
   ...
 }

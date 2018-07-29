@@ -11,12 +11,7 @@ background: 'background.jpg'
 A few weeks ago, I've created a repo on Github resuming how I stay up to date: [sderosiaux/how-i-stay-updated](https://github.com/sderosiaux/how-i-stay-updated).
 I thought it would be nice to write a blog post on that, with more details.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Where do I come from?
 

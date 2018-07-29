@@ -4,6 +4,7 @@ date: "2015-08-17T23:41:27Z"
 is_blog: true
 path: "/articles/2015/08/17/react-inline-styles-vs-css-stupid-benchmark/"
 language: en
+tags: ['javascript', 'reactjs']
 ---
 
 I was wondering what are the performance downsides when we are using ReactJS (it's the same for any other framework) with inline styles only, against using external CSS stylesheets.
@@ -11,12 +12,7 @@ I was wondering what are the performance downsides when we are using ReactJS (it
 We know that the size of inline styles can be huge (especially if we repeat elements). This is exactly the situation we are going to test here.
 This way, we can *test* browser performance when it comes to parse, save, and apply a bunch of inlines styles, against a unique CSS stylesheet.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # When use one against the other?
 

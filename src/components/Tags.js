@@ -12,12 +12,18 @@ export default ({ tags }) => (
         background: #eee;
         border: 1px solid #ddd;
         border-radius: 20px;
+        font-size: 18px;
+      }
+      li:hover {
+        background-color: rgb(2, 136, 209);
+      }
+      li:hover a {
+        color: white;
       }
     `}
   >
-    In:{' '}
     {(tags || []).map(tag => (
-      <li>
+      <li key={tag}>
         <Link className="clean" to={'/tags/' + tag}>
           {tag}
         </Link>

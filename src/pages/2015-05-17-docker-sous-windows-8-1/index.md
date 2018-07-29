@@ -6,12 +6,7 @@ path: "/articles/2015/05/17/docker-sous-windows-8-1/"
 language: fr
 ---
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Installer le client Docker via Chocolatey
 

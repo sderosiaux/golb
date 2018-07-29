@@ -6,6 +6,8 @@ path: "/articles/2017/03/02/serializing-data-efficiently-with-apache-avro-and-de
 language: "en"
 tags: ['scala', 'avro', 'benchmark', 'schema registry', 'confluent']
 background: 'background.jpg'
+category: 'Data Engineering'
+description: "Apache Avro is a must nowadays, but it's rarely used alone. For the sake of schema evolution (any business have requirements changes), it's often associated with a Schema Registry. This also has a performance impact because every message has to be checked."
 ---
 
 This article started with only the benchmark part, because I was curious of the impact of some parameters of the API, and if I could make things go faster.
@@ -19,13 +21,7 @@ We'll just go quickly through the basics of the Avro API, then we'll focus on:
 - The schemas registry management.
 - The schemas/case classes auto-generation in Scala.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
-
+TOC
 
 # The basics
 
@@ -37,7 +33,7 @@ First, let's remember how to use the Avro Java API to deal with `Schema`, `Gener
 
 ```scala
 val schema: Schema = {
-  val fa = SchemaBuilder.record("User").namespace("com.ctheu").fields()
+  val fa = SchemaBuilder.record("User").namespace("com.sderosiaux").fields()
   (0 to 80).foldLeft(fa) { (fields, i) => fields.optionalString("value" + i) }
   fa.endRecord()
 }
@@ -46,7 +42,7 @@ val schema: Schema = {
 `schema` contains:
 
 ```json
-{"type":"record","name":"User","namespace":"com.ctheu","fields":[
+{"type":"record","name":"User","namespace":"com.sderosiaux","fields":[
   {"name":"value0","type":["null","string"],"default":null},
   {"name":"value1","type":["null","string"],"default":null},
 ...
@@ -60,6 +56,7 @@ val record = new GenericData.Record(schema)
 ```
 
 `record` contains:
+
 ```json
 {"value0": "0.09768197503406495", "value1": "0.5937827911773815", ... }
 ```
@@ -97,7 +94,7 @@ def toRecord(buffer: Array[Byte], schema: Schema): GenericRecord = {
   val reader = new GenericDatumReader[GenericRecord](schema)
   val in = new ByteArrayInputStream(buffer)
   val decoder = DecoderFactory.get().binaryDecoder(in, null)
-  reader.read(null, decoder)    
+  reader.read(null, decoder)
 }
 ```
 
@@ -140,11 +137,8 @@ public D read(D reuse, Decoder in) throws IOException {}
 |The class behind `D` must implement `IndexedRecord` to be reusable.
 
 - Finally, encoders and decoders also have a configurable `bufferSize` if applicable.
-Their defaults are:
-  - 2048 bytes for the encoders: to bufferize serialized data before flushing them into the output stream.
-  - 8192 bytes for the decoders: to read that much data from the input stream, chunk by chunk.
-
----
+  - Default to 2048 bytes for the encoders: to bufferize serialized data before flushing them into the output stream.
+  - Default to 8192 bytes for the decoders: to read that much data from the input stream, chunk by chunk.
 
 We are going to test all the "reuse" combinaisons and play with the size of the data to serialize/deserialize at once, and see the impact of the `bufferSize`.
 
@@ -161,9 +155,10 @@ We will use a 80-Strings-containing-10-digits-each record as a fixture to serial
 ### Encoders
 
 As previously said, we are going to test:
+
 - `binaryEncoder` and `directBinaryEncoder`: with and without encoder reuse, 1/10/1000 records.
 
-This represents 12 tests (2 * 2 * 3), and they look like this (with JMH):
+This represents 12 tests (2\*2\*3), and they look like this (with JMH):
 
 ```scala
 @Benchmark @Fork(2)
@@ -212,14 +207,17 @@ If we look at the buffered encoder, without reuse, and normalize by records/s, w
 
 Writing multiple records did not improve our throughput because the buffer was still 2048 bytes.
 If we increase it to 1024*1024, we get much better results:
+
 ```
 withoutReuse10record    thrpt   20  5116,433 ± 30,456  ops/s
 withoutReuse1000record  thrpt   40  82,362 ± 0,238  ops/s
 ```
-- 10 records: 5116 ops/s, hence 51160 records/s. 
+
+- 10 records: 5116 ops/s, hence 51160 records/s.
 - 1000 records: 82 ops/s, hence 82000 records/s, we achieve the best throughput here.
 
 To conclude:
+
 - The `directBinaryEncoder` has no buffer, and directly writes its data into the output stream. It's only useful if no buffer is really needed (short live) or if the output stream is not compatible.
 - Do not use the `reuse` param for the encoders, it brings nothing performance wise. I should have check the memory usage.
 - It seems useless to batch the writes using the same encoder (poor gain) but if you do, increase greatly the `bufferSize`.
@@ -230,7 +228,7 @@ As previously said, we are going to test:
 
 - `binaryDecoder` and `directBinaryDecoder`: with and without decoder reuse, with and without record reuse, with 1/10/1000 records.
 
-This represents 24 tests (2 * 2 * 2 * 3) ! and they look like this:
+This represents 24 tests (2\*2\*\2\*3) ! and they look like this:
 
 ```scala
 @Benchmark
@@ -272,8 +270,8 @@ I didn't test the `directBinaryDecoder`, do you really want me to? ;)
 
 We can see that reuse or not, multiple records or not, it's the same performance (even with a bigger buffer)! Around 190k record/s, no matter how many records in a row.
 
-
 To conclude:
+
 - Do how you want when you deserialize the records, it does not matter, except on the memory and GC pressure probably: reusing encoders and records seems like a good idea.
 
 # Versioning the Avro schemas
@@ -292,6 +290,7 @@ Last but not least, that gives us an idea of what's in the _pipes_ without check
 [Confluent had written a nice article about them and why it's mandatory](https://www.confluent.io/blog/schema-registry-kafka-stream-processing-yes-virginia-you-really-need-one/).
 
 There are two main schema registries out there:
+
 - [Confluent's](http://docs.confluent.io/3.1.2/schema-registry/docs/index.html): integrated with the Confluent's Platform.
 - [schema-repo](https://github.com/schema-repo/schema-repo) which is the implementation of [AVRO-1124](https://issues.apache.org/jira/browse/AVRO-1124).
 
@@ -311,6 +310,7 @@ We need to introduce the notion of _Subject_ when we are using a SR.
 A subject represents a collection of _compatible_ (according to custom validation rules) schemas in the SR.
 
 The versions we talked about are only unique per subject:
+
 - a subject A can have v1, v2.
 - a subject B can have v1, v2, v3.
 
@@ -360,6 +360,7 @@ It's basically a `Map[String, (Map[Int, Any], Config)]` (!).
 
 - The whole configuration of the schema registry:
   - http://localhost:2876/config?includeDefaults=true
+
 ```xml
 Configuration of schema-repo server:
 
@@ -429,6 +430,7 @@ latest: 1 SCHEMA B
 schema-repo provides 3 `Subject` wrappers:
 
 - A read-only subject, to pass it down safely:
+
 ```scala
 // wrap the subject into a read-only container to ensure nothing can register schemas on it
 val readOnlySubject = Subject.readOnly(subject)
@@ -436,6 +438,7 @@ val readOnlySubject = Subject.readOnly(subject)
 ```
 
 - A cached subject, to avoid doing HTTP requests:
+
 ```scala
 // cache the schemas id+value in memory the first time they are accessed through the subject.
 // This is to avoid contacting the HTTP schema registry if it was already seen.
@@ -539,6 +542,7 @@ println(avroSubject.register("""
     |}
   """.stripMargin)) // INCOMPATIBLE, WILL FAIL!
 ```
+
 Output:
 
 ```js
@@ -604,6 +608,7 @@ $ ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties
 |There are also some official [Docker images](http://docs.confluent.io/3.1.2/cp-docker-images/docs/intro.html) available.
 
 I've kept only the interesting parts of the config:
+
 - It stores the schemas modifications into a kafka topic `_schemas`.
 - We can use JMX to check the internals of the registry.
 - In Zookeeper, we'll find the data in `/schema_registry`.
@@ -664,9 +669,9 @@ libraryDependencies += "io.confluent" % "kafka-schema-registry-client" % "3.1.2"
 
 ```scala
 val client = new CachedSchemaRegistryClient("http://vps:8081", Int.MaxValue)
-val s1 = SchemaBuilder.builder("com.ctheu").record("Transaction").fields()
+val s1 = SchemaBuilder.builder("com.sderosiaux").record("Transaction").fields()
   .requiredString("uuid").endRecord()
-val s2 = SchemaBuilder.builder("com.ctheu").record("Transaction").fields()
+val s2 = SchemaBuilder.builder("com.sderosiaux").record("Transaction").fields()
   .requiredString("uuid")
   .optionalDouble("value")
   .endRecord()
@@ -679,7 +684,7 @@ println(id1, id2)
 
 val metadata = client.getLatestSchemaMetadata("MY_SUBJECT")
 println(s"latest: ${metadata.getSchema}")
-// latest: {"type":"record","name":"Transaction","namespace":"com.ctheu","fields":[...]}
+// latest: {"type":"record","name":"Transaction","namespace":"com.sderosiaux","fields":[...]}
 
 // helper methods:
 println("fully compatible? " + AvroCompatibilityChecker.FULL_CHECKER.isCompatible(s1, s2))
@@ -697,15 +702,16 @@ There is an unofficial UI to go along with it: [Landoop/schema-registry-ui](http
 
 We'll need to enable CORS on the Schema Registry server of allow cross-domain requests if needed:
 
-```
+```shell
 $ cat >> etc/schema-registry/schema-registry.properties << EOF
 access.control.allow.methods=GET,POST,PUT,OPTIONS
 access.control.allow.origin=*
 EOF
 ```
+
 Then we can simply run a Docker image to get the UI working:
 
-```
+```shell
 $ docker run -d -p 8000:8000 -e "SCHEMAREGISTRY_URL=http://vps:8081" landoop/schema-registry-ui
 ```
 
@@ -775,6 +781,7 @@ def toRecord(buffer: Array[Byte], registry: SchemaRegistryClient): GenericRecord
 The Confluent's deserializer [KafkaAvroDeserializer](https://github.com/confluentinc/schema-registry/blob/master/avro-serializer/src/main/java/io/confluent/kafka/serializers/AbstractKafkaAvroDeserializer.java) contains a bit more checks and logic such as the ability to provide another reader schema (ie: different of the one found in the payload, but still compatible), dealing with registry subject names (for Kafka messages key and value), and it can use Avro `SpecificData` (ie: not only `GenericData`).
 
 In the Confluent's way, we would configure our Kafka Consumer properties with:
+
 ```scala
 props.put("schema.registry.url", url);
 props.put("key.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer")
@@ -821,7 +828,7 @@ println(schema)
 Output:
 
 ```json
-{"type":"record","name":"User","namespace":"com.ctheu",
+{"type":"record","name":"User","namespace":"com.sderosiaux",
  "fields":[{"name":"firstName","type":"string"},...] }
 ```
 
@@ -834,16 +841,18 @@ avro4s handles most Scala -> Avro types conversion: all the basic types and spec
 As we said, it's also possible to do the reverse transformation using [sbt-avro4s](https://github.com/sksamuel/sbt-avro4s), ie: generate the case class from a schema.
 
 In `project/plugins.sbt`:
-```
+
+```scala
 addSbtPlugin("com.sksamuel.avro4s" % "sbt-avro4s" % "1.0.0")
 ```
 
 In `src/main/resources/avro/Usr.avsc` (AVro SChema, using a JSON notation):
+
 ```json
 {
     "type":"record",
     "name":"Usr",
-    "namespace":"com.ctheu",
+    "namespace":"com.sderosiaux",
     "fields":[
         {"name":"firstName","type":"string"},
         {"name":"lastName","type":"string"},
@@ -880,7 +889,7 @@ val bin = AvroOutputStream.binary[User](System.out)
  // Schema written. Uses Avro jsonEncoder.
 val json = AvroOutputStream.json[User](System.out)
 // Schema written. Store the schema first, then the records.
-val data = AvroOutputStream.data[User](System.out) 
+val data = AvroOutputStream.data[User](System.out)
 
 val u = Seq(User("john", "doe", 66), User("mac", "king", 24))
 json.write(u)
@@ -905,12 +914,12 @@ assert(u == u2)
 
 There are a few more features available, take a peek at the [README](https://github.com/sksamuel/avro4s) (type precision, custom mapping).
 
-
 ## avrohugger
 
 Avrohugger does not rely on macros but on [treehugger](http://eed3si9n.com/treehugger/), which generates scala source code directly (whereas macros evaluation is just another phase in the compiler processing).
 
 Avrohugger is a set of libraries and tools:
+
 - `"com.julianpeeters" %% "avrohugger-core" % "0.15.0"`: generate Scala source code from Avro schemas. It can generates case classes but also `SpecificRecordBase` classes and `scavro` case classes ([scavro](https://github.com/oedura/scavro) is another library to generate case classes from schemas).
 
 ```scala
@@ -941,7 +950,7 @@ val schema = new Schema.Parser().parse(
   |{
   |    "type":"record",
   |    "name":"Usr",
-  |    "namespace":"com.ctheu",
+  |    "namespace":"com.sderosiaux",
   |    "fields":[
   |        {"name":"firstName","type":"string"},
   |        {"name":"lastName","type":"string"},
@@ -954,13 +963,14 @@ val schema = new Schema.Parser().parse(
 
 println(new Generator(format.Standard,
   avroScalaCustomTypes = Map("int" -> classOf[Double]),
-  avroScalaCustomNamespace = Map("com.ctheu" -> "com.toto"),
+  avroScalaCustomNamespace = Map("com.sderosiaux" -> "com.toto"),
   avroScalaCustomEnumStyle = Map(),
   restrictedFieldNumber = false
 ).schemaToStrings(schema))
 ```
 
 Cleaned output:
+
 ```scala
 object Suit extends Enumeration {
   type Suit = Value
@@ -973,6 +983,7 @@ case class Usr(firstName: String, lastName: String, age: Double, suit: Suit.Valu
 - [sbt-avro-hugger](https://github.com/julianpeeters/sbt-avrohugger) `addSbtPlugin("com.julianpeeters" % "sbt-avrohugger" % "0.15.0")`: a plugin just to automatize these generations using sbt tasks.
 
 - [avro-scala-macro-annotations](https://github.com/julianpeeters/avro-scala-macro-annotations) `"com.julianpeeters" % "avro-scala-macro-annotations_2.11" % "0.11.1"`: _fills_ an existing empty `case class` at compilation time, with the fields found in an avro schema or in an avro data file, eg:
+
 ```scala
 // From a schema:
 @AvroTypeProvider("avro/user.avsc")
@@ -990,6 +1001,7 @@ case class User()
 It's time to forget about JSON (we already forgot about XML). It's nice for humans because it's verbose and readable, but it's not efficient to work with. We repeat the schema of the data in all messages, we can make typos and send crap over the wires..
 
 Avro fixes those issues:
+
 - Space and network efficience thanks to a reduced payload.
 - Schema evolution intelligence and compatibility enforcing.
 - Schema registry visibility, centralization, and reutilisation.

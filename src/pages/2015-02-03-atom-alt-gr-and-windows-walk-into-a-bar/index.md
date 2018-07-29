@@ -4,14 +4,10 @@ description: Alt-GR is a bit delicate to handle with Atom on Windows
 date: "2015-02-03T23:41:05Z"
 is_blog: true
 path: "/articles/2015/02/03/atom-alt-gr-and-windows-walk-into-a-bar/"
+language: en
 ---
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Typing ']' does not work with azerty keyboards
 
@@ -76,6 +72,7 @@ Our previous tentative was just adding a new shortcut to the keys combinaison, t
 What we need, more brutal, is to clear the previous behavior of `Ctrl-Alt-[`.
 
 There is a keyword to do so `unset!`:
+
 ```javascript
 'atom-workspace atom-text-editor:not([mini])': { 'ctrl-alt-[': 'unset!' }
 ```
@@ -87,7 +84,7 @@ More details on how the keymaps are working : https://github.com/atom/atom-keyma
 
 With Atom, we can also *create* any command we want.
 
-Look for `init.coffee`, and add something like: 
+Look for `init.coffee`, and add something like:
 
 ```javascript
 atom.commands.add 'atom-text-editor',
@@ -108,4 +105,3 @@ Using the devtools, it's possible to grab a reference to the Atom editor:
 ```javascript
 atom.workspace.getEditors();
 ```
-

@@ -4,8 +4,10 @@ date: "2015-02-12T15:30:57Z"
 is_blog: true
 path: "/articles/2015/02/12/how-to-communicate-between-react-components/"
 language: en
-tags: ['javascript', 'es6', 'reactjs', 'context', 'redux', 'mobx', 'pubsub' ]
+tags: ['javascript', 'reactjs', 'context', 'redux', 'mobx', 'pubsub' ]
 background: 'background.jpg'
+category: 'ReactJS'
+description: "There are multiple patterns for components to talk to each others, we'll see all of them!"
 ---
 
 As a starter, I already wrote a smaller article about [Ownership and children in ReactJS](https://www.sderosiaux.com/2015/02/10/ownership-and-children-in-reactjs/) to differenciate between parent/child relationship and React ownership.
@@ -14,16 +16,12 @@ As a starter, I already wrote a smaller article about [Ownership and children in
 It depends of the relationship between the components, and it depends on what we prefer.
 
 There are 3 possible relationships:
+
 - parent to child
 - child to parent
 - not directly related (brothers, cousins)
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Parent to children
 

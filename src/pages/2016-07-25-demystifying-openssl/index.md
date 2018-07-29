@@ -19,12 +19,7 @@ I'm not an expert in openssl. I just want to demystify some of its features:
 
 We'll explain all the commands to use to generate a self-signed certificate, and we'll add it into nginx to make it work.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Why use a certificate?
 

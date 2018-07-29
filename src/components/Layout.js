@@ -1,29 +1,64 @@
 import React from 'react'
 import { Link } from 'gatsby'
 import { SocialIcon } from 'react-social-icons'
+import Helmet from 'react-helmet'
 import { css } from 'react-emotion'
 import Color from 'color'
 import CTA from '../components/CTA'
 import Rights from '../components/Rights'
 
 import { rhythm, scale } from '../utils/typography'
+import Img from 'gatsby-image'
 
 const color = Color('rgb(2, 136, 209)')
 const light = color.string()
 const dark = color.darken(0.2).string()
 
+require('./Layout.module.css')
+
 export default class extends React.Component {
   render() {
-    const { location, children, fullWidth } = this.props
+    const { location, children, fullWidth, cover } = this.props
 
     return (
       <div>
+        <Helmet>
+          <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+          <link rel="preconnect" href="//fonts.googleapis.com" />
+          <meta charSet="utf-8" />
+          <meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
+          <meta httpEquiv="Content-Language" content="en" />
+          <meta name="robots" content="index,follow" />
+          <meta name="application-name" content="sderosiaux.com" />
+          <meta
+            name="description"
+            content="Personal website of S. Derosiaux, talking about Scala and Data Engineering"
+          />
+          <meta
+            name="keywords"
+            content="java, scala, hadoop, spark, hbase, flume, kafka, javascript, reactjs, data-engineer"
+          />
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, user-scalable=yes, minimal-ui"
+          />
+          <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+          <link rel="icon" sizes="32x32" href="/favicon.ico" />
+          <link rel="icon" sizes="192x192" href="/favicon.ico" />
+          <link rel="apple-touch-icon-precomposed" href="/favicon.ico" />
+          <meta name="msapplication-TileImage" content="/favicon.ico" />
+        </Helmet>
+
         <Header location={location} />
-        <div
-          className={css`
-            height: 134px; // top bar
-          `}
-        />
+
+        {cover && (
+          <Img
+            fluid={cover.childImageSharp.fluid}
+            style={{
+              boxShadow: '0 5px 10px rgba(0, 0, 0, .2)',
+            }}
+          />
+        )}
 
         {fullWidth ? (
           <div>{children}</div>
@@ -47,13 +82,43 @@ export default class extends React.Component {
   }
 }
 
-const Header = ({ location }) => (
+const Header = ({ location }) => [
   <header
+    key="header"
     className={css`
       position: fixed;
       width: 100%;
       background: white;
       z-index: 99999; // to avoid tweet going on top
+
+      @media (max-width: 1205px) {
+        .myname {
+          font-size: 24px;
+        }
+        li {
+          padding: 5px 10px !important;
+          font-size: 18px;
+          text-transform: none !important;
+        }import { Helmet } from 'react-helmet';
+
+        .social {
+          display: none;
+        }
+        .bar {
+          height: 10px;
+        }
+        + .spacebar {
+          height: 30px;
+        }
+      }
+      @media (max-width: 600px) {
+        .myname {
+          display: none;
+        }
+        .bar {
+          height: 5px;
+        }
+      }
     `}
   >
     <div
@@ -64,7 +129,7 @@ const Header = ({ location }) => (
     >
       <Link
         className={
-          'clean ' +
+          'myname clean ' +
           css`
             margin-left: 40px;
             font-family: 'Kalam';
@@ -124,13 +189,16 @@ const Header = ({ location }) => (
       </ul>
 
       <ul
-        className={css`
-          margin: 0 20px;
-          li {
-            display: inline-block;
-            margin-right: 5px;
-          }
-        `}
+        className={
+          'social ' +
+          css`
+            margin: 0 20px;
+            li {
+              display: inline-block;
+              margin-right: 5px;
+            }
+          `
+        }
       >
         <li>
           <SocialIcon
@@ -172,11 +240,23 @@ const Header = ({ location }) => (
     </div>
 
     <div
-      className={css`
-        height: 20px;
-        background: linear-gradient(to bottom, ${light}, ${light}, ${light});
-        box-shadow: 0 2px 1px 2px rgba(0, 0, 0, 0.1);
-      `}
+      className={
+        'bar ' +
+        css`
+          height: 20px;
+          background: linear-gradient(to bottom, ${light}, ${light}, ${light});
+          box-shadow: 0 2px 1px 2px rgba(0, 0, 0, 0.1);
+        `
+      }
     />
-  </header>
-)
+  </header>,
+  <div
+    key="spacebar"
+    className={
+      'spacebar ' +
+      css`
+        height: 134px; // top bar
+      `
+    }
+  />,
+]

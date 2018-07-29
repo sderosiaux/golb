@@ -6,6 +6,8 @@ path: "/articles/2017/08/07/looking-at-kafka-s-consumers-offsets/"
 language: "en"
 tags: ['scala', 'kafka', 'stream', 'consumers', 'offsets', 'lag']
 background: "background.jpg"
+category: 'Data Engineering'
+description: "The consuming model of Kafka is very powerful, can greatly scale, and is quite simple. It's useful to understand how the internals work, like the topic __consumer_offsets, and see how to use Kafka Streams  Druid to display its content."
 ---
 
 Kafka has quite evolved since some times. Its consuming model is very powerful, can greatly scale, is quite simple to understand.
@@ -18,13 +20,7 @@ We'll start by looking at higher-level commands to check the offsets, then we'll
 
 We'll finish by a Kafka Streams processor to convert this topic to a JSON-readable topic to finally be consumed by a timeseries database (Druid), for monitoring and alerting purpose.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
-
+TOC
 
 # Eating its own dog food
 
@@ -78,6 +74,7 @@ mygroup   mytopic   2          unknown         6507388         unknown  consumer
 mygroup   mytopic   3          6175879         6969711         793832   consumer-1_/172.16.10.5
 mygroup   mytopic   4          unknown         6503476         unknown  consumer-1_/172.16.10.5
 ```
+
 Note: some offsets are `unknown` (therefore the lag also) because the consumers did not consume all the partitions yet.
 
 If this group is consuming several topics, all will be seen in the list.
@@ -103,7 +100,6 @@ If we did migrated from a previous Kafka version, according to the brokers confi
 [[info]]
 |Post Kafka-0.8, Zookeeper is only used for the brokers management (failures, discovery), not for the offsets management.
 
-
 ### Tip: summing-up the lag
 
 When we have several partitions, it's sometimes useful to just care about the sum of each partition's lag (0 meaning the group has catched up the latest messages):
@@ -115,11 +111,13 @@ $ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:
   --describe 2>/dev/null | awk 'NR>1 { print $6 }' | paste -sd+ - | bc
 98
 ```
+
 We know the whole group has _only_ 98 events still not consumed. If this is a topic with tons of real-time events, that's not bad!
 
 ### Tip: listing all the active groups
 
 This command is very useful to discover all the active groups on the cluster:
+
 ```shell
 $ kafka-run-class kafka.admin.ConsumerGroupCommand --bootstrap-server localhost:9092 \
   --new-consumer --list
@@ -130,16 +128,19 @@ weather
 
 Note that during a partition rebalancing, the affected group temporary disappears, because it is not active anymore.
 
-## Consuming __consumer_offsets
+## Consuming \_\_consumer\_offsets
 
 Because it's a topic, it's possible to just consume it as any other topic.
 
 But because it's an _internal_ Kafka topic, by default, the consumers can't see it, therefore they can't consume it.
 We must ask them to not exclude it (default is true) by adding some props:
+
 ```shell
 $ echo "exclude.internal.topics=false" > /tmp/consumer.config
 ```
+
 Then we use it to consume the topic:
+
 ```shell
 $ kafka-console-consumer --consumer.config /tmp/consumer.config \
   --zookeeper localhost:2181 \
@@ -147,11 +148,13 @@ $ kafka-console-consumer --consumer.config /tmp/consumer.config \
 ```
 
 Output:
+
 ```
      ▒k    ]▒▒▒▒  ]▒▒▒▒
      ▒kg    ]▒▒▒▒  ]▒▒▒▒
      ▒▒▒    ]▒▒▒▒  ]▒▒▒▒
 ```
+
 WHAT KIND OF SORCERY IS THIS?
 
 Because it's saved as binary data, we need some kind of formatter to help us out:
@@ -164,6 +167,7 @@ $ kafka-console-consumer --consumer.config /tmp/consumer.config \
 ```
 
 Here it is:
+
 ```shell
 [mygroup1,mytopic1,11]::[OffsetMetadata[55166421,NO_METADATA],CommitTime 1502060076305,ExpirationTime 1502146476305]
 [mygroup1,mytopic1,13]::[OffsetMetadata[55037927,NO_METADATA],CommitTime 1502060076305,ExpirationTime 1502146476305]
@@ -179,6 +183,7 @@ Note that each message in this topic has a key and a value. It's very important,
 I've written a [Kafka's Streams app](https://github.com/sderosiaux/kafka-streams-consumer-offsets-to-json) that reads this topic and convert its `(key, val)` to another topic, JSON-readable.
 
 The core of the code is:
+
 ```scala
 builder.stream[Array[Byte], Array[Byte]](INPUT_TOPIC)
     .map[BaseKey, Array[Byte]](baseKey)
@@ -187,7 +192,7 @@ builder.stream[Array[Byte], Array[Byte]](INPUT_TOPIC)
     .map[Array[Byte], String](toJson)
     .to(Serdes.ByteArray, Serdes.String, conf.outputTopic())
 ```
-It:
+
 - consumes `__consumer_offsets`
 - maps the content to the `BaseKey` case class
 - removes its own offsets to avoid an infinite loop
@@ -197,6 +202,7 @@ It:
 ![Kafka Streams to convert __consumer_offsets to JSON](kafkastreams.png)
 
 (Kafka Streams really needs a Scala API with more functions, such as `collect` and smart types inferring).
+Edit: `lightbend/kafka-streams-scala` has been merged into Kafka Trunk so it should be good now.
 
 A typical converted message is:
 
@@ -235,6 +241,7 @@ It's a broker which is the leader for a group, that caches and commits its consu
 ![How commits are happening](commit.png)
 
 We can know which broker it is when using `ConsumerGroupCommand`:
+
 ```
 GROUP                          TOPIC                          PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             OWNER
 17/08/07 23:54:32 INFO internals.AbstractCoordinator: Discovered coordinator broker01:9092 (id: 2147483519) for group mygroupid.
@@ -244,12 +251,15 @@ GROUP                          TOPIC                          PARTITION  CURRENT
 It's also simple to find it programmatically:
 
 Using Zookeeper to find the brokers, thanks to some Kafka client utils:
+
 ```scala
 val channel = ClientUtils.channelToOffsetManager("mygroupid",
                                                  ZkUtils("zk:2181", 30000, 30000, false))
 channel.disconnect()
 ```
+
 Through the logs, we can see what's going on and who is the Offset Manager:
+
 ```
 - Created socket with SO_TIMEOUT = 3000 (requested 3000), SO_RCVBUF = 65536 (requested -1), SO_SNDBUF = 65536 (requested -1), connectTimeoutMs = 3000.
 - Created channel to broker broker03:9092.
@@ -269,9 +279,11 @@ val metadataResponse = GroupCoordinatorResponse.readFrom(channel.receive.payload
 println(metadataResponse)
 channel2.disconnect()
 ```
+
 ```shell
 GroupCoordinatorResponse(Some(BrokerEndPoint(128,broker01,9092)),NONE,0)
 ```
+
 Note: `None` corresponds to `Errors` and the 0 is the `correlationId` (a distinct ID per request, to know to which one it corresponds).
 
 ## In code: GroupCoordinator and GroupMetadataManager
@@ -287,7 +299,6 @@ When an offset commit is asked by a client, the Group Coordinator waits for the 
 `__consumer_offsets` is a compacted topic. It's useful to not consume too many disk space for no reason, because we don't care of the past state. The compaction is only possible because this topic has a fixed key for the same event: the combinaison `(group, topic, partition number)`.
 
 The purpose of the `__consumer_offsets` topic is to keep the latest consumed offset per group/topic/partition, which is why the key is the combinaison of them. Through the compaction, only the latest value will be saved into Kafka's data, the past offsets are useless. It's a complement to the auto-cleaning done via the `expireTimestamp`.
-
 
 # Ingest the JSON into Druid
 
@@ -361,6 +372,7 @@ $ curl -X POST 'http://druidbroker:8082/druid/v2/?pretty=' \
   "intervals": [ "2017-08-09/2017-08-10" ]
 }'
 ```
+
 ```json
 [
     {
@@ -385,6 +397,8 @@ It's possible to use its query engine to trigger some alerts on a particular gro
 
 # Conclusion
 
+If we resume:
+
 - `__consumer_offsets` is an implementation detail (came in 0.9) we should not rely on; it replaces the old system based on Zookeeper.
 - `__consumer_offsets` is binary encoded. It keeps the latest consumed offsets for each topic/group/partition for a certain time only (1d).
 - `ConsumerGroupCommand` can be used to retrieve the consumers offsets.
@@ -392,4 +406,3 @@ It's possible to use its query engine to trigger some alerts on a particular gro
 - Low-level consumers can choose to not commit their offsets into Kafka (mostly to ensure at-least/exactly-once).
 - Kafka Streams is excellent at filling a topic from another one.
 - Druid is excellent at ingesting timestamped JSON.
-

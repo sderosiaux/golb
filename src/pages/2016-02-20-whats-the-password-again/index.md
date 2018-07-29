@@ -10,12 +10,7 @@ In our company or home network, we have access to several computers. We probably
 
 Of course, we are already using ssh to do so. But, if you are still typing a username and password each time you log in somewhere, please stop.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Passwords are obsolete
 

@@ -4,18 +4,15 @@ date: "2015-02-09T02:48:59Z"
 is_blog: true
 path: "/articles/2015/02/09/react-tips/"
 language: en
+category: 'ReactJS'
+tags: ['javascript', 'reactjs', 'perfmatters']
 ---
 
 React is full of tricks, is based on important principles, and comes with its own downsides and its own complexity.
 Thinking in React is a bit different than thinking in pure Javascript or jQuery.
 Here are some tips.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # HTML to JSX
 

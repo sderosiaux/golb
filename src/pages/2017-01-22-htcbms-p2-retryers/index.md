@@ -27,12 +27,7 @@ The next one will focus on the circuit-breaker pattern, more complex but smarter
 
 We'll compare different implementations for the sake of it.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # An example of a service that can fail
 

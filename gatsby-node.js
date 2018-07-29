@@ -44,28 +44,26 @@ exports.createPages = ({ graphql, actions }) => {
         // Create blog posts pages.
         const posts = result.data.allMarkdownRemark.edges
 
-        _.each(
-          posts.filter(p => p.node.frontmatter.is_blog === true),
-          (post, index) => {
-            const previous =
-              index === posts.length - 1 ? null : posts[index + 1].node
-            const next = index === 0 ? null : posts[index - 1].node
+        const blogs = posts.filter(p => p.node.frontmatter.is_blog === true)
+        blogs.forEach((post, index) => {
+          const previous =
+            index === blogs.length - 1 ? null : blogs[index + 1].node
+          const next = index === 0 ? null : blogs[index - 1].node
 
-            const path = post.node.frontmatter.path // post.node.fields.slug,
-            createPage({
-              path,
-              component: blogPost,
-              context: {
-                slug: post.node.fields.slug,
-                previous,
-                next,
-              },
-            })
-          }
-        )
+          const path = post.node.frontmatter.path // post.node.fields.slug,
+          createPage({
+            path,
+            component: blogPost,
+            context: {
+              slug: post.node.fields.slug,
+              previous,
+              next,
+            },
+          })
+        })
 
         let tags = []
-        _.each(posts, edge => {
+        posts.forEach(edge => {
           if (_.get(edge, 'node.frontmatter.tags')) {
             tags = tags.concat(edge.node.frontmatter.tags)
           }

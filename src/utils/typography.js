@@ -131,19 +131,14 @@ typography = new Typography({
       margin: 0,
       listStyle: 'none',
     },
-    'li > p, li > ul': {
-      // summary
-      marginTop: 0,
-      marginBottom: 0,
-    },
     a: {
       color: '#444',
       textDecoration: 'none',
     },
-    'a:not(.clean):not(.anchor)': {
+    'a:not(.clean):not(.anchor):not(.gatsby-resp-image-link)': {
       boxShadow: '0 1px 0 0 currentColor',
     },
-    'a:not(.clean):not(.anchor):hover,a:not(.clean):not(.anchor):active': {
+    'a:not(.clean):not(.anchor):hover:not(.gatsby-resp-image-link),a:not(.clean):not(.anchor):not(.gatsby-resp-image-link):active': {
       boxShadow: '0 1px 0 0 currentColor',
       color: Color('rgb(2, 136, 209)').string(),
     },

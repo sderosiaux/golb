@@ -15,12 +15,7 @@ We want to be able to query them in a scalable manner, using a time dimension, w
 - We can create a Hive table on top of the Avro files to query the data.
 - Because we want something efficient and fast, we'd like to use Impala on top of Parquet: we'll use Apache Oozie to export the Avro files to Parquet files.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Flume
 

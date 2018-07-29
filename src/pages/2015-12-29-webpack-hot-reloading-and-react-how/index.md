@@ -4,6 +4,7 @@ date: "2015-12-29T23:49:58Z"
 is_blog: true
 path: "/articles/2015/12/29/webpack-hot-reloading-and-react-how/"
 language: en
+tags: ['javascript', 'reactjs', 'webpack']
 ---
 
 Nowadays, working with ReactJS/webpack boilerplates, the Hot Reloading piece is already included and we can enjoy it. It's not yet in [`create-react-app`](https://github.com/facebookincubator/create-react-app) but that won't take long I think.
@@ -17,12 +18,7 @@ We can see it in action in a previous update of mine: [Using react-hot-loader wi
 [[info]]
 |
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+vs
 
 
 # Why should we enjoy Hot Reloading?

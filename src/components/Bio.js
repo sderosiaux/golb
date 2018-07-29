@@ -7,15 +7,22 @@ import 'typeface-merriweather'
 import profilePic from './profile-pic.jpg'
 import { rhythm } from '../utils/typography'
 import { Link } from 'gatsby'
+import { css } from 'react-emotion'
 
 class Bio extends React.Component {
   render() {
     return (
       <div
-        style={{
-          display: 'flex',
-          marginBottom: rhythm(2.5),
-        }}
+        className={css`
+          padding: 10px;
+          display: flex;
+          border: 1px solid #ccc;
+          border-radius: 3px;
+          align-items: center;
+          > * {
+            margin-bottom: 0;
+          }
+        `}
       >
         <img
           src={profilePic}
@@ -28,9 +35,9 @@ class Bio extends React.Component {
           }}
         />
         <p>
-          Software Engineer then Data Engineer, I live in France. Enthousiast
-          and eager to learn anything related to IT, I'm always seeking for
-          challenge. Find out more <Link to="/about-me">about me</Link>.
+          Software &amp; Data Engineer, I live in France. Enthousiast and eager
+          to learn, I'm always seeking for challenges. Find out more{' '}
+          <Link to="/about-me">about me</Link>.
         </p>
       </div>
     )

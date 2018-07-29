@@ -4,16 +4,12 @@ date: "2016-01-06T21:58:27Z"
 is_blog: true
 path: "/articles/2016/01/06/how-to-enhance-the-quality-of-your-javascript-code/"
 language: en
+tags: ['javascript', 'babel', 'reactjs']
 ---
 
 TLDR: By linting our source code. 
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # What does code linting provide?
 

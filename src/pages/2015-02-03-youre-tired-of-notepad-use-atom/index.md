@@ -10,16 +10,11 @@ The world of text editors was a bit frozen until GitHub released a new kind of e
 
 What does it bring? Is it fast? Is it for everyone? Let's take a look.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Changing habits
 
-![vs](vs.png){.fr} I'm used to work on **Visual Studio 2013**, which is a very good IDE.
+![vs](vs.png) I'm used to work on **Visual Studio 2013**, which is a very good IDE.
 
 It handle frontend and backend projects, can deal with a lot of files, uses TFS as source control, has an interface to merge files, has the ability to drag & drop in the files treeview, display images without going back to the explorer, has a lot of refactoring options and so much more. It just works flawlessly and the interface is quite responsive^[Except when some background process occurs and you're good to force close it and restart, that's faster.].
 
@@ -39,7 +34,7 @@ But a few months passed, so I decided to give a try. I don't regret it.
 
 It's not a true project manager yet but it's getting there. And I'm sure there are plugins to make it so.
 
-![atom cthulhu](atom-cthulhu.png){.fr}
+![atom cthulhu](atom-cthulhu.png)
 
 Atom is a big plugins/packages manager on its core. It comes automatically with dozen of them that we will need for misc purposes :
 

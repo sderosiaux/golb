@@ -22,12 +22,7 @@ murmur3 is well-known hash function, largely used, because of its simplicity, sp
 
 It is used across several domains: ids generator, checksums, hash tables, bloom filters, hyperloglog.. anywhere you need to get a fairly unique fixed-length numerical ID (from anything, a string, some bytes[], an object) to be used inside those data-structures.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Murmur3
 
@@ -404,7 +399,7 @@ words.foreach(bloom.put(_)) // insert every words into the Bloom filter
 
 println(s"exact size:${words.distinct.size}")               // 7719
 println(s"approx size: ${bloom.approximateElementCount()}") // 7721
-println(bloom.mightContain("ctheu"))           // false
+println(bloom.mightContain("sderosiaux"))           // false
 println(bloom.mightContain("Hamlet"))          // true
 println(bloom.mightContain("Zzzzzzzzzzzzzzz")) // true (!)
 println(words.contains("Zzzzzzzzzzzzzzz"))     // false

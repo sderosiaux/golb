@@ -1,14 +1,61 @@
 .custom-block-info {
-  border: 1px solid #ccc;
-  padding: 10px;
-  background-color: #f0f0fc;
+  margin: 20px 0;
+  padding: 10px 20px 10px 20px;
+  background-color: rgba(2, 136, 209, 0.1);
+  border-left: 7px solid rgb(2, 136, 209);
 }
 
 .custom-block-warn {
-  border: 1px solid #ccc;
-  padding: 10px;
-  background-color: #fcf0f0;
+  margin: 20px 0;
+  padding: 10px 20px 10px 20px;
+  background-color: rgba(209, 89, 2, 0.1);
+  border-left: 7px solid rgb(209, 89, 2);
 }
 
-.tag {
+article .custom-block-body > p {
+  margin: 0;
+}
+
+article h1 {
+  margin-top: 2em;
+}
+article h2,
+article h3 {
+  margin-top: 1em;
+}
+
+article ul > li {
+  list-style-type: disc;
+  margin-bottom: 5px;
+}
+article > ul > li:last-child {
+  margin-bottom: 30px;
+}
+article .gatsby-highlight {
+  margin-bottom: 30px;
+}
+
+/* Summary */
+article h1 + ul li {
+  list-style-type: none;
+  margin: 0;
+}
+article h1 + ul ul {
+  margin-bottom: 20px !important;
+}
+article h1 + ul ul {
+  border-left: 1px solid rgb(68, 68, 68);
+  padding-left: 10px;
+}
+article h1 + ul {
+  margin-bottom: 50px;
+}
+article h1 + ul li > p,
+article h1 + ul li > ul {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+article .gatsby-resp-image-link {
+  padding: 30px 0;
 }

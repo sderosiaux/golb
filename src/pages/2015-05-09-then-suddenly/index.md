@@ -16,12 +16,7 @@ We need to look for more answers, more challenges. Our brain is asking.
 
 Edit: a few months after this post, I quit my job and found an awesome job with talented people.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # We must create a source of knowledge
 

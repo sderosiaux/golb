@@ -4,6 +4,7 @@ date: "2015-02-15T20:23:10Z"
 is_blog: true
 path: "/articles/2015/02/15/gulp-and-the-nodejs-streams/"
 language: en
+tags: ['javascript', 'nodejs', 'gulp']
 ---
 
 Gulp is a popular build system.
@@ -15,12 +16,7 @@ It generally depends on a community to develop tons of plugins to provide more t
 
 We'll take a look at how Gulp works, why it's so *fluid* to use and why it's so fast: because it works with nodejs streams.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # How to start with Gulp
 

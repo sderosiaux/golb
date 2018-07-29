@@ -22,12 +22,7 @@ Here are the things to consider for a blog website and some platforms I evaluate
 
 Spoiler: I switched to Gatsby and Netlify.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Desired features
 

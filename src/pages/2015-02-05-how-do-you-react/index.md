@@ -4,6 +4,7 @@ description: The React javascript framework just revolutioned the front-end deve
 date: "2015-02-05T00:31:57Z"
 is_blog: true
 path: "/articles/2015/02/05/how-do-you-react/"
+tags: ['javascript', 'reactjs']
 ---
 
 
@@ -16,12 +17,7 @@ React is not a *yet another Javascript framework*, definitely not.
 
 Let's explore a bit why this is a revolution&trade;.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 
 # The manual way

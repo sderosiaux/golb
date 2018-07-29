@@ -30,7 +30,7 @@ module.exports = (
   const nodes = [
     header && {
       type: 'heading',
-      depth: 2,
+      depth: 1,
       children: [
         {
           type: 'text',

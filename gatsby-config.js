@@ -2,7 +2,7 @@ module.exports = {
   siteMetadata: {
     title: 'S. Derosiaux',
     author: 'Stéphane Derosiaux',
-    description: 'Stéphane Derosiaux - Data Engineer',
+    description: 'Stéphane Derosiaux - Scala & Data Engineer',
     siteUrl: 'https://www.sderosiaux.com',
   },
   pathPrefix: '/',
@@ -14,7 +14,7 @@ module.exports = {
         name: 'pages',
       },
     },
-    `gatsby-plugin-twitter`,
+    //`gatsby-plugin-twitter`,
     {
       resolve: `gatsby-transformer-remark`,
       options: {
@@ -22,7 +22,7 @@ module.exports = {
           {
             resolve: `gatsby-remark-images`,
             options: {
-              maxWidth: 590,
+              maxWidth: 1000,
             },
           },
           {
@@ -31,16 +31,16 @@ module.exports = {
               wrapperStyle: `margin-bottom: 1.0725rem`,
             },
           },
-          {
-            resolve: `gatsby-remark-twemoji-shortcut`,
-            options: {
-              // classname: 'some_classname another_classname', // add additional classname(s) to the emoji
-              // style: {
-              //   // add additional inline-styling to the emoji
-              //   //background: 'gold',
-              // },
-            },
-          },
+          // {
+          //   resolve: `gatsby-remark-twemoji-shortcut`,
+          //   options: {
+          //     // classname: 'some_classname another_classname', // add additional classname(s) to the emoji
+          //     // style: {
+          //     //   // add additional inline-styling to the emoji
+          //     //   //background: 'gold',
+          //     // },
+          //   },
+          // },
           'gatsby-remark-autolink-headers',
           'gatsby-remark-prismjs',
           'gatsby-remark-copy-linked-files',

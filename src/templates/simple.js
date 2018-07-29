@@ -15,12 +15,18 @@ export default class extends React.Component {
     const post = this.props.data.markdownRemark
     const siteTitle = get(this.props, 'data.site.siteMetadata.title')
     const fullWidth = post.frontmatter.fullWidth
+    const cover = post.frontmatter.background
+
     return (
-      <Layout location={this.props.location} fullWidth={fullWidth}>
+      <Layout
+        location={this.props.location}
+        fullWidth={fullWidth}
+        cover={cover}
+      >
         <Helmet title={`${siteTitle} | ${post.frontmatter.title}`} />
         <h1
           className={fullWidth ? 'marginAuto' : ''}
-          style={fullWidth ? { paddingTop: 40 } : {}}
+          style={fullWidth ? { marginTop: 40 } : {}}
         >
           {post.frontmatter.title}
         </h1>
@@ -32,7 +38,6 @@ export default class extends React.Component {
             }
           `}
         />
-        {post.frontmatter.addBio && <Bio />}
       </Layout>
     )
   }
@@ -51,10 +56,17 @@ export const pageQuerySimple = graphql`
       html
       frontmatter {
         title
-        addBio
         fullWidth
         background {
-          relativePath
+          childImageSharp {
+            fluid(
+              maxHeight: 200
+              cropFocus: CENTER
+              duotone: { highlight: "#0288d1", shadow: "#192550", opacity: 80 }
+            ) {
+              ...GatsbyImageSharpFluid
+            }
+          }
         }
       }
     }

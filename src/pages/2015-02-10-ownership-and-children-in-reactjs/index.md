@@ -4,17 +4,14 @@ date: "2015-02-10T01:10:59Z"
 is_blog: true
 path: "/articles/2015/02/10/ownership-and-children-in-reactjs/"
 language: en
+category: 'ReactJS'
+tags: ['javascript', 'reactjs']
 ---
 
 Let's explore how does the ownership works in React.
 What exactly is a child in React's world by looking at the special property : `this.props.children`. 
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Luke, I'm your.. owner?
 

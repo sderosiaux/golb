@@ -4,8 +4,11 @@ date: "2016-01-10T17:27:30Z"
 is_blog: true
 path: "/articles/2016/01/10/java-cli-gc-memory-and-tools-overview/"
 language: en
+category: 'JVM'
+tags: ['java', 'gc']
+description: "Java and the JVM is a humongous world with tons of tools, options, and behaviors to be aware of (GC). It's always useful to have an overview."
+background: 'background.jpg'
 ---
-
 
 Back to the Java world, I've made my mind and realized that I didn't know the Java basis enough.
 
@@ -17,25 +20,20 @@ I've decided to look at the *simple* aspects of Java (CLI, GC, tools) to consoli
 - Introduce some tools to debug and profile the JVM.
 
 For reference, I'm using:
+
 ```
 java version "1.8.0_66"
 Java(TM) SE Runtime Environment (build 1.8.0_66-b18)
 Java HotSpot(TM) 64-Bit Server VM (build 25.66-b18, mixed mode)
 ```
 
----
-Summary {.summary}
-
-[[toc]]
-
----
-
+TOC
 
 # Java flags
 
 We'll see some of the most useful flags we can enable with `java` to get more info and understand a bit more what's going on under the hood.
 
-Quick bite: 
+Quick bite:
 
 - `-XX:+[option]` : enable the following option
 - `-XX:-[option]` : disable the following option
@@ -45,7 +43,7 @@ Quick bite:
 
 ### -XX:+PrintCommandLineFlags
 
-It's interesting to know what are the default options of the JVM. 
+It's interesting to know what are the default options of the JVM.
 
 ```
 $ java -XX:+PrintCommandLineFlags -version
@@ -321,7 +319,7 @@ $ java -Xmx1m -XX:+PrintFlagsFinal -version |  grep HeapSize
 
 We will always get a `MaxHeapSize` divisible by 2.
 
-### Not enough heap ?
+### Not enough heap?
 
 If our program needs more heap memory and can't find it, it will ends a lovely OOM:
 
@@ -364,7 +362,7 @@ On my machine, I have 16GB of RAM, that gives:
 
 ### Minimum young generation size
 
-We can't have `MaxNewSize` < `NewSize`: 
+We can't have `MaxNewSize` < `NewSize`:
 
 ```xml
 Java HotSpot(TM) 64-Bit Server VM warning: NewSize (1536k) is greater than the MaxNewSize (1024k).
@@ -384,7 +382,7 @@ A new max generation size of 1536k will be used.
     uintx NewSize                                  := 1572864                             {product}
 ```
 
-### Not enough young generation space ?
+### Not enough young generation space?
 
 Even if we have a `MaxNewSize` of 1MB and our program tries to allocate 1GB bytes, it will work if we have a big enough heap size.
 
@@ -638,7 +636,7 @@ Some regions will even be automatically resized on the fly by the GC to enhance 
 
 Each of the regions deal with only one type of generation: an Eden, a Survivor, or an Old. (nit: and some regions deal with *Humongous objects*: they are so big that they span on several regions). G1GC targets around 2000 regions, each of them between 1MB and 32MB.
 
-![](img_569569ff3a6ee.png)
+![G1GC](img_569569ff3a6ee.png)
 
 It is oriented for big heaps (> 4GB), and for small latency applications: we can specify what is the maximal acceptable pause time for the collections. The default is 0.5s.
 
@@ -777,7 +775,7 @@ Commercial alternatives exist such as `JProfiler` and `YourKit`. [Differences](h
 
 We can also use `jconsole` (bundled with the JDK) which is more simple, but sometimes it's enough.
 
-![](img_56958b5554b08.png)
+![JConsole](img_56958b5554b08.png)
 
 # Java CLI tools
 
@@ -887,7 +885,7 @@ $ jstack 1204
 
 There is also a nice tool to easily parse the content of jstack: [mjprof](https://github.com/AdoptOpenJDK/mjprof)
 
-```xml
+```shell
 $ jstack -l 38515 | mjprof contains/name,Main/
 ```
 
@@ -901,52 +899,52 @@ It's useful but I think it's more useful to use some UI to monitor that such as 
 
 ```xml
 $ jmap -heap 11080
-Attaching to process ID 11080, please wait...          
-Debugger attached successfully.                        
-Server compiler detected.                              
-JVM version is 25.60-b23                               
-                                                        
-using thread-local object allocation.                  
-Parallel GC with 4 thread(s)                           
-                                                        
-Heap Configuration:                                    
-   MinHeapFreeRatio         = 0                        
-   MaxHeapFreeRatio         = 100                      
-   MaxHeapSize              = 734003200 (700.0MB)      
-   NewSize                  = 89128960 (85.0MB)        
-   MaxNewSize               = 244318208 (233.0MB)      
-   OldSize                  = 179306496 (171.0MB)      
-   NewRatio                 = 2                        
-   SurvivorRatio            = 8                        
-   MetaspaceSize            = 21807104 (20.796875MB)   
-   CompressedClassSpaceSize = 1073741824 (1024.0MB)    
-   MaxMetaspaceSize         = 17592186044415 MB        
-   G1HeapRegionSize         = 0 (0.0MB)                
-                                                        
-Heap Usage:                                            
-PS Young Generation                                    
-Eden Space:                                            
-   capacity = 67108864 (64.0MB)                        
-   used     = 8111152 (7.7353973388671875MB)           
-   free     = 58997712 (56.26460266113281MB)           
-   12.08655834197998% used                             
-From Space:                                            
-   capacity = 11010048 (10.5MB)                        
-   used     = 6575688 (6.271064758300781MB)            
-   free     = 4434360 (4.228935241699219MB)            
-   59.72442626953125% used                             
-To Space:                                              
-   capacity = 11010048 (10.5MB)                        
-   used     = 0 (0.0MB)                                
-   free     = 11010048 (10.5MB)                        
-   0.0% used                                           
-PS Old Generation                                      
-   capacity = 179306496 (171.0MB)                      
-   used     = 81936 (0.0781402587890625MB)             
-   free     = 179224560 (170.92185974121094MB)         
-   0.04569605777138158% used                           
-                                                        
-6521 interned Strings occupying 524504 bytes.          
+Attaching to process ID 11080, please wait...
+Debugger attached successfully.
+Server compiler detected.
+JVM version is 25.60-b23
+
+using thread-local object allocation.
+Parallel GC with 4 thread(s)
+
+Heap Configuration:
+   MinHeapFreeRatio         = 0
+   MaxHeapFreeRatio         = 100
+   MaxHeapSize              = 734003200 (700.0MB)
+   NewSize                  = 89128960 (85.0MB)
+   MaxNewSize               = 244318208 (233.0MB)
+   OldSize                  = 179306496 (171.0MB)
+   NewRatio                 = 2
+   SurvivorRatio            = 8
+   MetaspaceSize            = 21807104 (20.796875MB)
+   CompressedClassSpaceSize = 1073741824 (1024.0MB)
+   MaxMetaspaceSize         = 17592186044415 MB
+   G1HeapRegionSize         = 0 (0.0MB)
+
+Heap Usage:
+PS Young Generation
+Eden Space:
+   capacity = 67108864 (64.0MB)
+   used     = 8111152 (7.7353973388671875MB)
+   free     = 58997712 (56.26460266113281MB)
+   12.08655834197998% used
+From Space:
+   capacity = 11010048 (10.5MB)
+   used     = 6575688 (6.271064758300781MB)
+   free     = 4434360 (4.228935241699219MB)
+   59.72442626953125% used
+To Space:
+   capacity = 11010048 (10.5MB)
+   used     = 0 (0.0MB)
+   free     = 11010048 (10.5MB)
+   0.0% used
+PS Old Generation
+   capacity = 179306496 (171.0MB)
+   used     = 81936 (0.0781402587890625MB)
+   free     = 179224560 (170.92185974121094MB)
+   0.04569605777138158% used
+
+6521 interned Strings occupying 524504 bytes.
 ```
 
 [Official documentation.](http://docs.oracle.com/javase/7/docs/technotes/tools/share/jmap.html)

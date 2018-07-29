@@ -7,6 +7,7 @@ path: "/articles/2018/04/12/an-ode-to-the-kind-projector-and-to-the-partial-unif
 language: "en"
 tags: ['scala', 'partial-unification', 'kind-projector', 'cats', 'scalaz', 'dotty', 'typeclass', 'hkt']
 background: 'background.jpg'
+category: 'Scala'
 ---
 
 The [kind-projector Scalac plugin](https://github.com/non/kind-projector) is quite ubiquitous in the Scala world.
@@ -29,12 +30,7 @@ The kind-projector and the partial-unification are powerful features that push t
 
 They are heavily used in libraries because they need to be the most generic possible for us to work with them (and even with themselves..). But they will also find their ways into real projects and applications. We must be aware of what the partial-unification is. We must consider the kind-projector as native, nor fear it, and totally embrace it. :heart_eyes_cat:
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Partial Unification
 
@@ -301,7 +297,6 @@ override def map[A, B](fa: Either[A, U])(f: A => B): Either[B, U] = ???
 - `A` is free to form `F[_]`;
 - `U` comes from the outside (same for `F[B]`), thus the _kinds contract_ is respected.
 
-
 It works with `implicit def` of course! That's even one of the biggest usage (see cats or scalaz).
 
 Here, we'll create a right-biased `Functor[Either]` automatically at the call-sites of the method `f` (to avoid some trouble with partial unification, we'll explain just after):
@@ -474,7 +469,7 @@ It works because:
 - the partial-unification resolves: `[T]InferToLeft.U[Tuple3, Boolean, String, T]` which is equal to `[T](T, String, Boolean)`;
 - therefore it can create the `Functor`: `new Functor[(?, B, C)]`, brillant! :clap:
 
-<p class="c"><img src="mindblow.gif" alt="Mindblow" /></p>
+![Mindblow](mindblow.gif)
 
 Note this another trick if we want to do the same with a `Bifunctor`:
 
@@ -578,7 +573,7 @@ Tag.subst1[Option, Functor, Kg](Functor[Option]) : Functor[λ[α => List[α] @@ 
 
 Looking at the last line, we can understand the signature of `Tag.subst1`. It returns a `F[G @@ T]` where: `G` has one type parameter `G[_]` and is tagged with `T`.
 
-But we must undertand what is a tag: it's actually a type alias of a structural type :cold_sweat:: 
+But we must undertand what is a tag: it's actually a type alias of a structural type :cold_sweat::
 
 ```scala
 type @@[T, Tag] = Tagged[T, Tag]
@@ -618,7 +613,9 @@ def compose[G[_]: Traverse]: Traverse[[α] => F[G[α]]] = ???
 
 # Conclusion
 
-The partial-unification works with higher-kinded types and allows us to pass more complex types (such as `Either[_,_]`) to functions (expecting a `F[_]` for instance). The compiler will always favor right-biased type constructors by leaving the right-most types _free_ (ignoring the left-most). We can use the `InferToLeft` trick to revert the types for the partial-unification to work with the left-biased types. In Scala 2.12.6, it's enabled by default and the flag is gone. Until then: `scalacOptions += "-Ypartial-unification"`. :weary:
+The partial-unification works with higher-kinded types and allows us to pass more complex types (such as `Either[_,_]`) to functions (expecting a `F[_]` for instance).
+
+The compiler will always favor right-biased type constructors by leaving the right-most types _free_ (ignoring the left-most). We can use the `InferToLeft` trick to revert the types for the partial-unification to work with the left-biased types. In Scala 2.12.6, it's enabled by default and the flag is gone. Until then: `scalacOptions += "-Ypartial-unification"`. :weary:
 
 The kind-projector allows us to declare _free types_ in higher-kinded types to "fit" their container, using `?` or `λ` for more complex cases. `?` is NOT `_`. Always favor right-most free types to avoid partial-unification issues. Cats and scalaz relies a LOT on that, but as we saw, it's not that complicated to decrypt. [Read the documentation of the kind-projector](https://github.com/non/kind-projector), it goes deeper than what we saw here (such as the [polymorphic lambdas](https://github.com/non/kind-projector#polymorphic-lambda-values)).
 

@@ -4,18 +4,14 @@ date: "2016-08-03T23:48:53Z"
 is_blog: true
 path: "/articles/2016/08/03/jna-java-native-access-enjoy-the-native-functions/"
 language: "en"
+tags: ['java', 'jni', 'jna']
 ---
 
 Sometimes, it's necessary to know JNA to interact with system or third-party APIs, probably written in C/C++.
 
 JNA provides a *bridge* to be able to call them from Java-Land.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Before JNA: JNI
 

@@ -4,6 +4,7 @@ date: "2015-02-14T16:57:32Z"
 is_blog: true
 path: "/articles/2015/02/14/browserify-in-depth/"
 language: en
+tags: ['javascript', 'nodejs', 'browserify']
 ---
 
 [Browserify](http://browserify.org/) popularity was raising^[Hey, it was Feb-2015 only :). I was still adding `<script>` manually into my `index.html`.], I did not fully understand what it was, what was its purpose, why would I need it. I decided to step ahead and learn how it works, what it does.
@@ -12,12 +13,7 @@ The blogs and articles I found were never crystal cleared and were always using 
 
 We'll simply use [Node](http://nodejs.org/) and [npm](https://www.npmjs.com/) here, nothing fancy.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # What is Browserify ?
 

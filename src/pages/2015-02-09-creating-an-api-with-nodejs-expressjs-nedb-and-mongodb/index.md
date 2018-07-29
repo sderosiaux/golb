@@ -14,12 +14,7 @@ We'll use [nodejs](http://nodejs.org/)^[Back then, in Feb 2015, I barely used it
 For the database, we'll keep it simple and use [NeDB](https://github.com/louischatriot/nedb).
 Because I was going to have some many rows later (>300k), I would need a migration plan: NeDB has the exact same syntax as [MongoDB](http://www.mongodb.org/) which can handle millions of documents, we'll check this out.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # A nodejs server to expose an API
 

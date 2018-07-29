@@ -4,6 +4,8 @@ date: "2015-02-26T00:45:29Z"
 is_blog: true
 path: "/articles/2015/02/26/react-server-side-with-es6-syntax/"
 language: en
+category: 'ReactJS'
+tags: ['javascript', 'reactjs']
 ---
 
 This article is an artefact. If you want to remember, now is the time.
@@ -19,12 +21,7 @@ It will definitely bring back some memories !
 [[info]]
 |Nonetheless, if you want to know more about V8 "Harmony" features, ES2015 features, and React transpilation result, I suggest you to keep reading, it's still valid.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # How to enable ES2015 ? [artefact]
 

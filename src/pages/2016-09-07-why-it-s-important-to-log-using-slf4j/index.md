@@ -1,5 +1,5 @@
 ---
-title: Understand how to work with slf4j in Java
+title: Understanding how to work with slf4j in Java
 description: An overview of the slf4j ecosystem
 date: "2016-09-07T22:12:03.284Z"
 is_blog: true
@@ -19,12 +19,7 @@ This will help you to understand what's going on the next time you have some str
 
 We'll start to explain what is the concept of slf4j, then present different ways of interacting with it (the implementations).
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # The answer to everything: slf4j
 

@@ -28,12 +28,7 @@ To not make a huge article and stay focused, I think I'll write down a series of
 [[info]]
 |This first one talks about general principles and present some softwares and frameworks to get an overview. The subsequent articles will focus on specific frameworks and patterns (like the circuit-breaker) because we want to see some code!
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Types of failure
 

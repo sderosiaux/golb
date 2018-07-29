@@ -4,6 +4,7 @@ date: "2015-05-14T01:17:33Z"
 is_blog: true
 path: "/articles/2015/05/14/using-react-hot-loader-with-a-webpack-dev-server-and-a-node-server/"
 language: en
+tags: ['javascript', 'reactjs']
 ---
 
 I was working on a project running its own nodejs HTTP server, with [expressjs](http://expressjs.com/).
@@ -26,12 +27,7 @@ If you want to know more about how Webpack does HR (low-level), how `webpack-[ho
 [[info]]
 |A previous version of this post was using the `WebpackDevServer` with the `proxy` option. I decided to remove it and present this other solution instead, being simpler.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # The less, the better
 

@@ -4,6 +4,7 @@ date: "2015-03-01T23:48:39Z"
 is_blog: true
 path: "/articles/2015/03/01/perfmatters/"
 language: en
+tags: ['javascript', 'perfmatters']
 ---
 
 We see more and more websites that do not care of the performances.
@@ -21,12 +22,7 @@ A bad CSS can have a huge impact on the performance.
 
 Here is a bunch of *advices* or at least, things to be aware of.
 
----
-Summary {.summary}
-
-[[toc]]
-
----
+TOC
 
 # Goal: be jank-free at 60fps
 
