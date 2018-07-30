@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2015/02/14/browserify-in-depth/"
 language: en
 tags: ['javascript', 'nodejs', 'browserify']
+description: "Browserify was a popular Javascript bundler, simpler than Webpack."
 ---
 
 [Browserify](http://browserify.org/) popularity was raising^[Hey, it was Feb-2015 only :). I was still adding `<script>` manually into my `index.html`.], I did not fully understand what it was, what was its purpose, why would I need it. I decided to step ahead and learn how it works, what it does.

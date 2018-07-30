@@ -6,6 +6,7 @@ path: "/articles/2015/02/09/react-tips/"
 language: en
 category: 'ReactJS'
 tags: ['javascript', 'reactjs', 'perfmatters']
+description: "Thinking in ReactJS is another mindset to build. Components must be thought decoupled and that's for the best!"
 ---
 
 React is full of tricks, is based on important principles, and comes with its own downsides and its own complexity.

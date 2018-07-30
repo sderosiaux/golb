@@ -1,6 +1,6 @@
 ---
 title: Understanding how to work with slf4j in Java
-description: An overview of the slf4j ecosystem
+description: "Why slf4j exists? And how to use it!"
 date: "2016-09-07T22:12:03.284Z"
 is_blog: true
 path: "/articles/2016/09/07/why-it-s-important-to-log-using-slf4j/"

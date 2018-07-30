@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2017/01/22/how-to-communicate-between-micro-services-part-2-retryers/"
 language: "en"
 tags: ['micro-services', 'retryers', 'couchbase', 'spark', 'guava', 'akka', 'akka streams', 'lagom']
+description: 'When a service call fails, the simplest pattern to ensure a basic resilience is to try again. Multiple libraries exist to hide this complexity.'
 ---
 
 _The introduction of this series: [How to communicate between micro-services — Part 1](https://www.sderosiaux.com/2017/01/18/how-to-communicate-between-micro-services-part-1/)_.
@@ -33,7 +34,7 @@ TOC
 
 Let's code a quick HTTP service that can fail in Java:
 
-```
+```java
 class Server {
     public static void main(String[] args) throws Exception {
         HttpServer server = HttpServer.create(new InetSocketAddress(1234), 0);

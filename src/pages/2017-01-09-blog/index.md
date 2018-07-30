@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2017/01/09/comparing-blog-hosting-services-for-developers/"
 language: "en"
 tags: ['blog', 'wordpress', 'markdown', 'github', 'amazon s3', 'surge', 'now', 'gatsby', 'netlify']
+description: 'Basically, Gatsby on Netlify is so good, and free.'
 ---
 
 This blog was using Wordpress hosted on OVH for a long time. I'm sorry.

@@ -1,9 +1,9 @@
 ---
 title: You're tired of Notepad ? Use Atom !
-description: What is the new editor Atom, why is it different?
 date: "2015-02-03T04:01:57Z"
 is_blog: true
 path: "/articles/2015/02/03/youre-tired-of-notepad-use-atom/"
+description: "Don't use Atom, use Visual Studio Code."
 ---
 
 The world of text editors was a bit frozen until GitHub released a new kind of editor, based on the web technology: Atom!

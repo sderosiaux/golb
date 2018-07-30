@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2015/08/17/react-inline-styles-vs-css-stupid-benchmark/"
 language: en
 tags: ['javascript', 'reactjs']
+description: "ReactJS: using inline styles VS stylesheets. What are the differences?"
 ---
 
 I was wondering what are the performance downsides when we are using ReactJS (it's the same for any other framework) with inline styles only, against using external CSS stylesheets.

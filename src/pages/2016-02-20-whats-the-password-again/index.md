@@ -4,6 +4,7 @@ date: "2016-02-20T20:23:05Z"
 is_blog: true
 path: "/articles/2016/02/20/whats-the-password-again/"
 language: en
+description: "Never ssh with a password: use asymmetric cryptography to never type them again."
 ---
 
 In our company or home network, we have access to several computers. We probably want to interact with some of them, start some tasks, check some logs, reboot them and so on.

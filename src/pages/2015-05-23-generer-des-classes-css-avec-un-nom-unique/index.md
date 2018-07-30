@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2015/05/23/generer-des-classes-css-avec-un-nom-unique/"
 language: fr
 tags: ['javascript', 'reactjs', 'css']
+description: "Des classes CSS dédiés à leur composant ReactJS uniquement."
 ---
 
 A l'heure où l'on parle de *micro-services*, où l'on cherche à tout *modulariser*, à créer des systèmes à base de DAG, à ne plus rien mettre dans le scope *global* et à utiliser le scope *local* uniquement, histoire de maîtriser ce à quoi on a accès et d'éviter des *effets de bord* : on utilise encore un moteur CSS où l'on balance tous les sélecteurs à sa racine, qui utilise donc un scope global.

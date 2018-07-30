@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2016/03/31/from-apache-flume-to-apache-impala-using-hdfs/"
 language: "en"
 tags: ['flume', 'hdfs', 'avro', 'hive', 'impala', 'cloudera', 'oozie' ]
+description: "As a Data Engineer, moving data from one point to another, while being resilient IS the job. We'll do that with Flume, HDFS, and Impala."
 ---
 
 We have a Flume agent getting some Avro timestamped data.

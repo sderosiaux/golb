@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2015/03/01/perfmatters/"
 language: en
 tags: ['javascript', 'perfmatters']
+description: "Performance matters. A website should not be optimized right away, but it must neither be under-performant."
 ---
 
 We see more and more websites that do not care of the performances.

@@ -7,7 +7,7 @@ language: en
 tags: ['javascript', 'reactjs', 'context', 'redux', 'mobx', 'pubsub' ]
 background: 'background.jpg'
 category: 'ReactJS'
-description: "There are multiple patterns for components to talk to each others, we'll see all of them!"
+description: "There are multiple patterns for components to talk to each others, according to their bond (parent, child, other). We'll see all of them!"
 ---
 
 As a starter, I already wrote a smaller article about [Ownership and children in ReactJS](https://www.sderosiaux.com/2015/02/10/ownership-and-children-in-reactjs/) to differenciate between parent/child relationship and React ownership.

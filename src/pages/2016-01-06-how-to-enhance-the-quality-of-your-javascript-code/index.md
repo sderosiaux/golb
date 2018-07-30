@@ -5,9 +5,10 @@ is_blog: true
 path: "/articles/2016/01/06/how-to-enhance-the-quality-of-your-javascript-code/"
 language: en
 tags: ['javascript', 'babel', 'reactjs']
+description: "Integrating ESLint into webpack: that can save your time and find bugs."
 ---
 
-TLDR: By linting our source code. 
+TLDR: By linting our source code.
 
 TOC
 

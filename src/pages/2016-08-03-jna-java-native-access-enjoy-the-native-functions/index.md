@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2016/08/03/jna-java-native-access-enjoy-the-native-functions/"
 language: "en"
 tags: ['java', 'jni', 'jna']
+description: "After JNI, it's JNA. We can depends on third-party APIs in C/C++ in a simple way."
 ---
 
 Sometimes, it's necessary to know JNA to interact with system or third-party APIs, probably written in C/C++.

@@ -1,10 +1,10 @@
 ---
 title: "ReactJS: A new way to build a website"
-description: The React javascript framework just revolutioned the front-end development
 date: "2015-02-05T00:31:57Z"
 is_blog: true
 path: "/articles/2015/02/05/how-do-you-react/"
 tags: ['javascript', 'reactjs']
+description: "How ReactJS works, what are the famous components we must write? What are the principal features?"
 ---
 
 

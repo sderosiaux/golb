@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2015/02/15/gulp-and-the-nodejs-streams/"
 language: en
 tags: ['javascript', 'nodejs', 'gulp']
+description: "Gulp is a popular build system. Popular because it's fast thanks to its streams usage."
 ---
 
 Gulp is a popular build system.

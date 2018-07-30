@@ -5,12 +5,13 @@ is_blog: true
 path: "/articles/2015/05/14/using-react-hot-loader-with-a-webpack-dev-server-and-a-node-server/"
 language: en
 tags: ['javascript', 'reactjs']
+description: "Stop refreshing the page when you just changed some background-color. Hot Reloading is a must to gain productivity."
 ---
 
 I was working on a project running its own nodejs HTTP server, with [expressjs](http://expressjs.com/).
 It had a ReactJS front-end, and was using webpack to create some bundles, all good. But it was lacking of Hot Reloading.
 
-Not working with hot reloading nowadays in like being stuck in 2000. *F5*. *Maj+F5*. *Ctrl+R*. 
+Not working with hot reloading nowadays in like being stuck in 2000. *F5*. *Maj+F5*. *Ctrl+R*.
 
 You lose the current state of the page. You lose **your time** to get it back. You lose **your productivity**. You lose your patience. You start accusing people around, and the ambience quickly sucks.
 

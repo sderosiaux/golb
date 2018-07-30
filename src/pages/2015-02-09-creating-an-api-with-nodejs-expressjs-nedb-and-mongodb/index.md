@@ -4,6 +4,7 @@ date: "2015-02-09T01:48:59Z"
 is_blog: true
 path: "/articles/2015/02/09/creating-an-api-with-nodejs-expressjs-nedb-and-mongodb/"
 language: en
+description: "The experience of building a complete back-end in NodeJS."
 ---
 
 Being so interested in React, I wanted to create something *useful*, not just a *Hello World*, but something that depends on an API, with data.

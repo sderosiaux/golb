@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2015/12/29/webpack-hot-reloading-and-react-how/"
 language: en
 tags: ['javascript', 'reactjs', 'webpack']
+description: "As a React Front-end Developer, you're probably using Hot Reloading every day. But do you know how it's working?"
 ---
 
 Nowadays, working with ReactJS/webpack boilerplates, the Hot Reloading piece is already included and we can enjoy it. It's not yet in [`create-react-app`](https://github.com/facebookincubator/create-react-app) but that won't take long I think.
@@ -15,10 +16,6 @@ We are going to use the *latest* React HR project in date [`react-transform-hmr`
 
 `react-transform-hmr` is deprecated since, and `react-hot-loader` v3 is on the edge and is already working.
 We can see it in action in a previous update of mine: [Using react-hot-loader with webpack](http://localhost:8000/2015/05/14/using-react-hot-loader-with-a-webpack-dev-server-and-a-node-server/#react-hot-loader-v3).
-[[info]]
-|
-
-vs
 
 
 # Why should we enjoy Hot Reloading?

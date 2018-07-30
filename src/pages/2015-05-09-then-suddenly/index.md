@@ -4,6 +4,7 @@ date: "2015-05-09T08:48:43Z"
 is_blog: true
 path: "/articles/2015/05/09/the-comfort-zone-is-evil/"
 language: en
+description: "If you're stay in your confort zone, you'll be stuck later and will regret it. Challenge yourself!"
 ---
 
 It's been a while I was thinking about that. I couldn't sleep.
@@ -14,7 +15,8 @@ Some people like to be in their comfort zone. It's stable, it's expected, no sur
 I don't. Nobody should. If homo erectus did not evolve, homo sapiens wouldn't be there. We need to try new things, do some experiment, do some mistakes.
 We need to look for more answers, more challenges. Our brain is asking.
 
-Edit: a few months after this post, I quit my job and found an awesome job with talented people.
+[[info]]
+|A few months after this post, I quit my job and found an awesome job with talented people.
 
 TOC
 

@@ -6,6 +6,7 @@ path: "/articles/2015/02/10/ownership-and-children-in-reactjs/"
 language: en
 category: 'ReactJS'
 tags: ['javascript', 'reactjs']
+description: "What can we find in this.props.children, and how to use it?"
 ---
 
 Let's explore how does the ownership works in React.

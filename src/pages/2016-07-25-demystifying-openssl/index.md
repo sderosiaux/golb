@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2016/07/25/demystifying-openssl/"
 language: "en"
 background: "background.jpg"
+description: "I always saw openssl as a complicated beast. I don't anymore. It's just math."
 ---
 
 I always saw openssl as a complicated beast.

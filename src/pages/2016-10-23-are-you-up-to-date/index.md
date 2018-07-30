@@ -6,6 +6,7 @@ path: "/articles/2016/10/23/are-you-up-to-date/"
 language: "en"
 tags: ['technology', 'watch', 'newsletter', 'update', 'engineering', 'big data' ] 
 background: 'background.jpg'
+description: "Our jobs don't stop to evolve: continuous learning is mandatory. There are so many sources of knowledge out there. Focus."
 ---
 
 A few weeks ago, I've created a repo on Github resuming how I stay up to date: [sderosiaux/how-i-stay-updated](https://github.com/sderosiaux/how-i-stay-updated).

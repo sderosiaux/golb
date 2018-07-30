@@ -6,10 +6,10 @@ path: "/articles/2015/02/26/react-server-side-with-es6-syntax/"
 language: en
 category: 'ReactJS'
 tags: ['javascript', 'reactjs']
+description: "This was written when React was in version 0.13.0rc1. Gimme a break."
 ---
 
 This article is an artefact. If you want to remember, now is the time.
-
 
 - React was in version 0.13.0rc1.
 - nodejs was still using *harmony* flags to enable ES2015 features.

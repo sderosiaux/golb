@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2017/01/18/how-to-communicate-between-micro-services-part-1/"
 language: "en"
 tags: ['micro-services', 'grpc', 'sbe', 'netty', 'kafka', 'hazelcast', 'hollow', 'zookeeper', 'consul', 'etcd', 'druid', 'cqrs', 'hystrix', 'akka']
+description: 'A global overview of the micro-services strategy. It must deal with failures, how to communicate between them, sync/async, performances, observability, consistency and much more.'
 ---
 
 The title says _micro-services_ but it's more about _services_ on general. It's just more _catchy_.

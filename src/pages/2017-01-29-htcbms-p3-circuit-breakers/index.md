@@ -5,6 +5,7 @@ is_blog: true
 path: "/articles/2017/01/29/how-to-communicate-between-micro-services-part-3-circuit-breakers/"
 language: "en"
 tags: ['circuit-breakers', 'netflix', 'hystrix', 'archaius', 'akka', 'lagom']
+description: 'A circuit-breaker avoids useless call retries if it already knows the call will fail. It can provide a fallback instead. Multiple libraries exist to hide this complexity and provide observability.'
 ---
 
 _The previous part of this series: [How to communicate between micro-services — Part 2 — Retryers](https://www.sderosiaux.com/2017/01/22/how-to-communicate-between-micro-services-part-2-retryers/)_.

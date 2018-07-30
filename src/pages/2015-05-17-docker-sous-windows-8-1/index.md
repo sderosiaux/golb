@@ -4,6 +4,7 @@ date: "2015-05-17T21:20:34Z"
 is_blog: true
 path: "/articles/2015/05/17/docker-sous-windows-8-1/"
 language: fr
+description: "boot2docker sous Windows 8.1: quelques subtilités et erreurs rencontrées."
 ---
 
 TOC
