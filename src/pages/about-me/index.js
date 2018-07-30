@@ -50,7 +50,7 @@ const Block = ({ cover, fluid, children, fullWidth }) => (
 
 export default ({ location, data }) => {
   const siteTitle = data.site.siteMetadata.title
-  console.log(data)
+
   return (
     <Layout
       location={location}

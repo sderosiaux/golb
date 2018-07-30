@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'gatsby'
+import { Link, graphql, StaticQuery } from 'gatsby'
 import { SocialIcon } from 'react-social-icons'
 import Helmet from 'react-helmet'
 import { css } from 'react-emotion'
@@ -17,6 +17,73 @@ const dark = color.darken(0.2).string()
 
 require('./Layout.module.css')
 
+function schemaOrgJSONLD(
+  author,
+  siteUrl,
+  siteTitle,
+  siteDescription,
+  fullUrl,
+  date,
+  title,
+  bg
+) {
+  const res = [
+    {
+      '@context': 'http://schema.org',
+      '@type': 'Person',
+      name: author,
+      url: siteUrl,
+      sameAs: [
+        'http://instagram.com/sderosiaux',
+        'http://www.linkedin.com/in/stephane.derosiaux',
+      ],
+    },
+    {
+      '@context': 'http://schema.org',
+      '@type': 'Blog',
+      name: siteTitle,
+      url: siteUrl,
+      description: siteDescription,
+      publisher: author,
+    },
+    {
+      '@context': 'http://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          item: {
+            '@id': fullUrl,
+            name: title,
+            bg,
+          },
+        },
+      ],
+    },
+  ]
+
+  if (date) {
+    res.push({
+      '@context': 'http://schema.org',
+      '@type': 'BlogPosting',
+      url: siteUrl,
+      headline: title,
+      image: {
+        '@type': 'ImageObject',
+        url: bg,
+      },
+      description,
+      author,
+      publisher: author,
+      datePublished: date,
+      publisher: author,
+    })
+  }
+
+  return res
+}
+
 export default class extends React.Component {
   render() {
     const {
@@ -29,139 +96,115 @@ export default class extends React.Component {
       date,
     } = this.props
 
-    const siteUrl = 'https://www.sderosiaux.com/'
-    const siteTitle = 'The greatest'
-    const siteDescription = 'Blablablabl ablablablbala'
-    const author = 'S. Derosiaux'
-    const bg = cover ? /* siteUrl + */ cover.childImageSharp.fluid.src : ''
-    const fullUrl = /*siteUrl + */ location.pathname
-
-    const schemaOrgJSONLD = [
-      {
-        '@context': 'http://schema.org',
-        '@type': 'Person',
-        name: author,
-        url: siteUrl,
-        sameAs: [
-          'http://instagram.com/sderosiaux',
-          'http://www.linkedin.com/in/stephane.derosiaux',
-        ],
-      },
-      {
-        '@context': 'http://schema.org',
-        '@type': 'Organization',
-        url: siteUrl,
-        logo: siteUrl + '/favicon.ico',
-      },
-      {
-        '@context': 'http://schema.org',
-        '@type': 'Blog',
-        name: siteTitle,
-        url: siteUrl,
-        description: siteDescription,
-        publisher: author,
-      },
-      {
-        '@context': 'http://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            item: {
-              '@id': fullUrl,
-              name: title,
-              bg,
-            },
-          },
-        ],
-      },
-    ]
-
-    if (date) {
-      schemaOrgJSONLD.push({
-        '@context': 'http://schema.org',
-        '@type': 'BlogPosting',
-        url: siteUrl,
-        name: title,
-        headline: description,
-        image: {
-          '@type': 'ImageObject',
-          url: bg,
-        },
-        description,
-        author,
-        datePublished: date,
-        publisher: author,
-      })
-    }
-
     return (
-      <div>
-        <Helmet
-          meta={[
-            { name: 'description', content: description || title },
-            { name: 'image', content: bg },
-            { name: 'twitter:card', value: 'summary' },
-            { name: 'twitter:creator', content: '@sderosiaux' },
-            { name: 'twitter:site', content: '@sderosiaux' },
-            { name: 'twitter:title', content: title },
-            { name: 'twitter:description', content: description || title },
-            { name: 'twitter:image', content: bg },
-            { property: 'og:title', content: title },
-            { property: 'og:type', content: 'article' },
-            { property: 'og:url', content: fullUrl },
-            { property: 'og:description', content: description || title },
-            { property: 'og:image', content: bg },
-          ]}
-        />
-        <Helmet>
-          <script type="application/ld+json">
-            {JSON.stringify(schemaOrgJSONLD)}
-          </script>
-          <meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
-          <meta httpEquiv="Content-Language" content="en" />
-          <meta name="robots" content="index,follow" />
-          <meta name="application-name" content="sderosiaux.com" />
-          <meta
-            name="keywords"
-            content="java, scala, hadoop, spark, hbase, flume, kafka, javascript, reactjs, data-engineer"
-          />
-          <link rel="icon" sizes="32x32" href="/favicon.ico" />
-          <link rel="icon" sizes="192x192" href="/favicon.ico" />
-          <link rel="apple-touch-icon-precomposed" href="/favicon.ico" />
-          <meta name="msapplication-TileImage" content="/favicon.ico" />
-        </Helmet>
+      <StaticQuery
+        query={graphql`
+          query {
+            site {
+              siteMetadata {
+                title
+                author
+                description
+                siteUrl
+              }
+            }
+          }
+        `}
+        render={data => {
+          const metadata = data.site.siteMetadata
+          const siteUrl = metadata.siteUrl
+          const author = metadata.author
+          const siteDescription = metadata.description
+          const siteTitle = metadata.title
 
-        <Header location={location} />
+          const bg = cover ? siteUrl + cover.childImageSharp.fluid.src : ''
+          const fullUrl = siteUrl + location.pathname
+          const jsonld = schemaOrgJSONLD(
+            author,
+            siteUrl,
+            siteTitle,
+            siteDescription,
+            fullUrl,
+            date,
+            title,
+            bg
+          )
 
-        {cover && (
-          <Img
-            fluid={cover.childImageSharp.fluid}
-            style={{
-              boxShadow: '0 5px 10px rgba(0, 0, 0, .2)',
-            }}
-          />
-        )}
+          return (
+            <div>
+              <Helmet
+                meta={[
+                  { name: 'description', content: description || title },
+                  { name: 'image', content: bg },
+                  { name: 'twitter:card', value: 'summary' },
+                  { name: 'twitter:creator', content: '@sderosiaux' },
+                  { name: 'twitter:site', content: '@sderosiaux' },
+                  { name: 'twitter:title', content: title },
+                  {
+                    name: 'twitter:description',
+                    content: description || title,
+                  },
+                  { name: 'twitter:image', content: bg },
+                  { property: 'og:title', content: title },
+                  { property: 'og:type', content: 'article' },
+                  { property: 'og:url', content: fullUrl },
+                  { property: 'og:description', content: description || title },
+                  { property: 'og:image', content: bg },
+                ]}
+              />
+              <Helmet>
+                <script type="application/ld+json">
+                  {JSON.stringify(jsonld)}
+                </script>
+                <meta
+                  httpEquiv="Content-Type"
+                  content="text/html; charset=UTF-8"
+                />
+                <meta httpEquiv="Content-Language" content="en" />
+                <meta name="robots" content="index,follow" />
+                <meta name="application-name" content="sderosiaux.com" />
+                <meta
+                  name="keywords"
+                  content="java, scala, hadoop, spark, hbase, flume, kafka, javascript, reactjs, data-engineer"
+                />
+                <link rel="icon" sizes="32x32" href="/favicon.ico" />
+                <link rel="icon" sizes="192x192" href="/favicon.ico" />
+                <link rel="apple-touch-icon-precomposed" href="/favicon.ico" />
+                <meta name="msapplication-TileImage" content="/favicon.ico" />
+              </Helmet>
 
-        {fullWidth ? (
-          <div>{children}</div>
-        ) : (
-          <div
-            className={css`
-              margin-left: auto;
-              margin-right: auto;
-              max-width: 1200px;
-              padding: 40px;
-              min-height: 100vh;
-            `}
-          >
-            {children}
-          </div>
-        )}
-        <CTA />
-        <Rights />
-      </div>
+              <Header location={location} />
+
+              {cover && (
+                <Img
+                  fluid={cover.childImageSharp.fluid}
+                  style={{
+                    boxShadow: '0 5px 10px rgba(0, 0, 0, .2)',
+                  }}
+                />
+              )}
+
+              {fullWidth ? (
+                <div>{children}</div>
+              ) : (
+                <div
+                  className={css`
+                    margin-left: auto;
+                    margin-right: auto;
+                    max-width: 1200px;
+                    padding: 40px;
+                    min-height: 100vh;
+                  `}
+                >
+                  {children}
+                </div>
+              )}
+              <CTA />
+              <Rights />
+            </div>
+          )
+        }}
+      />
     )
   }
 }
