@@ -71,7 +71,7 @@
   border: 1px solid #999;
   border-radius: 4px;
   transition: 0.2s all;
-  font-size: 18px;
+  font-size: 22px;
 }
 
 #contact-form button[type='submit']:hover {

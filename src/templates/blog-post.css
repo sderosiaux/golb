@@ -40,6 +40,10 @@ article h1 + ul li {
   list-style-type: none;
   margin: 0;
 }
+article h1 + ul a {
+  font-weight: normal !important;
+  box-shadow: 0 1px 0 0 currentColor !important;
+}
 article h1 + ul ul {
   margin-bottom: 20px !important;
 }

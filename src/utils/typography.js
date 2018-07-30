@@ -136,14 +136,13 @@ const typography = new Typography({
       textDecoration: 'none',
     },
     'a:not(.clean):not(.anchor):not(.gatsby-resp-image-link)': {
-      boxShadow: '0 1px 0 0 currentColor',
+      boxShadow: '0 2px 0 0 currentColor',
+      fontWeight: 'bold',
     },
     'a:not(.clean):not(.anchor):hover:not(.gatsby-resp-image-link),a:not(.clean):not(.anchor):not(.gatsby-resp-image-link):active': {
-      boxShadow: '0 1px 0 0 currentColor',
       color: Color('rgb(2, 136, 209)').string(),
     },
     'a.underline:hover,a.underline:active': {
-      boxShadow: '0 1px 0 0 currentColor',
       color: Color('rgb(2, 136, 209)').string(),
     },
   }),

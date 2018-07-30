@@ -17,6 +17,7 @@
     "gatsby-plugin-emotion": "^2.0.0-beta.3",
     "gatsby-plugin-feed": "next",
     "gatsby-plugin-google-analytics": "next",
+    "gatsby-plugin-mailchimp": "^2.2.3",
     "gatsby-plugin-manifest": "^2.0.2-beta.3",
     "gatsby-plugin-nprogress": "^2.0.0-beta.4",
     "gatsby-plugin-offline": "next",
