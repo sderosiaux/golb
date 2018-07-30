@@ -32,9 +32,6 @@ export default class extends React.Component {
     const description = post.frontmatter.description
     const title = post.frontmatter.title
     const fullUrl = siteUrl + this.props.location.pathname
-    const cover = background
-      ? siteUrl + background.childImageSharp.fluid.src
-      : ''
 
     const disqusShortname = 'ctheu'
     const disqusConfig = {
@@ -44,69 +41,15 @@ export default class extends React.Component {
 
     const feelFree = <FeelFreeToShare path={fullUrl} title={title} />
 
-    const schemaOrgJSONLD = [
-      {
-        '@context': 'http://schema.org',
-        '@type': 'WebSite',
-        url: siteUrl,
-        name: title,
-      },
-      {
-        '@context': 'http://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            item: {
-              '@id': fullUrl,
-              name: title,
-              cover,
-            },
-          },
-        ],
-      },
-      {
-        '@context': 'http://schema.org',
-        '@type': 'BlogPosting',
-        url: siteUrl,
-        name: title,
-        headline: title,
-        image: {
-          '@type': 'ImageObject',
-          url: cover,
-        },
-        description,
-        author,
-        datePublished: post.frontmatter.date,
-        publisher: author,
-      },
-    ]
-
     return (
-      <Layout location={this.props.location} cover={background}>
-        <Helmet
-          title={`${siteTitle} | ${title}`}
-          meta={[
-            { name: 'description', content: description || title },
-            { name: 'image', content: cover },
-            { name: 'twitter:card', value: 'summary' },
-            { name: 'twitter:creator', content: '@sderosiaux' },
-            { name: 'twitter:site', content: '@sderosiaux' },
-            { name: 'twitter:title', content: title },
-            { name: 'twitter:description', content: description || title },
-            { name: 'twitter:image', content: cover },
-            { property: 'og:title', content: title },
-            { property: 'og:type', content: 'article' },
-            { property: 'og:url', content: fullUrl },
-            { property: 'og:description', content: description || title },
-            { property: 'og:image', content: cover },
-          ]}
-        >
-          <script type="application/ld+json">
-            {JSON.stringify(schemaOrgJSONLD)}
-          </script>
-        </Helmet>
+      <Layout
+        location={this.props.location}
+        cover={background}
+        description={description}
+        title={title}
+      >
+        <Helmet title={`${siteTitle} | ${title}`} />
+
         <h1 style={{ marginBottom: 5 }}>{post.frontmatter.title}</h1>
 
         <p style={{ marginBottom: 0, ...scale(-1 / 5) }}>

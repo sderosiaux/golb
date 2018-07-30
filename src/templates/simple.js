@@ -22,6 +22,8 @@ export default class extends React.Component {
         location={this.props.location}
         fullWidth={fullWidth}
         cover={cover}
+        title={post.frontmatter.title}
+        description={post.frontmatter.description}
       >
         <Helmet title={`${siteTitle} | ${post.frontmatter.title}`} />
         <h1
@@ -56,6 +58,7 @@ export const pageQuerySimple = graphql`
       html
       frontmatter {
         title
+        description
         fullWidth
         background {
           childImageSharp {

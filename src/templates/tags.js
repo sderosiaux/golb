@@ -12,12 +12,14 @@ export default ({ location, pageContext, data }) => {
   const tagHeader = `Articles about "${tag}"`
 
   return (
-    <Layout location={location}>
+    <Layout
+      location={location}
+      title={tagHeader}
+      description={`All my articles talking about ${tag}`}
+    >
       <h1>{tagHeader}</h1>
       <ul>
         {edges.map(({ node }) => {
-          const { title } = node.frontmatter
-          const { slug: path } = node.fields
           return (
             <Article
               key={node.frontmatter.path}

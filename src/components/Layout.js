@@ -9,6 +9,7 @@ import Rights from '../components/Rights'
 
 import { rhythm, scale } from '../utils/typography'
 import Img from 'gatsby-image'
+import { blockImageFragment } from '../pages/about-me/About'
 
 const color = Color('rgb(2, 136, 209)')
 const light = color.string()
@@ -18,31 +19,114 @@ require('./Layout.module.css')
 
 export default class extends React.Component {
   render() {
-    const { location, children, fullWidth, cover } = this.props
+    const {
+      location,
+      children,
+      fullWidth,
+      cover,
+      description,
+      title,
+      date,
+    } = this.props
+
+    const siteUrl = 'https://www.sderosiaux.com/'
+    const siteTitle = 'The greatest'
+    const siteDescription = 'Blablablabl ablablablbala'
+    const author = 'S. Derosiaux'
+    const bg = cover ? /* siteUrl + */ cover.childImageSharp.fluid.src : ''
+    const fullUrl = /*siteUrl + */ location.pathname
+
+    const schemaOrgJSONLD = [
+      {
+        '@context': 'http://schema.org',
+        '@type': 'Person',
+        name: author,
+        url: siteUrl,
+        sameAs: [
+          'http://instagram.com/sderosiaux',
+          'http://www.linkedin.com/in/stephane.derosiaux',
+        ],
+      },
+      {
+        '@context': 'http://schema.org',
+        '@type': 'Organization',
+        url: siteUrl,
+        logo: siteUrl + '/favicon.ico',
+      },
+      {
+        '@context': 'http://schema.org',
+        '@type': 'Blog',
+        name: siteTitle,
+        url: siteUrl,
+        description: siteDescription,
+        publisher: author,
+      },
+      {
+        '@context': 'http://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            item: {
+              '@id': fullUrl,
+              name: title,
+              bg,
+            },
+          },
+        ],
+      },
+    ]
+
+    if (date) {
+      schemaOrgJSONLD.push({
+        '@context': 'http://schema.org',
+        '@type': 'BlogPosting',
+        url: siteUrl,
+        name: title,
+        headline: description,
+        image: {
+          '@type': 'ImageObject',
+          url: bg,
+        },
+        description,
+        author,
+        datePublished: date,
+        publisher: author,
+      })
+    }
 
     return (
       <div>
+        <Helmet
+          meta={[
+            { name: 'description', content: description || title },
+            { name: 'image', content: bg },
+            { name: 'twitter:card', value: 'summary' },
+            { name: 'twitter:creator', content: '@sderosiaux' },
+            { name: 'twitter:site', content: '@sderosiaux' },
+            { name: 'twitter:title', content: title },
+            { name: 'twitter:description', content: description || title },
+            { name: 'twitter:image', content: bg },
+            { property: 'og:title', content: title },
+            { property: 'og:type', content: 'article' },
+            { property: 'og:url', content: fullUrl },
+            { property: 'og:description', content: description || title },
+            { property: 'og:image', content: bg },
+          ]}
+        />
         <Helmet>
-          <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-          <link rel="preconnect" href="//fonts.googleapis.com" />
-          <meta charSet="utf-8" />
+          <script type="application/ld+json">
+            {JSON.stringify(schemaOrgJSONLD)}
+          </script>
           <meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
           <meta httpEquiv="Content-Language" content="en" />
           <meta name="robots" content="index,follow" />
           <meta name="application-name" content="sderosiaux.com" />
           <meta
-            name="description"
-            content="Personal website of S. Derosiaux, talking about Scala and Data Engineering"
-          />
-          <meta
             name="keywords"
             content="java, scala, hadoop, spark, hbase, flume, kafka, javascript, reactjs, data-engineer"
           />
-          <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1, user-scalable=yes, minimal-ui"
-          />
-          <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
           <link rel="icon" sizes="32x32" href="/favicon.ico" />
           <link rel="icon" sizes="192x192" href="/favicon.ico" />
           <link rel="apple-touch-icon-precomposed" href="/favicon.ico" />

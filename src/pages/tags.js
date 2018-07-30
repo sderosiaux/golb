@@ -15,7 +15,11 @@ export default ({
   },
   location,
 }) => (
-  <Layout location={location}>
+  <Layout
+    location={location}
+    title="All available tags"
+    description="Looking for a subject in particular?"
+  >
     <Helmet title={title} />
     <div>
       <h1>Tags</h1>

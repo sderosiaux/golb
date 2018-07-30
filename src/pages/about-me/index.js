@@ -52,7 +52,13 @@ export default ({ location, data }) => {
   const siteTitle = data.site.siteMetadata.title
   console.log(data)
   return (
-    <Layout location={location} fullWidth={true} cover={data.cover}>
+    <Layout
+      location={location}
+      fullWidth={true}
+      cover={data.cover}
+      title="About Me"
+      description="Hi! It's Stéphane from France! Here is my story."
+    >
       <Helmet title={siteTitle + ' | About Me'} />
 
       <div style={{ marginTop: 20 }}>

@@ -2,6 +2,7 @@
 title: "Do we fit?"
 fullWidth: true
 background: 'cover.jpg'
+description: 'What about working with me?'
 ---
 
 [[hero0]]

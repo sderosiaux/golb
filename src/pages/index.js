@@ -31,7 +31,13 @@ export default ({ location, data }) => {
   const groups = groupBy(articles, a => a.frontmatter.category)
 
   return (
-    <Layout location={location} fullWidth={true} cover={cover}>
+    <Layout
+      location={location}
+      fullWidth={true}
+      cover={cover}
+      title="Personal website of S. Derosiaux"
+      description="I talk mostly about Scala and Data Engineering!"
+    >
       <Helmet title={siteTitle + ' | Home'} />
 
       <div style={{ marginTop: 20 }}>
