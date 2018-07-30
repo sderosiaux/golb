@@ -21,6 +21,18 @@ description: 'What about working with me?'
 |
 |_If your company, teams, and projects fit all this, then we can probably work together!_ :sunglasses:
 
+[[hero0]]
+|## Get in touch with me
+|[Send me a tweet](https://twitter.com/sderosiaux) or use this form (private, no worries):
+|
+|<form id="contact-form" name="contact" method="POST" netlify-honeypot="bot" netlify>
+|<p class="bot"><input type="text" name="bot" /></p>
+|<p><label for="name">Name</label><input type="text" name="name" /></p>
+|<p><label for="email">Email</label><input type="email" name="email" /></p>
+|<p><label for="message">How can I help?</label><textarea name="message"></textarea></p>
+|<p><button type="submit">Send me your message</button></p>
+|</form>
+
 [[hero1]]
 |- For the non-professional stuff and sweet photos, read [About Me](/about-me).
 |- For my career path and more details, checkout my [LinkedIn](https://www.linkedin.com/in/st%C3%A9phane-derosiaux/).
