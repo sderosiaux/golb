@@ -1,6 +1,6 @@
 import Typography from 'typography'
-import Wordpress2016 from 'typography-theme-wordpress-2016'
-import bootstrapTheme from './bootstrap'
+//import Wordpress2016 from 'typography-theme-wordpress-2016'
+//import bootstrapTheme from './bootstrap'
 import Color from 'color'
 
 /*
@@ -91,17 +91,17 @@ const theme: OptionsType = {
   }),
 }
 */
-Wordpress2016.overrideThemeStyles = () => ({
-  'a.gatsby-resp-image-link': {
-    boxShadow: 'none',
-  },
-})
+// Wordpress2016.overrideThemeStyles = () => ({
+//   'a.gatsby-resp-image-link': {
+//     boxShadow: 'none',
+//   },
+// })
 
-delete Wordpress2016.googleFonts
+//delete Wordpress2016.googleFonts
 
-let typography = new Typography(Wordpress2016)
+//let typography = new Typography(Wordpress2016)
 
-typography = new Typography({
+const typography = new Typography({
   baseFontSize: '24px',
   baseLineHeight: 1.45,
   googleFonts: [
