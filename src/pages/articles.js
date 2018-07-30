@@ -4,6 +4,7 @@ import get from 'lodash/get'
 import Helmet from 'react-helmet'
 import Layout from '../components/Layout'
 import Article from '../components/Article'
+import NewsletterSubscription from '../components/NewsletterSubscription'
 
 export default class extends React.Component {
   render() {
@@ -18,6 +19,7 @@ export default class extends React.Component {
         description="Checkout all my articles about Scala, Kafka, ReactJS etc."
       >
         <Helmet title={siteTitle + ' | Articles'} />
+        <NewsletterSubscription />
         {articles.map(({ node }) => (
           <Article
             key={node.frontmatter.path}
@@ -25,6 +27,7 @@ export default class extends React.Component {
             {...node}
           />
         ))}
+        <NewsletterSubscription />
       </Layout>
     )
   }
