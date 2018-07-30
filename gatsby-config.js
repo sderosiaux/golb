@@ -14,6 +14,10 @@ module.exports = {
         name: 'pages',
       },
     },
+    {
+      resolve: 'gatsby-plugin-netlify',
+      options: {},
+    },
     //`gatsby-plugin-twitter`,
     {
       resolve: 'gatsby-plugin-mailchimp',
