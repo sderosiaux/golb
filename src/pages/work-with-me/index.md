@@ -27,9 +27,9 @@ description: 'What about working with me?'
 |
 |<form id="contact-form" name="contact" method="POST" netlify-honeypot="bot" netlify>
 |<p class="bot"><input type="text" name="bot" /></p>
-|<p><label for="name">Name</label><input type="text" name="name" /></p>
-|<p><label for="email">Email</label><input type="email" name="email" /></p>
-|<p><label for="message">How can I help?</label><textarea name="message"></textarea></p>
+|<p><label for="name">Name</label><input required type="text" name="name" /></p>
+|<p><label for="email">Email</label><input required type="email" name="email" /></p>
+|<p><label for="message">How can I help?</label><textarea required name="message"></textarea></p>
 |<p><button type="submit">Send me your message</button></p>
 |</form>
 
