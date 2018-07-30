@@ -1,0 +1,2 @@
+https://www.ctheu.com/* https://www.sderosiaux.com/articles/:splat 301!
+https://www.sderosiaux.com/:year/:month/:day/:slug https://www.sderosiaux.com/articles/:year/:month/:day/:slug 301!

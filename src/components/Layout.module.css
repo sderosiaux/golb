@@ -1,0 +1,30 @@
+blockquote {
+  margin: 0;
+  margin-bottom: 20px;
+  padding: 30px;
+  border: 5px solid rgb(2, 136, 209);
+  border-radius: 40px;
+  font-style: italic;
+  color: gray;
+  position: relative;
+}
+blockquote::before {
+  top: -5px;
+  left: 50%;
+  width: 94%;
+  height: 10px;
+  content: '';
+  position: absolute;
+  background: rgb(255, 255, 255);
+  margin-left: -47%;
+}
+blockquote::after {
+  bottom: -5px;
+  left: 50%;
+  width: 94%;
+  height: 10px;
+  content: '';
+  position: absolute;
+  background: rgb(255, 255, 255);
+  margin-left: -47%;
+}

@@ -1,0 +1,91 @@
+.custom-block-hero {
+  padding: 20px;
+}
+
+.custom-block-hero.centered {
+  text-align: center;
+}
+.custom-block-hero.centered > div {
+  display: inline-block;
+}
+
+.custom-block-hero > div,
+.marginAuto {
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.custom-block-hero:not(.custom-block-hero0) a {
+  color: white;
+}
+.custom-block-hero a:hover {
+  color: rgb(2, 136, 209) !important;
+  background-color: white;
+}
+
+.custom-block-hero0 {
+}
+
+.custom-block-hero1 {
+  background-color: rgb(2, 136, 209);
+  color: #fafafa;
+}
+.custom-block-hero2 {
+  background-color: rgb(2, 136, 209);
+  color: #fafafa;
+}
+.custom-block-hero3 {
+  background-color: rgb(2, 136, 209);
+  color: #fafafa;
+}
+.custom-block-hero4 {
+  background-color: rgb(2, 136, 209);
+  color: #fafafa;
+}
+.custom-block-hero5 {
+  background-color: #ddd;
+  color: #666;
+}
+
+#contact-form .bot {
+  display: none;
+}
+#contact-form p {
+  display: flex;
+}
+#contact-form p label {
+  width: 200px;
+}
+@media (max-width: 800px) {
+  #contact-form p label {
+    display: none;
+  }
+  #contact-form p {
+    margin-bottom: 10px;
+  }
+}
+#contact-form p input,
+#contact-form p textarea {
+  flex: 1;
+  padding: 5px;
+  border: 1px solid #888;
+  border-radius: 4px;
+}
+#contact-form p:last-child {
+  justify-content: center;
+}
+#contact-form button[type='submit'] {
+  background: rgb(2, 136, 209);
+  cursor: pointer;
+  padding: 15px 30px;
+  color: #eee;
+  border: 1px solid #999;
+  border-radius: 4px;
+  transition: 0.2s all;
+  font-size: 22px;
+}
+
+#contact-form button[type='submit']:hover {
+  background: white;
+  color: #555;
+}
