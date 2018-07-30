@@ -16,7 +16,6 @@ export default class extends React.Component {
         location={this.props.location}
         title="Articles"
         description="Checkout all my articles about Scala, Kafka, ReactJS etc."
-        cover={cover}
       >
         <Helmet title={siteTitle + ' | Articles'} />
         {articles.map(({ node }) => (
