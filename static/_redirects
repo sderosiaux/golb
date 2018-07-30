@@ -1,2 +1,7 @@
 https://www.ctheu.com/* https://www.sderosiaux.com/articles/:splat 301!
-https://www.sderosiaux.com/:year/:month/:day/:slug https://www.sderosiaux.com/articles/:year/:month/:day/:slug 301!
+https://www.sderosiaux.com/2014/:month/:day/:slug https://www.sderosiaux.com/articles/2014/:month/:day/:slug 301!
+https://www.sderosiaux.com/2015/:month/:day/:slug https://www.sderosiaux.com/articles/2015/:month/:day/:slug 301!
+https://www.sderosiaux.com/2016/:month/:day/:slug https://www.sderosiaux.com/articles/2016/:month/:day/:slug 301!
+https://www.sderosiaux.com/2017/:month/:day/:slug https://www.sderosiaux.com/articles/2017/:month/:day/:slug 301!
+https://www.sderosiaux.com/2018/:month/:day/:slug https://www.sderosiaux.com/articles/2018/:month/:day/:slug 301!
+
