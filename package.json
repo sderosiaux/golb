@@ -1,10 +1,10 @@
 {
-  "name": "gatsby-starter-blog",
-  "description": "Starter Gatsby Blog",
-  "version": "1.0.0",
-  "author": "Kyle Mathews <mathews.kyle@gmail.com>",
+  "name": "golb",
+  "description": "My website",
+  "version": "2.0.0",
+  "author": "Stéphane Derosiaux <derste@gmail.com>",
   "bugs": {
-    "url": "https://github.com/gatsbyjs/gatsby-starter-blog/issues"
+    "url": "https://github.com/sderosiaux/golb/issues"
   },
   "dependencies": {
     "color": "^3.0.0",
@@ -50,10 +50,7 @@
     "react-social-icons": "^3.0.0",
     "react-typography": "^0.16.13",
     "remark-toc": "^5.0.0",
-    "typeface-merriweather": "0.0.43",
-    "typeface-montserrat": "0.0.43",
-    "typography": "^0.16.17",
-    "typography-theme-wordpress-2016": "^0.15.10"
+    "typography": "^0.16.17"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
@@ -61,7 +58,7 @@
     "gh-pages": "^1.1.0",
     "prettier": "^1.12.0"
   },
-  "homepage": "https://github.com/gatsbyjs/gatsby-starter-blog#readme",
+  "homepage": "https://github.com/sderosiaux/golb#readme",
   "keywords": [
     "gatsby"
   ],
@@ -69,7 +66,7 @@
   "main": "n/a",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gatsbyjs/gatsby-starter-blog.git"
+    "url": "git+https://github.com/sderosiaux/golb.git"
   },
   "scripts": {
     "dev": "gatsby develop",
