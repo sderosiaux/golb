@@ -47,6 +47,9 @@ export default ({
           border-radius: 4px;
           overflow: hidden;
           box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.15);
+          @media (max-width: 800px) {
+            display: none;
+          }
         `}
       >
         {background && <Img fixed={background.childImageSharp.fixed} />}

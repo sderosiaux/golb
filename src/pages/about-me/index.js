@@ -35,7 +35,8 @@ const Block = ({ cover, fluid, children, fullWidth }) => (
       padding: 10px;
       text-align: center;
       color: #444;
-      min-width: 500px;
+      width: 500px;
+      overflow: hidden;
     `}
   >
     {cover && (

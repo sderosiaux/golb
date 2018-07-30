@@ -56,9 +56,20 @@
 #contact-form p label {
   width: 200px;
 }
+@media (max-width: 800px) {
+  #contact-form p label {
+    display: none;
+  }
+  #contact-form p {
+    margin-bottom: 10px;
+  }
+}
 #contact-form p input,
 #contact-form p textarea {
   flex: 1;
+  padding: 5px;
+  border: 1px solid #888;
+  border-radius: 4px;
 }
 #contact-form p:last-child {
   justify-content: center;

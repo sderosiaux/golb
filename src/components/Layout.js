@@ -223,10 +223,10 @@ const Header = ({ location }) => [
           font-size: 24px;
         }
         li {
-          padding: 5px 10px !important;
+          padding: 5px 5px !important;
           font-size: 18px;
           text-transform: none !important;
-        }import { Helmet } from 'react-helmet';
+        }
 
         .social {
           display: none;
@@ -239,6 +239,9 @@ const Header = ({ location }) => [
         }
       }
       @media (max-width: 600px) {
+        .sep {
+          display: none;
+        }
         .myname {
           display: none;
         }
@@ -273,9 +276,12 @@ const Header = ({ location }) => [
       </Link>
 
       <div
-        className={css`
-          flex: 1;
-        `}
+        className={
+          'sep ' +
+          css`
+            flex: 1;
+          `
+        }
       />
 
       <ul

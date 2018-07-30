@@ -73,21 +73,24 @@ export default class NewsletterSubscription extends React.Component {
             Join the club and receive an email when I post a new article! No
             spam ever, no worries.
           </p>
-          <input
-            type="email"
-            required
-            placeholder="you@email.com"
-            onChange={this._handleEmailChange}
-            className={css`
-              width: 500px;
-              padding: 10px;
-              border-radius: 4px;
-              border: 1px solid white;
-              ::placeholder {
-                color: rgb(2, 136, 209);
-              }
-            `}
-          />
+          <p>
+            <input
+              type="email"
+              required
+              placeholder="you@email.com"
+              onChange={this._handleEmailChange}
+              className={css`
+                width: 100%;
+                max-width: 500px;
+                padding: 10px;
+                border-radius: 4px;
+                border: 1px solid white;
+                ::placeholder {
+                  color: rgb(2, 136, 209);
+                }
+              `}
+            />
+          </p>
           <div style={{ textAlign: 'center' }}>
             <button
               type="submit"

@@ -5,7 +5,7 @@ import get from 'lodash/get'
 import { css } from 'react-emotion'
 import Bio from '../components/Bio'
 import Layout from '../components/Layout'
-
+import { Centered } from '../components/Centered'
 import { rhythm, scale } from '../utils/typography'
 
 require('./simple.css')
@@ -26,12 +26,11 @@ export default class extends React.Component {
         description={post.frontmatter.description}
       >
         <Helmet title={`${siteTitle} | ${post.frontmatter.title}`} />
-        <h1
-          className={fullWidth ? 'marginAuto' : ''}
-          style={fullWidth ? { marginTop: 40 } : {}}
-        >
-          {post.frontmatter.title}
-        </h1>
+
+        <Centered>
+          <h1 style={{ marginTop: 20 }}>{post.frontmatter.title}</h1>
+        </Centered>
+
         <div
           dangerouslySetInnerHTML={{ __html: post.html }}
           className={css`
@@ -63,7 +62,8 @@ export const pageQuerySimple = graphql`
         background {
           childImageSharp {
             fluid(
-              maxHeight: 200
+              maxHeight: 220
+              maxWidth: 1000
               cropFocus: CENTER
               duotone: { highlight: "#0288d1", shadow: "#192550", opacity: 80 }
             ) {

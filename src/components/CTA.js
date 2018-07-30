@@ -31,6 +31,7 @@ export default () => (
           align-items: center;
           justify-content: center;
           color: white;
+          text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
           font-size: 42px;
           > div {
             text-align: center;
@@ -45,6 +46,7 @@ export default () => (
             className={
               'clean ' +
               css`
+                text-shadow: none;
                 cursor: pointer;
                 background: rgb(2, 136, 209);
                 color: white;
@@ -54,6 +56,9 @@ export default () => (
                 transition: 0.2s all;
                 :hover {
                   background: ${hover};
+                }
+                @media (max-width: 600px) {
+                  display: inline-block;
                 }
               `
             }
