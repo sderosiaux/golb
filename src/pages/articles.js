@@ -9,8 +9,14 @@ import NewsletterSubscription from '../components/NewsletterSubscription'
 export default class extends React.Component {
   render() {
     const siteTitle = get(this, 'props.data.site.siteMetadata.title')
-    const articles = get(this, 'props.data.allMarkdownRemark.edges')
+    let articles = get(this, 'props.data.allMarkdownRemark.edges')
     const cover = get(this, 'props.data.cover')
+
+    articles
+      .filter(a => !a.node.frontmatter.background)
+      .forEach(
+        a => (a.node.frontmatter.background = this.props.data.defaultImage)
+      )
 
     return (
       <Layout
@@ -51,16 +57,15 @@ export const pageQuery = graphql`
       }
     }
 
-    cover: file(relativePath: { eq: "DSC00806.jpg" }) {
+    defaultImage: file(relativePath: { eq: "DSC00806.jpg" }) {
       childImageSharp {
-        fluid(
-          maxHeight: 220
-          maxWidth: 1000
+        fixed(
+          width: 300
+          height: 250
           cropFocus: CENTER
-          quality: 90
           duotone: { highlight: "#0288d1", shadow: "#192550", opacity: 80 }
         ) {
-          ...GatsbyImageSharpFluid
+          ...GatsbyImageSharpFixed
         }
       }
     }
