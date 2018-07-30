@@ -107,11 +107,11 @@ const typography = new Typography({
   googleFonts: [
     {
       name: 'Varela Round',
-      styles: ['400', '400i', '700', '700i', '900', '900i'],
+      styles: ['400', '700'],
     },
     {
       name: 'Kalam',
-      styles: ['300', '400'],
+      styles: ['400'],
     },
   ],
   headerFontFamily: [
