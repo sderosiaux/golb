@@ -23,7 +23,7 @@ description: 'What about working with me?'
 
 [[hero0]]
 |## Get in touch with me
-|[Send me a tweet](https://twitter.com/sderosiaux) or use this form (private, no worries):
+|[Send me a tweet](https://twitter.com/sderosiaux) or use this form (private, no worries). French or English.
 |
 |<form id="contact-form" name="contact" method="POST" netlify-honeypot="bot" netlify>
 |<p class="bot"><input type="text" name="bot" /></p>
