@@ -108,7 +108,7 @@ export const pageQuery = graphql`
         title
       }
     }
-    cover: file(relativePath: { eq: "DSC00806.jpg" }) {
+    cover: file(relativePath: { eq: "DSC_9238.jpg" }) {
       childImageSharp {
         fluid(
           maxHeight: 220
