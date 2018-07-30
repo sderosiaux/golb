@@ -218,6 +218,11 @@ const Header = ({ location }) => [
       background: white;
       z-index: 99999; // to avoid tweet going on top
 
+      @media (max-width: 2000px) {
+        ul.directory li {
+          padding: 20px 20px;
+        }
+      }
       @media (max-width: 1205px) {
         .myname {
           font-size: 24px;
@@ -233,9 +238,6 @@ const Header = ({ location }) => [
         }
         .bar {
           height: 10px;
-        }
-        + .spacebar {
-          height: 30px;
         }
       }
       @media (max-width: 600px) {
@@ -285,19 +287,22 @@ const Header = ({ location }) => [
       />
 
       <ul
-        className={css`
-          li {
-            display: inline-block;
-            text-transform: uppercase;
-            padding: 40px 30px;
-          }
-          li.active {
-            background: ${light};
-          }
-          li.active > a {
-            color: white;
-          }
-        `}
+        className={
+          'directory ' +
+          css`
+            li {
+              display: inline-block;
+              text-transform: uppercase;
+              padding: 30px 30px;
+            }
+            li.active {
+              background: ${light};
+            }
+            li.active > a {
+              color: white;
+            }
+          `
+        }
       >
         <li className={location.pathname === '/' ? 'active' : ''}>
           <Link className="clean underline" to="/">
@@ -388,7 +393,13 @@ const Header = ({ location }) => [
     className={
       'spacebar ' +
       css`
-        height: 134px; // top bar
+        height: 114px; // top bar
+        @media (max-width: 2000px) {
+          height: 94px;
+        }
+        @media (max-width: 1205px) {
+          height: 30px;
+        }
       `
     }
   />,
