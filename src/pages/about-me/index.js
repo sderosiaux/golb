@@ -129,9 +129,8 @@ export default ({ location, data }) => {
           I've also started to read <em>real</em> books since a tweet of{' '}
           <a href="https://twitter.com/nehanarkhede">Neha Narkhede</a>{' '}
           (Co-founder and CTO of Confluent) answering to{' '}
-          <a href="https://twitter.com/patrickc">
-            Patrick Collison (Stripe CEO)
-          </a>.
+          <a href="https://twitter.com/patrickc">Patrick Collison</a> (CEO of
+          Stripe).
         </ColorfulCentered>
 
         <Centered
