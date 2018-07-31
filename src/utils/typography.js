@@ -145,6 +145,11 @@ const typography = new Typography({
     'a.underline:hover,a.underline:active': {
       color: Color('rgb(2, 136, 209)').string(),
     },
+    '@media only screen and (max-width:768px)': {
+      html: {
+        fontSize: '16px',
+      },
+    },
   }),
 })
 

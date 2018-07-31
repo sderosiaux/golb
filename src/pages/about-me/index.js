@@ -107,7 +107,12 @@ export default ({ location, data }) => {
             Optimist, enthousiast, and always eager to learn.
           </Block>
           <Block cover={data.scala}>
-            I love Scala and functional programming.
+            I love Scala and functional programming. I'm hanging out on the
+            gitter{' '}
+            <a href="https://gitter.im/scala/fr">
+              <code>scala/fr</code>
+            </a>{' '}
+            if you need help.
           </Block>
           <Block cover={data.startup}>
             I love startups, technology, science, software engineering.
