@@ -9,7 +9,12 @@ import Article from '../components/Article'
 export default ({ location, pageContext, data }) => {
   const { tag } = pageContext
   const { edges, totalCount } = data.allMarkdownRemark
+  const { defaultImage } = data
   const tagHeader = `Articles about "${tag}"`
+
+  edges
+    .filter(a => !a.node.frontmatter.background)
+    .forEach(a => (a.node.frontmatter.background = defaultImage))
 
   return (
     <Layout
@@ -43,6 +48,19 @@ export const pageQuery = graphql`
       edges {
         node {
           ...ArticleFrontmatter
+        }
+      }
+    }
+
+    defaultImage: file(relativePath: { eq: "DSC00806.jpg" }) {
+      childImageSharp {
+        fixed(
+          width: 300
+          height: 250
+          cropFocus: CENTER
+          duotone: { highlight: "#0288d1", shadow: "#192550", opacity: 80 }
+        ) {
+          ...GatsbyImageSharpFixed
         }
       }
     }
