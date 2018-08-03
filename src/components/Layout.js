@@ -56,7 +56,7 @@ function schemaOrgJSONLD(
           item: {
             '@id': fullUrl,
             name: title,
-            bg,
+            image: bg,
           },
         },
       ],
