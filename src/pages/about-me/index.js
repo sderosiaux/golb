@@ -166,7 +166,7 @@ export default ({ location, data }) => {
             I'm fluent in French (native) and English (I guess so).
           </Block>
           <Block cover={data.hike}>
-            I love running and travelling to hike all over the world.
+            I love running and travelling to hike and find geocaches all over the world.
           </Block>
           <Block cover={data.ddr}>
             I love old games, fitness, DDR (and Stepmania!), cooking (paleo!)
