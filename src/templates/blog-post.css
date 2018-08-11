@@ -63,3 +63,8 @@ article h1 + ul li > ul {
 article .gatsby-resp-image-link {
   padding: 30px 0;
 }
+
+.gatsby-highlight-code-line,
+.gatsby-highlight-code-line * {
+  background-color: #e8e8e8 !important;
+}
