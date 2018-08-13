@@ -2,12 +2,12 @@
 title: "Types: Never commit too early"
 description: "Committing early to an implementation can lead to complex refactorings and make the code harder to reason about. Often, depending on a typeclass (declaring a limited capacity) is a better choice: you defer the choice of implementation to the caller."
 date: "2018-08-10T12:00Z"
-is_blog: false
-path: "/articles/2018/08/10/never-commit-too-early/"
+is_blog: true
+path: "/articles/2018/08/10/types-never-commit-too-early/"
 language: "en"
 tags: ['scala', 'cats', 'scalaz', 'typeclass', 'tagless final']
 category: 'Scala'
-background: 'background.jpg'
+background: 'Evan_and_friends_at_halloween.jpg'
 ---
 
 I remember a year ago, I was arguing with my colleague: he wanted to use `Task` (from Monix) in some function because `Task` is great and offer tons of features. I wanted to use `F[_]: Sync` because I didn't want to commit too early.
@@ -452,6 +452,7 @@ A project will depend upon `lib-core` and `lib-monix` for instance, but not the 
 
 ## Shims: typeclasses of typeclasses
 
+[djspiewak/shims](https://github.com/djspiewak/shims) provides interoperability (isomorphisms) between cats and scalaz typeclasses.
 
 
 # What if you need to specialize?
