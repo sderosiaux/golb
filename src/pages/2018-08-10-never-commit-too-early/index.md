@@ -447,32 +447,125 @@ wait[Task](2000).runSyncUnsafe(Duration.Inf)
 - ConcurrentEffect
 
 
+## Stacking Monad transformers with stack
+
+Consider this usage of the `State` monad:
+
+```scala
+def duplicateS[A: Monoid, F[_]: Monad]: StateT[F, A, A] = {
+  for {
+    a <- StateT.get[F, A]
+    aa <- StateT.pure[F, A, A](a |+| a)
+  } yield aa
+}
+
+duplicateS[String, Option].run("hello")
+// Some((hello,hellohello))
+```
+
+Here, the for-comprehension depends upon the `StateT` monad.
+If we want to combine with another monad, we're going into troubles:
+
+
+
+
+```scala
+def duplicate[A: Monoid, F[_]: Monad](implicit S: MonadState[F, A]): F[A] = {
+  for {
+    a <- S.get
+    aa <- Applicative[F].pure(a |+| a)
+  } yield aa
+}
+
+something[String, StateT[Option, String, ?]].run("hello")
+// Some((hello,hellohello))
+
+something[Int, StateT[Try, Int, ?]].run(10)
+// Success((10,20))
+```
 
 A project will depend upon `lib-core` and `lib-monix` for instance, but not the other two modules (that would provide the same function as `lib-monix`, just with a different implementation).
 
 ## Shims: typeclasses of typeclasses
 
 
+## Capabilities: separation of concerns
 
-# What if you need to specialize?
+Typeclasses represents _capabilities_.
 
-For instance, in Monix, `Task` provides tons of additional features we don't find in `Sync` or `cats-effect` typeclasses in general (`Effect`, `Bracket`, etc.).
+```scala
+def program[A, F: Console: Async: DbAccess: Permissions: Drawable](p: F[A]) = ???
+```
 
-Let's take `Task.gatherUnordered`.  or ???
+Here, `program` expect multiple features/capabilities that `F` must have to be executed. In an eyeblink, you know this function will do IOs, async stuff, access to the DB, check permissions, and draw something. All are different concerns that can be implemented as the caller want. It's like SOLID OOP programming where you refer to interfaces, not to implementations.
 
-doOnCancel
+The difference is that we're dealing only with typeclasses: no inheritance, implicitly resolved, applied to functions.
 
-create your own TC?
+To avoid having tons of required "capabilities" in our functions, they should be split apart and deal with the minimal set of features (Single Responsability Principle). The only "big" function is the main entry, where we need to provide everything, but we should soon call functions with only a few capabilities: a function that uses `DbAccess` should not rely on `Drawable` (except to pass it on nested functions).
 
-# Separation of concerns
+It will be clearer for the reader (and the writer) to know what a function is dealing with, what the function can do, what the function has access to. It's easier to reason about it, because its scope is small and possibilities of actions are not endless.
 
-To avoid having tons of required "capabilities" in our functions, they should definitely be split apart and deal with one thing only (Single Responsability Principle).
+This is why we have static types: to restrict what we can do, how we can combine them. Having generics `A` is a step even further: you can't do anything with them. Typeclasses exist to be able to act on such types, by just providing some operations. If you take `String` for instance, you can do so many things with it it's not funny. But if you just provides `A: Show` to a function, you know it can only stringify the value behind `A` (call `.show()` on it).
 
-It will be clearer for the reader (and the writer) to know what it's dealing with, what the function can do, what the function has access to. It's easier to reason about it, because its scope is small and possibilities of actions are not endless at all.
+John A De Goes demonstrates this in [FP to the Max](https://www.youtube.com/watch?v=sxudIMiOo68). Check it out now if you didn't saw it yet.
 
-This is why we have static types: to restrict what we can do, how we can combine them. Having generics `A` is a step even further: you can't do anything with them. Typeclasses exist to be able to act on such types, by just providing some operations. If you take `String` for instance, you can do so many things with it it's not funny. But if you just provides `A: Show` to a function, you know it can only stringify it.
+## What if you need to specialize our code?
 
-John A De Goes demonstrates this in FP to the Max. Check it out now if you didn't saw it yet.
+Monix's `Task` provides several features we don't find in `Sync` or `cats-effect` typeclasses in general, such as memoization, add async boundaries, add callbacks on lifecycle changes (`doOnCancel`), races etc.
+
+For instance:
+
+```scala
+def compute(a: Int, b: Int) = Task.gatherUnordered(List(
+  Task(a).asyncBoundary.map(_ + 1),
+  Task(b).map(_ + 1)
+)).doOnFinish(_ => Task(println("finished!")))
+
+compute(1, 2).runSyncUnsafe(Duration.Inf)
+
+// finished!
+// List(2, 3) or List(3, 2)
+```
+
+Here, it's difficult to generalize `compute` because it relies on several `Task`'s features which don't have their equivalent in typeclasses: callbacks, unordered gathering, fallback to the default `Scheduler`...
+
+We could create our own specialized TC with the method(s) we want:
+
+```scala
+@typeclass
+trait Callbacks[F[_]] {
+  def doOnFinish[A](a: F[A], cb: Option[Throwable] => F[Unit]): F[A]
+}
+@typeclass
+trait Gather[F[_]] {
+  def unordered[A](a: F[A], b: F[A]): F[List[A]]
+}
+
+def computeGeneric[F[_]](a: Int, b: Int)
+                        (implicit S: Async[F], G: Gather[F],
+                           C: Callbacks[F], ec: ExecutionContext): F[List[Int]] = {
+  C.doOnFinish(G.unordered(
+    S.delay(a).flatMap(a => Async.shift(ec).map(_ => a + 1)),
+    S.delay(b).map(_ + 1)
+  ), _ => S.delay(println("finished!")))
+}
+```
+
+Typeclasses should have laws (internal & external), tested with Scalacheck generally, such as `Functor` has internal laws about its identity:
+
+```scala
+def covariantIdentity[A](fa: F[A]): IsEq[F[A]] =
+    fa.map(identity) <-> fa
+```
+
+Or `Sync` has internal laws about handling errors:
+
+```scala
+def suspendThrowIsRaiseError[A](e: Throwable) =
+    F.suspend[A](throw e) <-> F.raiseError(e)
+```
+
+
 
 ## Modularization
 
@@ -507,14 +600,13 @@ Moreover, it can help to test the code. We often refer to using `Id` when workin
 It's also useful when you take some `Applicative`. You can work with `Const[A, B]` in tests to avoid complicated code.
 
 
-# Performances
+# All implementations are different
+
+## Performances
 
 IO vs ZIO
 
-# Stack Safety
-
-# ApplicativeAsk is also a case where...???
-
+## Stack Safety
 
 
 # Conclusion
