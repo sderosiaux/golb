@@ -68,3 +68,7 @@ article .gatsby-resp-image-link {
 .gatsby-highlight-code-line * {
   background-color: #e8e8e8 !important;
 }
+
+.token.operator {
+  background: transparent;
+}

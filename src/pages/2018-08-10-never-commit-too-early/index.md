@@ -191,9 +191,9 @@ In Scala, the `null` case is never even considered. It's never checked in code t
 
 ## Pure Functional Programming
 
-This is where we encounter the _Pure Functional Programming_ principles, where functions must be:
+This is where we encounter the _Pure Functional Programming_ (PFP) principles, where functions must be:
 
-- Total: the behavior should be explicit just by looking at the types:
+- **Total**: the behavior should be explicit just by looking at the types:
 
 ```scala
 // Those are NOT total
@@ -209,7 +209,7 @@ sealed abstract class Option[+A] {
 None.get // AH! Are we getting an A?
 ```
 
-- Deterministic: the same call should return the same result:
+- **Deterministic**: the same call should return the same result:
 
 ```scala
 // Those are NOT deterministic
@@ -218,7 +218,7 @@ def f(a: Int): Boolean = if (Math.random() > 0.5) true else false
 // is f(1) true or false?
 ```
 
-- Side-effects free: nothing outside of the scope of the function should be altered:
+- **Side-effects free**: nothing outside of the scope of the function should be altered:
 
 ```scala
 // Those are NOT side-effect free
@@ -251,7 +251,7 @@ println(a)
 println(a)
 ```
 
-If we follow those 3 rules:
+If we follow those 3 rules, we unblock some achievements:
 
 - it's easier to reason about the program, about the functions: the types don't hide anything.
 - it's easier to compose: small primitives goes into bigger and so on. All the types must be composed: nothing can be lost along the way, nothing can be hidden.
@@ -335,9 +335,30 @@ All that to say: provide simple types to your function, it makes it easier to kn
 
 # Typeclasses to the rescue
 
-Let's now focus on specific examples to clear our mind.
+Let's focus on specific examples to clear our mind.
 
-We'll use some cats-effect typeclasses in our example, but all the reasonings are valid for any typeclasses.
+We'll take a look at some cats-effect typeclasses, but all the reasonings are valid for any typeclasses.
+
+## Be Coherent
+
+Typeclasses should be (locally or globally) _coherent_. It means we should find only one instance for a given type in a given (local) scope, for a deterministic implicit resolution.
+It's a difficult problem with workarounds right now.
+
+Often a typeclass extends another one (like `Monad > Applicative > Functor`), therefore if you have two typeclasses with a same parent in scope, you don't have coherence.
+
+In this example, which `.map` should the compiler pick? It exists in `Monad` and `Traverse`:
+
+```scala
+def transform[F[_]: Monad: Traverse](x: F[A], f: A => A) = { ... x.map(f) ... }
+```
+
+Typeclasses coherences is a very hot topic, feel free to wander:
+
+- [Allow Typeclasses to Declare Themselves Coherent dotty/#2047](https://github.com/lampepfl/dotty/issues/2047)
+- [What kind of typeclass coherence should we support? dotty/#4234](https://github.com/lampepfl/dotty/issues/4234)
+- [Coherence Domains in Scala](https://gist.github.com/djspiewak/9f6feadab02b16829c41484b394d16e4)
+- [Local Coherence from the Scala Typeclass proposal](https://github.com/dotty-staging/dotty/blob/add-common/docs/docs/reference/extend/local-coherence.md)
+- [Type classes: confluence, coherence and global uniqueness](http://blog.ezyang.com/2014/07/type-classes-confluence-coherence-global-uniqueness/)
 
 ## Be in Sync with the Postel's law
 
@@ -347,7 +368,7 @@ In my previous job, I wanted to replace all our `Future` or `Task` by `F[_]: Syn
 
 `Sync` is a typeclass providing the capability of deferring some execution. Anyone can implement this trait with its own type. We can find `Sync` instances for [`cats IO`](https://github.com/typelevel/cats-effect), [`monix Task`](https://github.com/monix/monix), [`ZIO`](https://github.com/scalaz/scalaz-zio), [`BIO`](https://github.com/LukaJCB/cats-bio), [`UIO`](https://github.com/LukaJCB/cats-uio). It's not only used for asynchronous execution: we also have instances for monad transformers (if their inner monad has a `Sync`) `EitherT`, `OptionT`, `WriteT`, `StateT` etc.
 
-Here is the description of `Sync`:
+Here is the description of `Sync` (from cats 1.x):
 
 ```scala
 trait Bracket[F[_], E] extends MonadError[F, E] { ... }
@@ -357,7 +378,7 @@ trait Sync[F[_]] extends Bracket[F, Throwable] {
 }
 ```
 
-Basically, it just _lazifies_ some execution using a thunk (and provides some cleanup with its parent `Bracket`, and is monadic).
+Basically, it just _lazifies_ some execution using a thunk (and provides some cleanup with its parent `Bracket` which is monadic).
 
 Unfortunately, there is no `Sync` instance of `Future` because it wouldn't be lawful (would not respect the law `Sync` needs to respect): `Future` being not lazy, it can't defer an execution.
 
@@ -380,9 +401,9 @@ Sync[LazyFuture].suspend(f) // it works because the Future didn't start yet
 
 Yes, that's ugly. No-one should use `Future` because it's eager and not referentially-transparent, making it hard to know what's going on and is bug-prone.
 
-We prefer relying on `IO` or `Task` from the Scala ecosystem.
+We prefer relying on `IO` or `Task` from the Scala ecosystem which are lazy by nature, and referentially-transparent.
 
-But better: we prefer relying on `Sync` and let the user use `IO` or `Task` as they want!
+But better: we prefer relying on `Sync` and let the caller use `IO` or `Task` as they want!
 
 ```scala
 def specific[A](a: A): Task[A] = Task.eval(a)
@@ -403,28 +424,34 @@ If you need more power, use more powerful typeclasses.
 
 ## Bracket, LiftIO, Async, Effect, Concurrent, ConcurrentEffect
 
-Instead of knowing all implementations that exists, it's useful to know which typeclasses to use instead (focusing on `cats-effect`).
+Instead of knowing all implementations that can run a computation, it's useful to know which typeclasses to use instead (here, focusing on [cats-effect](https://github.com/typelevel/cats-effect)), and let the callers decide upon the implementation (it can get back to the root of the program!).
 
-All are used the same way as `Sync`. They just provide more (or less) features to deal with sync/async execution:
+The typeclasses in cats-effect are particularly useful because a program always needs some form of computation effect, therefore it's quite ubiquitous to use them.
 
-- Bracket: it's the loan-pattern in FP (to manage auto-cleaning of resources):
+All of them are used the same way as we saw with `Sync`. They just provide more or less features to deal with sync/async executions, and all are `Monad`s to `flatMap` the hell out of them.
+
+Here is a small overview of what's possible:
+
+- `Bracket`: it's the loan-pattern in FP (to manage auto-cleaning of resources):
 
 ```scala
-def fopen[F[_]](filename: String)(implicit F: Bracket[F, Throwable]): F[Long] = {
+def countLines[F[_]](filename: String)(implicit F: Bracket[F, Throwable]): F[Long] = {
   F.bracket(F.pure(Files.newBufferedReader(Paths.get(filename))))
            (br => F.pure(br.lines().count()))
            (br => F.pure(br.close()))
 }
-fopen[IO]("build.sbt").unsafeRunSync() // 33
+countLines[IO]("build.sbt").unsafeRunSync() // 33
 ```
 
-- LiftIO: transform any cats `IO` to the desired effect
+The cleanup logic is "embedded" into the result: no need to think about it anymore. This is a wonderful abstraction, no need of variable in the outer scope of `try`, of `finally { if (f != null) f.close(); }` and so on.
+
+- `LiftIO`: transform any cats `IO` to the desired effect. Necessary for "bridges".
 
 ```scala
 val t: Task[Unit] = LiftIO[Task].liftIO(IO(println("Hello")))
 ```
 
-- Async: trigger an async execution
+- `Async`: trigger an async execution. It provides us a callback to call when our execution is "done". `IO.fromFuture` uses this by registering to `Future.onComplete` and _callbacking_.
 
 ```scala
 // Sorry for the Thread.sleep, trying to keep it simple :-)
@@ -437,58 +464,79 @@ wait[IO](2000).unsafeRunSync()
 wait[Task](2000).runSyncUnsafe(Duration.Inf)
 ```
 
-- Effect: run effect step-by-step through its asynchronous boundaries
+- `Effect`: a super `Async` that can run the effect, and still wraps the result into `IO[Unit]`, referential-transparency abided.
 
 ```scala
-
+def printAsync[F[_]: Effect, A](x: F[A]): IO[Unit] = Effect[F].runAsync(x) { result =>
+  IO(println(s"Result: $result"))
+}
+printAsync(IO("hello")).unsafeRunSync() // Result: Right(hello)
 ```
 
-- Concurrent
-- ConcurrentEffect
+Previously, we could also call `runSyncStep` to evaluate steps until an async-boundary, but [that will probably be gone soon](https://github.com/typelevel/cats-effect/issues/299), but nevermind.
 
 
-## Stacking Monad transformers with stack
-
-Consider this usage of the `State` monad:
+- `Concurrent` is `Async` with computations race and cancellation:
 
 ```scala
-def duplicateS[A: Monoid, F[_]: Monad]: StateT[F, A, A] = {
-  for {
-    a <- StateT.get[F, A]
-    aa <- StateT.pure[F, A, A](a |+| a)
-  } yield aa
+// Runs an effect and timeout after `d` if not done yet
+def fast[F[_], A](x: F[A], d: FiniteDuration)(implicit F: Concurrent[F], tim: Timer[F]): F[A] =
+  F.race(x, tim.sleep(d)).flatMap {
+    case Left(value) => F.pure(value)
+    case Right(_) => F.raiseError(new Throwable ("Too late!"))
+  }
+```
+
+Usage:
+
+```scala
+val sleep: IO[Unit] = IO(Thread.sleep(10000))
+
+fast(sleep, 500 millis).unsafeRunSync()
+// Exception in thread "main" java.lang.Throwable: Too late!
+
+// we must provide a `Timer[EitherT]`, only `Timer[IO]` is in scope by default
+implicit val t = Timer.derive[EitherT[IO, Error, ?]]
+val x: EitherT[IO, Error, Unit] = fast(EitherT.liftF(sleep), 500 millis)
+x.value.unsafeRunSync()
+// Exception in thread "main" java.lang.Throwable: Too late!
+```
+
+The other usage is to create cancellable computations:
+
+```scala
+val work: IO[Int] = Concurrent[IO].cancelable[Int] { cb =>
+  val atom = AtomicBoolean(true)
+  // we call "cb" when computation is done
+  Future(Thread.sleep(1000)) andThen { case _ => if (atom.get) cb(Right(10)) }
+  
+  // cancel logic as result
+  IO(println("cancel!")) *> IO(atom.set(false))
 }
 
-duplicateS[String, Option].run("hello")
-// Some((hello,hellohello))
+// Note the IO[IO[Unit]]]
+// It's a computation producing another IO: the "cancellation trigger"
+val start: IO[IO[Unit]] = work.runCancelable {
+  case Left(ex) => IO(println(s"Left: $ex"))
+  case Right(i) => IO(println(s"Right: $i"))
+}
 ```
 
-Here, the for-comprehension depends upon the `StateT` monad.
-If we want to combine with another monad, we're going into troubles:
-
-
-
+The previous code was just declarative, now we start the computation:
 
 ```scala
-def duplicate[A: Monoid, F[_]: Monad](implicit S: MonadState[F, A]): F[A] = {
-  for {
-    a <- S.get
-    aa <- Applicative[F].pure(a |+| a)
-  } yield aa
-}
+val cancelComputation: IO[Unit] = start.unsafeRunSync()
 
-something[String, StateT[Option, String, ?]].run("hello")
-// Some((hello,hellohello))
+// if we don't call cancelComputation.unsafeRunSync()
+// Right: 10
 
-something[Int, StateT[Try, Int, ?]].run(10)
-// Success((10,20))
+// if we call cancelComputation.unsafeRunSync()
+// cancel!
 ```
 
-A project will depend upon `lib-core` and `lib-monix` for instance, but not the other two modules (that would provide the same function as `lib-monix`, just with a different implementation).
+- `ConcurrentEffect`: finally, this one is `Concurrent` with the possibility to start a cancellable computation (as we did on `IO`).
 
-## Shims: typeclasses of typeclasses
-
-[djspiewak/shims](https://github.com/djspiewak/shims) provides interoperability (isomorphisms) between cats and scalaz typeclasses.
+- `SyncIO`: was committed a week ago, stay tuned! :-)
 
 ## Capabilities: separation of concerns
 
@@ -502,17 +550,240 @@ Here, `program` expect multiple features/capabilities that `F` must have to be e
 
 The difference is that we're dealing only with typeclasses: no inheritance, implicitly resolved, applied to functions.
 
-To avoid having tons of required "capabilities" in our functions, they should be split apart and deal with the minimal set of features (Single Responsability Principle). The only "big" function is the main entry, where we need to provide everything, but we should soon call functions with only a few capabilities: a function that uses `DbAccess` should not rely on `Drawable` (except to pass it on nested functions).
+We'll see how important this is when we are going to stack monads.
+
+To avoid having tons of required "capabilities" in our functions, they should be split apart and deal with the minimal set of features (Single Responsability Principle). The only "big" function is the main entry, where we need to provide everything, but we should soon call functions with only a few capabilities: a function that uses `DbAccess` should not rely on `Drawable` (except to pass it on nested functions):
+
+```scala
+def program[A, F: Console: Async: DbAccess: Permissions: Drawable](p: F[A]) = for {
+    _ <- accessDb
+    _ <- draw
+    ...
+} yield ()
+
+def accessDb[F[_]: DbAccess: Async]): F[DB] = ???
+def draw[F: Drawable]: F[Unit] = ???
+```
 
 It will be clearer for the reader (and the writer) to know what a function is dealing with, what the function can do, what the function has access to. It's easier to reason about it, because its scope is small and possibilities of actions are not endless.
 
-This is why we have static types: to restrict what we can do, how we can combine them. Having generics `A` is a step even further: you can't do anything with them. Typeclasses exist to be able to act on such types, by just providing some operations. If you take `String` for instance, you can do so many things with it it's not funny. But if you just provides `A: Show` to a function, you know it can only stringify the value behind `A` (call `.show()` on it).
+This is why we have static types: to restrict what we can do, how we can combine them. Having generics `A` is a step even further: you can't do anything with them. Typeclasses exist to be able to act on such types, by just providing some operations.
+
+If you take `String` for instance, you can do so many things with it it's not funny. But if you just provides `A: Show` to a function, you know it can only stringify the value behind `A` (call `.show()` on it).
 
 John A De Goes demonstrates this in [FP to the Max](https://www.youtube.com/watch?v=sxudIMiOo68). Check it out now if you didn't saw it yet.
 
-## What if you need to specialize our code?
+## Shims: conversions between typeclasses
 
-Monix's `Task` provides several features we don't find in `Sync` or `cats-effect` typeclasses in general, such as memoization, add async boundaries, add callbacks on lifecycle changes (`doOnCancel`), races etc.
+We talked a lot about cats. It can happen a project uses cats and scalaz at the same time. In this case, [djspiewak/shims](https://github.com/djspiewak/shims) provides interoperability (isomorphisms) between their typeclasses.
+
+It's a bunch of `implicit defs` between the two ecosystems, to avoid polluting our code.
+
+I never had the need to use it. The last time I had both of them in a codebase, I directly replaced the scalaz parts in favor of cats.
+I guess in large projects, you don't have time to change everything, so shims can come in handy.
+
+# Stacking Monad Transformers without hassle
+
+## The classic overhead solution
+
+Let's imagine an ads system dealing with city targeting if the whole system is configured to use it, or else fallback on displaying all the ads.
+We could implement the foundation by relying on `Reader`, `State`, and `IO` monads to deal with configuration, state, and asynchrony:
+
+```scala
+type Ads = List[Ad]
+type City = String
+
+case class AdsConfig(targeting: Boolean)
+case class Ad(imageUrl: String, target: Option[City] = None)
+
+def userLocation(): IO[City] = ???
+def needTargeting: Reader[AdsConfig, Boolean] = Reader(_.targeting)
+def filterAds(city: City) = State[Ads, Ads](_.partition(!_.target.contains(city)))
+def renderAds(ads: Ads): IO[Unit] = ???
+```
+
+Usage:
+
+```scala
+val ads = List(Ad("http://a", Some("paris")), Ad("http://b"), Ad("http://c", Some("paris")))
+
+filterAds("paris").runA(ads).value
+// List(Ad(http://a,Some(paris)), Ad(http://c,Some(paris)))
+```  
+
+We can try to combine the whole thing in a for-comp, but the astute reader knows it won't compile, because the monads used in the for-comprehension are not the same, and monads don't compose:
+
+```scala
+for {
+  location: City <- userLocation()
+  shouldTarget: Boolean <- needTargeting
+  ads: Ads <- if (shouldTarget) filterAds(location) else State.get[Ads]
+  _: Unit <- renderAds(ads)
+} yield ()
+```
+
+We need to lift everything to the same type: `StateT[ReaderT[IO, AdsConfig, ?], Ads, Ads]]`. It ain't gonna be pretty because of all the liftings:
+
+```scala{4,7-8,12,14}
+// we need to lift our State into F now
+def filterAdsT[F[_]: Applicative](city: City) = StateT[F, Ads ,Ads](
+    _.partition(!_.target.contains(city))
+    .pure[F])
+
+val program: StateT[ReaderT[IO, AdsConfig, ?], Ads, Ads] = for {
+  location <- StateT.liftF[ReaderT[IO, AdsConfig, ?], Ads, City](
+                ReaderT.liftF[IO, AdsConfig, City](
+                  userLocation()
+                )
+              )
+  shouldTarget <- StateT.liftF[ReaderT[IO, AdsConfig, ?], Ads, Boolean](
+                    needTargeting
+                  .lift[IO])
+  ads <- if (shouldTarget) filterAdsT[ReaderT[IO, AdsConfig, ?]](location)
+         else StateT.get[ReaderT[IO, AdsConfig, ?], Ads]
+} yield ads
+
+program.runA(ads).run(AdsConfig(targeting = true)).unsafeRunSync()
+// List(Ad(http://a,Some(paris)), Ad(http://c,Some(paris)))
+```
+
+This is what stacking monads/effects is. Monad Transformers _simplify_ this a bit (they already wrapped a Monad) but we are not going that far nonetheless. It's too cumbersome.
+
+Multiple ways exist to simplify how to write stacking:
+
+- The free monad
+- [djspiewak/emm](https://github.com/djspiewak/emm): A general monad for managing stacking effects
+- [atnos-org/eff](https://github.com/atnos-org/eff): Extensible effects are an alternative to monad transformers for computing with effects in a functional way.
+- [typelevel/cats-mtl](https://github.com/typelevel/cats-mtl) Using typeclasses! The one we'll care about.
+
+## Final tagless style: the F effect
+
+As we said, using typeclasses makes the developer do not care what the implementation is: here we're talking about `ReaderT`, `StateT`, `IO`.
+We'll code using abstractions only provided by cats-mtl and some minor refactoring.
+
+Doing this, we will:
+
+- avoid lifting everything.
+- dispatch and hide the massive boilerplate.
+- have a unique Effect `F[_]` in our program that will be the combinaison of types (the stack) behind the scene, but still abstract.
+
+First, we encode the effect into our function instead of relying on concrete types (`StateT`, `IO` etc.), and we make sure `F` is the return type:
+
+```scala
+def needTargeting[F[_]](implicit F: ApplicativeAsk[F, AdsConfig]): F[Boolean] =
+  F.reader(_.targeting)
+def filterAds[F[_]](city: City)(implicit S: MonadState[F, Ads]): F[Ads] =
+  S.inspect(_.filter(_.target.contains(city)))
+
+def getAllAds[F[_]: Sync](): F[Ads] = ???
+def userLocation[F[_]: Sync](): F[City] = ???
+def renderAds[F[_]: Sync](ads: Ads): F[Unit] = ???
+```
+
+The `F[_]` will be provided by the "super-stacked-type" later.
+
+Note the usage of `ApplicativeAsk` and `MonadState`: they are typeclasses only (representing `Reader` and `State`). They only impose `F[_]` to have some features, no matter its form: we only need this, nothing more. That's exactly where the power of typeclasses come from.
+
+## Typeclasses all the way down
+
+Then, we create our whole program asking for all the requirements on `F[_]`: to be `Sync`, to have the ability to read from `AdsConfig`, and to deal with a state, because that's what our little functions need:
+
+```scala
+def program[F[_]: Sync: ApplicativeAsk[?[_], AdsConfig]: MonadState[?[_], Ads]]: F[Unit] = {
+  for {
+    location <- userLocation[F]()
+    allAds <- getAllAds[F]()
+    shouldTarget <- needTargeting[F]
+    ads <- if (shouldTarget) filterAds[F](location) else allAds.pure[F]
+    _ <- renderAds[F](ads)
+  } yield ()
+}
+```
+
+All our function depends upon `F` now: the code is quite clear, don't you think?
+
+It does compile, because all methods returns the same monad `F`.
+
+## A transparent stacking
+
+At the end of the world, we must finally provide what is `F[_]`.
+
+We take back our work from previously, and just submit the stack of types. And look, we can even change the order in the stack, it does not matter:
+
+```scala
+type Effect[A] = StateT[ReaderT[IO, AdsConfig, ?], Ads, A]
+val app: Effect[Unit] = program[Effect]
+app.run(ads).run(AdsConfig(targeting = true)).unsafeRunSync()
+
+type OtherEffect[A] = ReaderT[StateT[IO, Ads, ?], AdsConfig, A]
+val app2: OtherEffect[Unit] = program[OtherEffect]
+app2.run(AdsConfig(targeting = true)).run(ads).unsafeRunSync()
+```
+
+This is particularly useful and clean, combined to the tagless final technique (where the algebras all returns `F[_]`).
+It's easy to test, because the implementations can easily change, just by altering the stack of types at the root.
+Note that the typeclasses instances of `program` are provided by cats-mtl (`ApplicativeAsk`, `MonadState`).
+
+The downside is the performance are not that great because there is still a stack of `Monad`s, hence tons and tons of `flatMap`s overhead.
+
+Fortunately, optimizations are possible, refer to this great talk by Pawel Szulc: [A roadtrip with monads: from MTL, through tagless, to BIO](https://www.youtube.com/watch?v=QM86Ab3lL20).
+We'll quickly show them here, but don't forget to watch this talk!
+
+## No more stacking
+
+The idea to remove the stacked monads, is to declare independent instances of the needed typeclasses.
+
+As a reminder, our program has these constraints:
+
+```scala
+def program[F[_]: Sync: ApplicativeAsk[?[_], AdsConfig]: MonadState[?[_], Ads]]: F[Unit] = ???
+```
+
+We forget about cats-mtl instances and declare our owns.
+We can write an `ApplicativeAsk` to read our config (replace the `.run(config)`):
+
+```scala
+def constantConfig[F[_]: Applicative, E](e: E) = new DefaultApplicativeAsk[F, E] {
+  override val applicative: Applicative[F] = Applicative[F]
+  override def ask: F[E] = e.pure[F]
+}
+implicit val config = constantConfig[IO, AdsConfig](AdsConfig(targeting = true))
+```
+
+Our execution becomes:
+
+```scala
+// we are just left with the State monad which wraps the IO monad
+program[StateT[IO, Ads, ?]].run(ads).unsafeRunSync()
+```
+
+We can also implement a basic non thread-safe `StateMonad` (watch for the talk for an thread-safe version), and provide an implicit with the given state directly:
+
+```scala
+case class SimpleState[F[_]: Monad, S](var state: S) extends DefaultMonadState[F, S] {
+  override val monad: Monad[F] = Monad[F]
+  override def get: F[S] = Applicative[F].pure(state)
+  override def set(s: S): F[Unit] = (state = s).pure[F]
+}
+implicit val st = SimpleState[IO, Ads](ads)
+```
+
+Our execution becomes trivial:
+
+```scala
+// we are just left with the IO monad
+program[IO].unsafeRunSync()
+```
+
+The monad stack is gone! Everything is provided by typeclasses, the hierarchy is flat, no `flatMap`s overhead, we are good.
+
+And the best: we didn't alter our function at all, just the initialization code. Therefore, it's easy to iterate: from monad transformers (performance penalty), to custom typeclasses implementations.
+
+Conclusion: never commit to custom types in functions, because you don't know how the caller is going to process your result. Embed everything into an `F[_]` effect, require what you need through typeclasses, and let it fulfill the void.
+
+## What if you need to specialize your code?
+
+Monix's `Task` provides several features we don't find in `Sync` or `cats-effect` typeclasses in general, such as memoization, add async boundaries, add callbacks on lifecycle changes (`doOnCancel`), races & cancellation (... which are part of the `Concurrent` typeclass!) etc.
 
 For instance:
 
@@ -530,7 +801,7 @@ compute(1, 2).runSyncUnsafe(Duration.Inf)
 
 Here, it's difficult to generalize `compute` because it relies on several `Task`'s features which don't have their equivalent in typeclasses: callbacks, unordered gathering, fallback to the default `Scheduler`...
 
-We could create our own specialized TC with the method(s) we want:
+We could create our own specialized typeclasses (respect the coherence) with the methods we want:
 
 ```scala
 @typeclass
@@ -552,7 +823,7 @@ def computeGeneric[F[_]](a: Int, b: Int)
 }
 ```
 
-Typeclasses should have laws (internal & external), tested with Scalacheck generally, such as `Functor` has internal laws about its identity:
+Typeclasses should have laws (internal & external), tested with Scalacheck, such as `Functor` has internal laws about its identity:
 
 ```scala
 def covariantIdentity[A](fa: F[A]): IsEq[F[A]] =
@@ -566,44 +837,41 @@ def suspendThrowIsRaiseError[A](e: Throwable) =
     F.suspend[A](throw e) <-> F.raiseError(e)
 ```
 
+# Modularization
 
+We saw we always have a "core" that depends upon `F[_]` to let us use any typeclass and build any stacks on top.
 
-## Modularization
+A good practice when writing an application or a library is to write this abstract core in its own module and have distinct modules for implementations.
 
-A best-practice when writing a library is to write an abstract core and have dedicated modules for given implementation.
+Example of a library which core contains only tagless final algebras, type aliases, and such generic constructions:
 
 ```none
-lib-core
-lib-cats-io
-lib-zio
-lib-monix
+lib-core    // F[_]
+lib-cats-io // --> cats-effect
+lib-zio     // --> scalaz
+lib-monix   // --> monix
 ```
 
-# Tagless final
+A project will depend upon `lib-core` and `lib-monix` (which will import monix on its own) for instance, but won't depend on the other two modules (which would provide the same function as `lib-monix`, just with a different implementation). It could also depends on `lib-core` and nothing else, and provide its own implementation. This avoids polluting dependencies of the upstream projects.
 
 ```scala
-trait Show[F[_], A] {
-    def show(a: A]: F[String]
-}
-trait ItemRepository[F[_]] {
-    def find(id: Int): F[Option[Item]]
-}
+libraryDependencies ++= Seq(
+  "com.company" %% "lib-core" % "1.0.0"
+  "com.company" %% "lib-monix"   % "1.0.0"
+)
 ```
 
-`Id` to test.
-
-It's easier to create different versions of the capabilities without rewriting the whole program.
-
-FP to the max by John A De Goes https://www.youtube.com/watch?v=sxudIMiOo68
-
-Moreover, it can help to test the code. We often refer to using `Id` when working with tagless final, to avoid dealing with asynchronous tests. That's not always possible, especially when you're working with `Sync`: `Id` has no instance of `Sync` so you can't escape it.
-
-It's also useful when you take some `Applicative`. You can work with `Const[A, B]` in tests to avoid complicated code.
-
+Same story for HTTP frameworks providing serializers and deserializers for like circe and play-json: you use different modules because you commit only to one of those.
 
 # All implementations are different
 
 ## Performances
+
+We scratched the performance issue when dealing with Monad Transformers, and we successfully remove the stack by providing our own typeclass implementations.
+
+Another factor is the implementations themselves. Their performance can largely differ. Quite some work has been done lately on the synchronous/asynchronous effects performances, due to some (good) competition between the main actors: scalaz/cats/monix.
+
+
 
 IO vs ZIO
 
