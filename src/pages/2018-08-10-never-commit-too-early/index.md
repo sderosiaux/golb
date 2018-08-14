@@ -16,7 +16,7 @@ I may have trust issues, but I don't like to commit too early when it's not nece
 
 Since a while now, the community talks about the _tagless final_ encoding (great [posts](https://typelevel.org/blog/2018/05/09/tagless-final-streaming.html) on [typelevel](https://typelevel.org/blog/2017/12/27/optimizing-final-tagless.html), on [scala.io](https://blog.scalac.io/exploring-tagless-final.html), on [SoftwareMill](https://softwaremill.com/free-tagless-compared-how-not-to-commit-to-monad-too-early/)) where you write an algebra and let the effect type be a `F[_]`. This is the same thing: you don't want your algebra to depend on a specific effect implementation because it's orthogonal to what your algebra is dealing with (a specific domain).
 
-Here, our algebra deals with what we can do with _items_, the effect does not matter:
+This algebra deals with what we can do with _items_, the effect does not matter, it can be `Id`, `IO`, `Task`, who cares (the caller):
 
 ```scala
 trait ItemRepository[F[_]] {
@@ -27,9 +27,10 @@ trait ItemRepository[F[_]] {
 }
 ```
 
-We won't talk much more about tagless final but more about the general case: function encodings.
+We won't talk that much about tagless final but more about the general case: function encodings.
+We'll take a tour about the typeclasses usage, advantages and downsides, and will make our way to un-stack monad-transformers stack.
 
-Committing to an implementation can have an impact on dependents applications: the need to refactor, the need to add libraries, add converters. It can also have an impact on performance, it can even break at runtime (stack safety).
+Committing to an implementation can have an impact on dependents applications: the need to refactor, the need to add libraries, add converters, lifting the types. It can also have an impact on performance, it can even break at runtime, depending on which implementation is used.
 
 TOC
 
@@ -871,12 +872,131 @@ We scratched the performance issue when dealing with Monad Transformers, and we 
 
 Another factor is the implementations themselves. Their performance can largely differ. Quite some work has been done lately on the synchronous/asynchronous effects performances, due to some (good) competition between the main actors: scalaz/cats/monix.
 
+A simple benchmark (bits taken from scalaz-zio) can shows tremendous differences to execute the same computation (abstracted by `F[_]`):
 
+```scala
+@State(Scope.Thread)
+@BenchmarkMode(Array(Mode.Throughput))
+@OutputTimeUnit(TimeUnit.SECONDS)
+class Bench {
 
-IO vs ZIO
+  @Param(Array("10000"))
+  var size: Int = _
+
+  def createTestArray: Array[Int] = Range.inclusive(1, size).toArray.reverse
+
+  // The method we're going to evaluate with cats IO, scalaz IO, and Monix Task
+  def arrayFill[F[_]: Sync](array: Array[Int])(i: Int): F[Unit] =
+    if (i >= array.length) Sync[F].unit
+    else Sync[F].delay(array.update(i, i)).flatMap(_ => arrayFill(array)(i + 1))
+
+  @Benchmark
+  def catsTest() = {
+    import cats.effect.IO
+
+    (for {
+      array <- IO.pure(createTestArray)
+      _     <- arrayFill[IO](array)(0)
+    } yield ()).unsafeRunSync()
+  }
+
+  @Benchmark
+  def monixTest() = {
+    import monix.eval.Task
+    implicit val s = Scheduler.computation().withExecutionModel(SynchronousExecution)
+
+    (for {
+      array <- Task.eval(createTestArray)
+      _     <- arrayFill[Task](array)(0)
+    } yield ()).runSyncUnsafe(Duration.Inf)
+  }
+
+  @Benchmark
+  def scalazTest() = {
+    type ZIO[A] = IO[Nothing, A]
+
+    // we provide a bare minimum Sync[ZIO]
+    // it's not available yet: https://github.com/scalaz/scalaz-zio/issues/79
+    implicit val syncZio = new Sync[ZIO] {
+      override def suspend[A](thunk: => ZIO[A]): ZIO[A] = IO.suspend(thunk)
+      override def flatMap[A, B](fa: ZIO[A])(f: A => ZIO[B]): ZIO[B] = fa.flatMap(f)
+      override def pure[A](x: A): ZIO[A] = IO.point(x)
+      // ...
+    }
+    (for {
+      array <- IO.now(createTestArray)
+      _     <- arrayFill[ZIO](array)(0)
+    } yield ()).run
+  }
+}
+```
+
+Here are the results, with scalaz-zio almost 3x times faster:
+
+```
+[info] Benchmark         (size)   Mode  Cnt     Score     Error  Units
+[info] Bench.catsTest     10000  thrpt    3  2471,367 ▒  65,831  ops/s
+[info] Bench.monixTest    10000  thrpt    3  2411,369 ▒  13,621  ops/s
+[info] Bench.scalazTest   10000  thrpt    3  6960,302 ▒ 127,379  ops/s
+```
+
+We are not here to debate about those differences.
+
+Our point is that if you care about performance, you should definitely bench and compare several implementations to fit your need.
+The needed features can be the same (provided by the typeclass), but how it's done internally has a large impact on the end result.
+
+The best part: it's easy to test different implementations without modifying the whole program (the typeclasses has to act the same way!), and gain performances.
 
 ## Stack Safety
 
+Finally, it has to be taken into account that some Monad implementations can be not stack-safe.
+
+It means that if the computations `flatMap` the hell out, it's possible for the program to crash at runtime.
+
+If we implement a recursive method that `flatMap`s before the recursive call, we can test this out:
+
+```scala
+// our recursive method, working with F[_]: Sync
+def arrayFill[F[_]: Sync](array: Array[Int])(i: Int): F[Unit] = {
+  if (i >= array.length) Sync[F].unit
+  else Sync[F].delay(array.update(i, i)).flatMap(_ => arrayFill(array)(i + 1))
+}
+
+// No problem, IO is stack-safe
+arrayFill[IO]((1 to 100000).toArray)(0).unsafeRunSync()
+
+// No problem, Eval (type State[S, A] = StateT[Eval, S, A]) is stack-safe
+arrayFill[State[Int, ?]]((1 to 100000).toArray)(0).unsafeRunSync()
+
+// We grab some Sync[StateT[Id, Int, ?]], notice the usage of Id, nothing is stack-safe here
+implicit val stateSync = new Sync[StateT[Id, Int, ?]] {
+  override def suspend[A](thunk: => StateT[Id, Int, A]): StateT[Id, Int, A] = thunk
+  override def flatMap[A, B](fa: StateT[Id, Int, A])(f: A => StateT[Id, Int, B]): StateT[Id, Int, B] = fa.flatMap(f)
+  override def pure[A](x: A): StateT[Id, Int, A] = StateT.pure(x)
+  // ...
+}
+
+// BOOM! Exception in thread "main" java.lang.StackOverflowError
+arrayFill[StateT[Id, Int, ?]]((1 to 1000).toArray)(0).run(0)
+```
+
+No having stack-safety (via trampolining internally) is a no-go. Watch out for what you are using. You wouldn't like to get a production crash because of some customer having an too long array of whatever data.
+
+Hopefully, all implementations in cats, scalaz, monix, and similar quality projects have our back, and everything is stack-safe. (it was not always the case, see [make IndexedStateT stack safe](https://github.com/typelevel/cats/pull/2187) for instance)
 
 # Conclusion
 
+We talked about a lot of things, because types is a huge huge world.
+
+- We are coding in Scala so we love enforcing types.
+- Using the free theorems, we have shown that it's always better to enforce the bare minimum types in our functions and algebras by using polymorphism, generic effects `F[_]`, and typeclasses.
+
+Unfortunately, because of Scala/JVM quirks, it's always possible to go "beyond" what the types state and use un-Pure-Functionnal-Programming features (`null`, `throw`, side-effects, non-total functions..). This is why we should forget about those, and always code: **Total & Deterministic & Side-Effects free functions**.
+
+Respecting PFP, the types convey only what's possible. It's easier to read and understand. The scope of possible actions is smaller, and we don't have to think about implementation details. Types are documentation: comments and function names are often out of date. Types are never out of date.
+
+- Using typeclasses prevent library-collisions-of-types-doing-the-same (`Task`s, `Future`, `IO`) that need conversion overheads when multiple functions, each using a different implementation, needs to work together. Combined to a Tagless Final style, typeclasses are a very good alternative to stacking Monad Transformers: improve readability, maintenance, and performance (by removing the stack). [cats-mtl](https://github.com/typelevel/cats-mtl) implements most of the classic Monad Transformers as typeclasses (`ReaderT`, `WriterT`, `StateT`, ...).
+
+The only downside of typeclasses is their non-specialization. When we need specific features from a given implementation, we can either commit to this implementation (we generally do), or we can write our own typeclass to be consistent with the rest and avoid disgraceful lifting or conversions (and still keep a `F[_]: SuperFeature`).
+
+- Finally, we noticed that all implementations are not equivalent. Some can be faster, but some can be buggier. Your code, your tests, your decision.
