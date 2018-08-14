@@ -1,9 +1,9 @@
 ---
 title: "Types: Never commit too early"
 description: "Committing early to an implementation can lead to complex refactorings and make the code harder to reason about. Often, depending on a typeclass (declaring a limited capability) is a better choice: you defer the choice of implementation to the caller."
-date: "2018-08-10T12:00Z"
+date: "2018-08-15T12:00Z"
 is_blog: true
-path: "/articles/2018/08/10/types-never-commit-too-early/"
+path: "/articles/2018/08/15/types-never-commit-too-early/"
 language: "en"
 tags: ['scala', 'cats', 'scalaz', 'typeclass', 'tagless final', 'mtl']
 category: 'Scala'
@@ -61,11 +61,11 @@ The less you can do in a function, the easiest to implement it and to reason abo
 You must have the world in your mind when coding a small function, it's not reassuring and moreover, it's difficult!
 You need to rely on documentation to know what is possible, understand where the parameters come from etc. We know documentations are always up-to-date right?
 
-We want to reduce the [connascence of type](https://en.wikipedia.org/wiki/Connascence#Connascence_of_Type_(CoT)) to the maximum. We want to [decouple](https://en.wikipedia.org/wiki/Coupling_(computer_programming)) our code from implementations to the maximum. Why code my function for a `String` if polymorphism is enough? (`def f[A](a: A)`). Why code my function with a `Future` if `F[_]` is enough? (`def f(a: A): F[A]`)
+We want to reduce the [connascence of type](https://en.wikipedia.org/wiki/Connascence#Connascence_of_Type_(CoT)) to the maximum. We want to [decouple](https://en.wikipedia.org/wiki/Coupling_(computer_programming)) our code from implementations the most. Why code my function for a `String` if polymorphism is enough? (`def f[A](a: A)`). Why code my function with a `Future` if `F[_]` is enough? (`def f(a: A): F[A]`)
 
 > Types are documentation —Tony Morris
 
-People who implement libraries must commit only to the bare minimum for their libraries to do their job.
+People who implement libraries must commit only to use the bare minimum for their libraries to do their job.
 They should abstract upon what is not their core. We don't want to fall into the case I described previously with `Future` and `Task`.
 
 It's not only reserved for library implementers: any application we develop should follow this principle. We all have colleagues (or our future-self) who are going to read and understand the code later on (and during the code review). Therefore their effort should be made easy the more we can.
