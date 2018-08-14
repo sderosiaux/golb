@@ -1,11 +1,11 @@
 ---
 title: "Types: Never commit too early"
-description: "Committing early to an implementation can lead to complex refactorings and make the code harder to reason about. Often, depending on a typeclass (declaring a limited capacity) is a better choice: you defer the choice of implementation to the caller."
+description: "Committing early to an implementation can lead to complex refactorings and make the code harder to reason about. Often, depending on a typeclass (declaring a limited capability) is a better choice: you defer the choice of implementation to the caller."
 date: "2018-08-10T12:00Z"
 is_blog: true
 path: "/articles/2018/08/10/types-never-commit-too-early/"
 language: "en"
-tags: ['scala', 'cats', 'scalaz', 'typeclass', 'tagless final']
+tags: ['scala', 'cats', 'scalaz', 'typeclass', 'tagless final', 'mtl']
 category: 'Scala'
 background: 'Evan_and_friends_at_halloween.jpg'
 ---
