@@ -14,7 +14,7 @@ I remember a year ago, I was arguing with my colleague: he wanted to use `Task` 
 
 I may have trust issues, but I don't like to commit too early when it's not necessary.
 
-Since a while now, the community talks about the _tagless final_ encoding (great [posts](https://typelevel.org/blog/2018/05/09/tagless-final-streaming.html) on [typelevel](https://typelevel.org/blog/2017/12/27/optimizing-final-tagless.html), on [scala.io](https://blog.scalac.io/exploring-tagless-final.html), on [SoftwareMill](https://softwaremill.com/free-tagless-compared-how-not-to-commit-to-monad-too-early/)) where you write an algebra and let the effect type be a `F[_]`. This is the same thing: you don't want your algebra to depend on a specific effect implementation because it's orthogonal to what your algebra is dealing with (a specific domain).
+Since a while now, the community talks about the _tagless final_ encoding (great [posts](https://typelevel.org/blog/2018/05/09/tagless-final-streaming.html) on [typelevel](https://typelevel.org/blog/2017/12/27/optimizing-final-tagless.html), on [scalac.io](https://blog.scalac.io/exploring-tagless-final.html), on [SoftwareMill](https://softwaremill.com/free-tagless-compared-how-not-to-commit-to-monad-too-early/)) where you write an algebra and let the effect type be a `F[_]`. This is the same thing: you don't want your algebra to depend on a specific effect implementation because it's orthogonal to what your algebra is dealing with (a specific domain).
 
 This algebra deals with what we can do with _items_, the effect does not matter, it can be `Id`, `IO`, `Task`, who cares (the caller):
 
