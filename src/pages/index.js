@@ -125,7 +125,7 @@ export const pageQuery = graphql`
     back1: markdownRemark(
       frontmatter: {
         path: {
-          eq: "/articles/2018/06/15/a-simple-way-to-write-parsers-using-the-state-monad/"
+          eq: "/articles/2018/08/15/types-never-commit-too-early/"
         }
       }
     ) {
@@ -135,7 +135,7 @@ export const pageQuery = graphql`
     back2: markdownRemark(
       frontmatter: {
         path: {
-          eq: "/articles/2018/04/12/an-ode-to-the-kind-projector-and-to-the-partial-unification-of-scala/"
+          eq: "/articles/2018/06/15/a-simple-way-to-write-parsers-using-the-state-monad/"
         }
       }
     ) {
