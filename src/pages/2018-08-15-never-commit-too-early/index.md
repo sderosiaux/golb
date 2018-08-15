@@ -784,9 +784,13 @@ Conclusion: never commit to custom types in functions, because you don't know ho
 
 ## What if you need to specialize your code?
 
-Monix's `Task` provides several features we don't find in `Sync` or `cats-effect` typeclasses in general, such as memoization, add async boundaries, add callbacks on lifecycle changes (`doOnCancel`), races & cancellation (... which are part of the `Concurrent` typeclass!) etc.
+Monix's `Task` provides several features we don't find in `Sync` or `cats-effect` typeclasses in general, such as memoization, add async boundaries, add callbacks on lifecycle changes (such as `doOnCancel`, `doOnFinish`), races & cancellation (... which are part of the `Concurrent` typeclass!) etc.
 
-For instance:
+[[info]]
+|• Callbacks could be handled [`Bracket`](https://typelevel.org/cats-effect/typeclasses/bracket.html) as [Jakub Kozlowski]((https://twitter.com/kubukoz/status/1029523219181522944)) suggested on Twitter<br />
+|• Parallelisation by [`Parallel`](https://typelevel.org/cats/typeclasses/parallel.html)
+
+For the sake of it, let's say there is no typeclass equivalent for our features:
 
 ```scala
 def compute(a: Int, b: Int) = Task.gatherUnordered(List(
