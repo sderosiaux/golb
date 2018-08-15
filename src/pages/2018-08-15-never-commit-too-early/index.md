@@ -965,14 +965,20 @@ def arrayFill[F[_]: Sync](array: Array[Int])(i: Int): F[Unit] = {
   if (i >= array.length) Sync[F].unit
   else Sync[F].delay(array.update(i, i)).flatMap(_ => arrayFill(array)(i + 1))
 }
+```
 
+This method sets the value of each element with its index, recursively.
+
+We can provide any monadic `F[_]`:
+
+```scala
 // No problem, IO is stack-safe
 arrayFill[IO]((1 to 100000).toArray)(0).unsafeRunSync()
 
 // No problem, Eval (type State[S, A] = StateT[Eval, S, A]) is stack-safe
 arrayFill[State[Int, ?]]((1 to 100000).toArray)(0).unsafeRunSync()
 
-// We grab some Sync[StateT[Id, Int, ?]], notice the usage of Id, nothing is stack-safe here
+// We grab some Sync[StateT[Id, Int, ?]], notice the usage of Id, **nothing is stack-safe here**
 implicit val stateSync = new Sync[StateT[Id, Int, ?]] {
   override def suspend[A](thunk: => StateT[Id, Int, A]): StateT[Id, Int, A] = thunk
   override def flatMap[A, B](fa: StateT[Id, Int, A])(f: A => StateT[Id, Int, B]): StateT[Id, Int, B] = fa.flatMap(f)
@@ -984,7 +990,9 @@ implicit val stateSync = new Sync[StateT[Id, Int, ?]] {
 arrayFill[StateT[Id, Int, ?]]((1 to 1000).toArray)(0).run(0)
 ```
 
-No having stack-safety (via trampolining internally) is a no-go. Watch out for what you are using. You wouldn't like to get a production crash because of some customer having an too long array of whatever data.
+Because our last example uses `Id`, aka "nothing", `StateT` is not stack-safe. This creates a long encapsulation of `.flatMap(...flatMap(...flatMap(...)))` which explodes.
+
+No having stack-safety (normally done via trampolining internally) is a no-go. Watch out for what you are using. You wouldn't like to get a production crash because of some customer having an too long array of whatever data.
 
 Hopefully, all implementations in cats, scalaz, monix, and similar quality projects have our back, and everything is stack-safe. (it was not always the case, see [make IndexedStateT stack safe](https://github.com/typelevel/cats/pull/2187) for instance)
 
