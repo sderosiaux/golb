@@ -666,7 +666,7 @@ Doing this, we will:
 
 - avoid lifting everything.
 - dispatch and hide the massive boilerplate.
-- have a unique Effect `F[_]` in our program that will be the combinaison of types (the stack) behind the scene, but still abstract.
+- have a unique Effect `F[_]` in our program that will be the combination of types (the stack) behind the scene, but still abstract.
 
 First, we encode the effect into our function instead of relying on concrete types (`StateT`, `IO` etc.), and we make sure `F` is the return type:
 
