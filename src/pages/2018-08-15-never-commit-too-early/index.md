@@ -725,7 +725,7 @@ This is particularly useful and clean, combined to the tagless final technique (
 It's easy to test, because the implementations can easily change, just by altering the stack of types at the root.
 Note that the typeclasses instances of `program` are provided by cats-mtl (`ApplicativeAsk`, `MonadState`).
 
-The downside is the performance are not that great because there is still a stack of `Monad`s, hence tons and tons of `flatMap`s overhead.
+The downside is the performances are not that great because there is still a stack of `Monad`s, hence tons and tons of `flatMap`s overhead.
 
 Fortunately, optimizations are possible, refer to this great talk by Pawel Szulc: [A roadtrip with monads: from MTL, through tagless, to BIO](https://www.youtube.com/watch?v=QM86Ab3lL20).
 We'll quickly show them here, but don't forget to watch this talk!
