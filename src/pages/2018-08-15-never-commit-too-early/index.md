@@ -683,7 +683,7 @@ def renderAds[F[_]: Sync](ads: Ads): F[Unit] = ???
 
 The `F[_]` will be provided by the "super-stacked-type" later.
 
-Note the usage of `ApplicativeAsk` and `MonadState`: they are typeclasses only (representing `Reader` and `State`). They only impose `F[_]` to have some features, no matter its form: we only need this, nothing more. That's exactly where the power of typeclasses come from.
+Note the usage of `ApplicativeAsk` and `MonadState`: they are typeclasses only (representing `Reader` and `State`). They only impose `F[_]` to have some features, no matter its form: we only need this, nothing more. That's exactly where the power of typeclasses comes from.
 
 ## Typeclasses all the way down
 
