@@ -124,9 +124,7 @@ export const pageQuery = graphql`
 
     back1: markdownRemark(
       frontmatter: {
-        path: {
-          eq: "/articles/2018/08/15/types-never-commit-too-early/"
-        }
+        path: { eq: "/articles/2018/08/15/types-never-commit-too-early-part1/" }
       }
     ) {
       ...ArticleFrontmatter
