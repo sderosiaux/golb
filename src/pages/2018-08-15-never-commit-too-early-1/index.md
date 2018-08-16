@@ -1,6 +1,6 @@
 ---
 title: "Types: Never commit too early - Part 1: The Free Theorems"
-description: "We can learn a lot from functions just by looking at their signatures. The simpler the types, the easiest to understand and work with it. Polymorphism and Pure Functional Programming help us."
+description: "We can learn a lot from functions just by looking at their signatures. The simpler the types, the easiest it is to understand it. Polymorphism and Pure Functional Programming help us."
 date: "2018-08-15T12:00Z"
 is_blog: true
 path: "/articles/2018/08/15/types-never-commit-too-early-part1/"
