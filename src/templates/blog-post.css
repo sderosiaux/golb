@@ -12,6 +12,10 @@
   border-left: 7px solid rgb(209, 89, 2);
 }
 
+article {
+  padding-bottom: 100px;
+}
+
 article .custom-block-body > p {
   margin: 0;
 }
