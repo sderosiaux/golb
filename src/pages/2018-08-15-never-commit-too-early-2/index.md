@@ -134,6 +134,8 @@ def countLines[F[_]](filename: String)(implicit F: Bracket[F, Throwable]): F[Lon
            (br => F.pure(br.close()))
 }
 countLines[IO]("build.sbt").unsafeRunSync() // 33
+
+// Note that we could use `Resource.fromAutoCloseable` to deal with BufferedReader
 ```
 
 The cleanup logic is "embedded" into the result: no need to think about it anymore. This is a wonderful abstraction, no need of variable in the outer scope of `try`, of `finally { if (f != null) f.close(); }` and so on.
