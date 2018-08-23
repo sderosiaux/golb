@@ -10,6 +10,8 @@ category: 'Scala'
 background: '1_6_3xV73zP7QSOK5pdNoadw.jpeg'
 ---
 
+[_This is a cross-post from my Medium if you prefer._](https://medium.com/@sderosiaux/are-scala-futures-the-past-69bd62b9c001)
+
 We all started with Scala Futures. They bring so much power and their syntax is simple enough. _"Concurrency and asynchrony made easy"_ could be their tagline.
 
 Futures allow us to deal with "values that don't exist yet". We can create a pipeline of transformations on top that will be applied when the time comes: when the Future will be _fulfilled_.
