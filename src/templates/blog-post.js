@@ -95,7 +95,7 @@ export default class extends React.Component {
           )}
         </ul>
         <br />
-        <DiscussionEmbed shortname={disqusShortname} config={disqusConfig} />
+        {/* <DiscussionEmbed shortname={disqusShortname} config={disqusConfig} /> */}
       </Layout>
     )
   }
