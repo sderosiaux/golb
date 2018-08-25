@@ -175,6 +175,9 @@ val app2: OtherEffect[Unit] = program[OtherEffect]
 app2.run(AdsConfig(targeting = true)).run(ads).unsafeRunSync()
 ```
 
+[[warning]]
+|About the "it does not matter": it does! I've been lucky enough because it's not true in general. Look out for [/u/SystemFw](https://www.reddit.com/r/scala/comments/97s9bc/types_never_commit_too_early/e4llc6b/) comments on Reddit about the why.
+
 This is particularly useful and clean, combined to the tagless final technique (where the algebras all returns `F[_]`).
 It's easy to test, because the implementations can easily change, just by altering the stack of types at the root.
 Note that the typeclasses instances of `program` are provided by cats-mtl (`ApplicativeAsk`, `MonadState`).
