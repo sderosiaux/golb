@@ -175,7 +175,7 @@ val app2: OtherEffect[Unit] = program[OtherEffect]
 app2.run(AdsConfig(targeting = true)).run(ads).unsafeRunSync()
 ```
 
-[[warning]]
+[[warn]]
 |About the "it does not matter": it does! I've been lucky enough because it's not true in general. Look out for [/u/SystemFw](https://www.reddit.com/r/scala/comments/97s9bc/types_never_commit_too_early/e4llc6b/) comments on Reddit about the why.
 
 This is particularly useful and clean, combined to the tagless final technique (where the algebras all returns `F[_]`).
@@ -215,13 +215,13 @@ Our execution becomes:
 program[StateT[IO, Ads, ?]].run(ads).unsafeRunSync()
 ```
 
-We can also implement a basic non thread-safe `StateMonad` (watch for the talk for an thread-safe version), and provide an implicit with the given state directly:
+We can also implement a basic implementation of a not thread-safe `MonadState` (watch for the talk for an thread-safe version), and provide an implicit with the given state directly:
 
 ```scala
-case class SimpleState[F[_]: Monad, S](var state: S) extends DefaultMonadState[F, S] {
-  override val monad: Monad[F] = Monad[F]
-  override def get: F[S] = Applicative[F].pure(state)
-  override def set(s: S): F[Unit] = (state = s).pure[F]
+case class SimpleState[F[_]: Sync, S](var state: S) extends DefaultMonadState[F, S] {
+  override val monad: Monad[F] = Sync[F]
+  override def get: F[S] = Sync[F].pure(state)
+  override def set(s: S): F[Unit] = Sync[F].delay((state = s))
 }
 implicit val st = SimpleState[IO, Ads](ads)
 ```
