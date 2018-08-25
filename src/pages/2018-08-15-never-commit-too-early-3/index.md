@@ -215,7 +215,7 @@ Our execution becomes:
 program[StateT[IO, Ads, ?]].run(ads).unsafeRunSync()
 ```
 
-We can also implement a basic implementation of a not thread-safe `MonadState` (watch for the talk for an thread-safe version), and provide an implicit with the given state directly:
+We can also implement a basic not thread-safe `MonadState` (watch for the talk for an thread-safe version), and provide an implicit with the given state directly:
 
 ```scala
 case class SimpleState[F[_]: Sync, S](var state: S) extends DefaultMonadState[F, S] {
