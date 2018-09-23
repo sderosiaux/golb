@@ -123,6 +123,7 @@ export const pageQuery = graphql`
           childImageSharp {
             fluid(
               maxHeight: 200
+              maxWidth: 800
               cropFocus: CENTER
               duotone: { highlight: "#0288d1", shadow: "#192550", opacity: 80 }
             ) {
