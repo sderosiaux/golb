@@ -123,7 +123,9 @@ Errors are part of the code. *Errors are not meant to be ignored*, they are mean
 
 > WORM: Write Once Read Many.
 
-Help everybody by expressing the possible outcome of the functions, similar to `throws` for checked exceptions but without its downsides :
+Help everybody by expressing the possible outcome of the functions, similar to `throws` for checked exceptions but without its downsides.
+
+## Why throws is not good enough
 
 - it follows a different path than the return type, why having 2 tracks?
 - no polymorphism
