@@ -10,7 +10,9 @@ category: 'Java'
 background: '0_75QcNGthkA6PGdeL.jpg'
 ---
 
-We'll start by looking at some bad smells developers are using when dealing with errors. Then we'll demonstrate why it's important to properly handle all of our errors.
+Working with my team, I had to deal with some business errors which were Exceptions. I was a bit nervous about them, and was having a “not good enough”, “not expressive enough” feeling. Having a Scala background, I decided to show them how we could handle errors differently.
+
+Let’s look at how we are generally dealing with errors in Java. We’ll see what are the downsides, and why’s important to properly handle all of our errors in a more type-safe way.
 
 We'll work from a base solution and improve it using [vavr](http://www.vavr.io/) and some of its functional types: `Either`, then a combination of `Either` and `Option` while keeping a fluent style.
 
@@ -125,7 +127,7 @@ Help everybody by expressing the possible outcome of the functions, similar to `
 
 - it follows a different path than the return type, why having 2 tracks?
 - no polymorphism
-- implementing an interface enforces us to add the `throws` declaration of exceptions we are often not even throwing
+- implementing an interface enforces us to add the `throws` declaration of exceptions we are often not even throwing. Edit: this is false, an implementation doesn't have to `throws` the same `Exception`s and it can't add new ones. We say interface is a "contract" but up to a point.
 - to let the code "clean", a lot of people cast them into `RuntimeException` defeating their purpose
 - no composition
 - it has to be `Exception`: what if I prefer to have a custom class not related to `Exception`?
@@ -286,7 +288,7 @@ Either<?, Distance> d = from("FRA").flatMap(c -> flyTo(c))
 
 First, it does not compile. Second, what would be our error type? We have two of them! Several solutions:
 
-- Make `CountryError` and `FlyError` inherits a common base such as `BusinessError`. We'll need to do that for all our error types, because we never know when we'll need to combine them.
+- Make `CountryError` and `FlyError` inherits a common base such as `BusinessError`. We could have several "main type of errors" (per domain) we could inherit from. We'll need to do that for all our error types, because we never know when we'll need to combine them.
 - When it's time to handle it (like in the root of our application), we'll probably need to distinguish between those types. Languages often provide *pattern matching* to do that. It's the equivalent of a bunch of if/else checking for the type of class and casting it, to adapt the treatment.
 - Combine them into an `Either` itself! That gives something more complicated in Java:
 
@@ -338,5 +340,6 @@ Functional Programming libraries have several abstractions available to work wit
 
 This is easier for anyone to read the code and know about the possibilities of failures, and how they are handled. This makes the code maybe not more readable (especially when several types of error must be handled), but more robust because explicit. We are not going to forget to handle an error during a refactor: the compiler will warn us!
 
+Is it better to write vavr-ified code than idiomatic Java code? I’m sure yes.
 
 This article was originally posted on my medium: don't hesitate to clap it! https://medium.com/@sderosiaux/using-vavr-to-write-more-robust-java-code-87ccb0be12d7
