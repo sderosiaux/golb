@@ -128,11 +128,13 @@ Help everybody by expressing the possible outcome of the functions, similar to `
 - it follows a different path than the return type, why having 2 tracks?
 - no polymorphism
 - implementing an interface enforces us to add the `throws` declaration of exceptions we are often not even throwing. Edit: this is false, an implementation doesn't have to `throws` the same `Exception`s and it can't add new ones. We say interface is a "contract" but up to a point.
+- if your implementation needs to throw an `Exception` not present in the interface, you must wrap it into a `RuntimeException` because you can't add it in `throws`.
+- Lambdas can't throw checked `Exception`s but only unchecked ones, because all the functional interfaces don't `throws` anything. But lambdas are because ubiquitous with Java 8, meaning you are just hiding tons of unchecked errors in your code. This is why https://github.com/pivovarit/throwing-function or https://projectlombok.org/features/SneakyThrows exist.
 - to let the code "clean", a lot of people cast them into `RuntimeException` defeating their purpose
 - no composition
 - it has to be `Exception`: what if I prefer to have a custom class not related to `Exception`?
 
-`throws` is clearly to throw out. We know the compiler type-checks the program to ensure it makes sense. We must rely on it to help us ensuring we handle our errors properly.
+`throws` is clearly to throw out because of all of those issues, hence `Exception` propagation with it. We know the compiler type-checks the program to ensure it makes sense. We must rely on it to help us ensuring we handle our errors properly.
 
 # Either is in the place
 
