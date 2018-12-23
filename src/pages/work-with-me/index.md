@@ -68,7 +68,7 @@ description: 'What about working with me?'
 
 [[hero0]]
 |## Data & Cloud
-|**Data is a _first-class citizen_**. It's ubiquitous.
+|**Data are a _first-class citizen_**. They are ubiquitous.
 |
 |It should be understand by every employees. Companies produce tons of it.
 |It's always possible to do something with it, get insights, and improve upon them. We just need to know where to look, how to extract them, how to process them, how to store them. Data Scientists can understand the data (provided by the Data Engineers) using Machine Learning.
