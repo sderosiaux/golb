@@ -850,7 +850,7 @@ On the left, the unoptimized Logical Plan, on the right, after optimization (whi
 
 I've started with my `merge()` thing and fell into the rabbit hole. It was a bit long but I hope you learned something!
 
-Optimizations clearly reduce the load on our Kafka Cluster by avoiding to create unnecessary internal topics. They will improve speed and reduce mem/network pressure on our Kafka Streams applications because they will process less data and avoid doing unnecessary or redundant operations to process our streams.
+Optimizations clearly reduce the load on our Kafka Cluster by avoiding to create unnecessary internal topics and simplify the Topology our Kafka Streams applications use. They improve performance and reduce memory/network pressure on our Kafka Streams applications: they will process less data and will avoid doing unnecessary or redundant operations to process our streams.
 
 Despite a few subtleties (value-changing after key-changing) and exceptions we can get when starting the Kafka Streams application (they won't make it into production anyway), we should build our Topology using `(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE)` by default. By upgrading our dependency, more and more optimizations will be available without us to do anything.
 
