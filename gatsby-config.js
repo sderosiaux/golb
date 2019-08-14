@@ -26,6 +26,10 @@ module.exports = {
           'https://sderosiaux.us15.list-manage.com/subscribe/post?u=10fa09a0a644f563c084ab3fd&amp;id=32c9c3f4b2',
       },
     },
+    'gatsby-plugin-catch-links',
+    'gatsby-plugin-sitemap',
+    `gatsby-transformer-sharp`,
+    `gatsby-plugin-sharp`,
     {
       resolve: `gatsby-transformer-remark`,
       options: {
@@ -68,6 +72,9 @@ module.exports = {
                   classes: 'custom-block-info',
                   title: 'optional',
                 },
+                float: {
+                  classes: 'float'
+                },
                 hero0: {
                   classes: 'custom-block-hero custom-block-hero0',
                 },
@@ -104,10 +111,6 @@ module.exports = {
         ],
       },
     },
-    'gatsby-plugin-catch-links',
-    'gatsby-plugin-sitemap',
-    `gatsby-transformer-sharp`,
-    `gatsby-plugin-sharp`,
     `gatsby-plugin-emotion`,
     {
       resolve: `gatsby-plugin-google-analytics`,
