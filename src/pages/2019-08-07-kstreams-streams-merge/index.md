@@ -852,7 +852,7 @@ I've started with my `merge()` thing and fell into the rabbit hole. It was a bit
 
 Optimizations clearly reduce the load on our Kafka Cluster by avoiding to create unnecessary internal topics and simplify the Topology our Kafka Streams applications use. They improve performance and reduce memory/network pressure on our Kafka Streams applications: they will process less data and will avoid doing unnecessary or redundant operations to process our streams.
 
-Despite a few subtleties (value-changing after key-changing) and exceptions we can get when starting the Kafka Streams application (they won't make it into production anyway), we should build our Topology using `(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE)` by default. By upgrading our dependency, more and more optimizations will be available without us to do anything.
+Despite a few subtleties (value-changing after key-changing) and exceptions we can get when starting the Kafka Streams application (they won't make it into production anyway), we should always build our Topology with optimizations enabled. By upgrading our dependencies over time, more and more optimizations will be available without us to do anything.
 
 We have to be careful because this can change the topology of the internal topics. Thus, a simple dependency upgrade can change which internal topic is used and maybe alter the behavior of the application if we are doing a rolling-upgrade. (Not sure of the impact and the strategy to adapt: big-bang release?).
 
