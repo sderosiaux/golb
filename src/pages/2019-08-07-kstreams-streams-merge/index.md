@@ -11,11 +11,11 @@ category: 'Data Engineering'
 background: 'image2.png'
 ---
 
-Working on some Event Sourcing architecture, we were processing different sources of events with multiple `KStream`s among a same application and we wanted to put the results of all of them in the same topic, running a unique application and a single `KafkaStreams`. Of course I forgot about `merge()`, so I was wondering how would we do it.
+Working on an event-sourcing based project, we are processing different sources of events with many `KStream`s in the same application. We wanted to put the results of all of them in the same topic, still running a unique application and a single `KafkaStreams`. Of course I forgot about `merge()`, so I was wondering how would we do it.
 
-This lead me to follow the path of Processors and Optimizations in Kafka Streams, with a sprinkle of best-pratices and things-to-be-aware-of.
+This lead me to learn more about the Processors and the Optimizations in Kafka Streams which is what I talk about here. I'll sprinkle that with best pratices and things-to-be-aware-of.
 
-A very good blog about the optimizations in Kafka Streams is available on Confluent: https://www.confluent.io/blog/optimizing-kafka-streams-applications
+A good blog about the optimizations in Kafka Streams is available on Confluent, by its authors: https://www.confluent.io/blog/optimizing-kafka-streams-applications
 
 TOC
 
@@ -98,11 +98,14 @@ Before going back Kafka Streams merge(), Topology and optimizations, let's take 
 
 ## Beware of the Referential Transparency
 
-Be aware that Kafka Streams is **not immutable-friendly** (alter structures behind the scene) **nor referentially-transparent** (we can't just replace a variable by its value, the behavior will change).
+Be aware that Kafka Streams is:
+
+- **not immutable-friendly**: it alters the structures behind the scene.
+- **not referentially-transparent**: we can't just replace a variable by its value, the behavior will change.
 
 This can lead to some surprises, a different behavior after refactoring, or runtime exceptions.
 
-Consider our previous example, and just inline the variable `input`:
+Consider our previous example, and inline the variable `input`:
 
 ```kotlin
 val input = sb.stream("a")
@@ -120,7 +123,7 @@ TopologyException: Invalid topology: Topic prices has already been registered by
 
 This is not the only place where referential-transparency doesn't work.
 It's the same with all the `*Supplier` variants that must return a unique instance.
-We can't just refactor without thinking about what we are doing, because we may alter the behavior of our program.
+We can't refactor without thinking about what we are doing, because we may alter the behavior of our program.
 
 Doing so:
 
@@ -270,7 +273,7 @@ The records are bufferized and sent downstream (to the `StreamTask`s), one by on
 
 ![](2019-08-10-21-41-13.png)
 
-Kafka Streams tries to fill its in-memory buffers from the `poll()` data (without committing offsets of course, until processing). If a partition buffer is full (slow processing) or if some topics are consumed way faster than other, then Kafka Streams will `pause()` (KafkaConsumer API) some partitions, to keep everyone on the same page (same time). This is the only place where there is some backpressure. If some error occurs in the stream processing, because the data are backed by Kafka, Kafka Streams will simply resume to the latest committed offset of the source topics.
+Kafka Streams tries to fill its in-memory buffers from the `poll()` data (without committing offsets of course, until processing). If a partition buffer is full (slow processing) or if some topics are consumed way faster than other, then Kafka Streams will `pause()` (KafkaConsumer API) some partitions, to keep everyone on the same page (same time). This is the only place where there is some backpressure. If some error occurs in the stream processing, because the data are backed by Kafka, Kafka Streams will resume to the latest committed offset of the source topics.
 
 A Breadth-First approach will probably be worked on later in Kafka Streams, to allow for parallel processing. For instance, if doing IOs in a Streams, it's better to parallelize processing. It's naturally done at the partition level right now thanks to the Kafka partitionning model, but it could be finer. Check out [KAFKA-6034](https://issues.apache.org/jira/browse/KAFKA-6034).
 
@@ -316,7 +319,7 @@ But before that, Kafka Streams will try to optimize it and more globally, its Lo
 
 ## StreamsBuilder to Topology
 
-When we `.build()` our `StreamsBuilder`, the first thing it does is check if the optimization are opt-in. If that's the case, it optimizes the graph of `StreamsGraphNode` to a new graph of `StreamsGraphNode` (actually, it mutates it). Then it can build the low level `Topology`. To do so, it simply iterates over all the ordered nodes and ask them to `writeToTopology`.
+When we `.build()` our `StreamsBuilder`, the first thing it does is check if the optimization are opt-in. If that's the case, it optimizes the graph of `StreamsGraphNode` to a new graph of `StreamsGraphNode` (actually, it mutates it). Then it can build the low level `Topology`. To do so, it iterates over all the ordered nodes and ask them to `writeToTopology`.
 
 Right now, there are 2 kinds of optimizations:
 
@@ -334,7 +337,7 @@ sb.table("a")
   .to("b")
 ```
 
-In this case, it will simply forward all non-null-keys records downstream (a KTable ignores null keys), and no statestore will be created:
+In this case, it will forward all non-null-keys records downstream (a KTable ignores null keys), and no statestore will be created:
 
 ![](2019-08-13-00-13-08.png)
 
@@ -617,8 +620,8 @@ val t = sb.stream("a")
 // ... same as before
 ```
 
-Simply by adding a `.mapValues` (a _value-changing_ operation) just after the a key-changing operation, the optimization won't apply.
-I'm not entirely sure why. At first, this looks dumb anyway. If I do a key-changing followed by a value-changing operation, it means I just need a `map()` or equivalent to do both at the same time. But in the grand scheme of things, where functions are everywhere, returning `KStream`s, this situation may happen (and could lead to an _operator fusion_ optimization!).
+By adding a `.mapValues` (a _value-changing_ operation) after the a key-changing operation, the optimization won't apply.
+I'm not entirely sure why. At first, this looks dumb anyway. If I do a key-changing followed by a value-changing operation, it means I need a `map()` or equivalent to do both at the same time. But in the grand scheme of things, where functions are everywhere, returning `KStream`s, this situation may happen (and could lead to an _operator fusion_ optimization!).
 
 Operations `*mapValues()` and `*transformValues()` are _value-changing_ operations. We can just change the value of the record, this will prevent any repartitioning (because the key stays as-is). It's a best practice to use them whenever possible.
 
@@ -644,7 +647,7 @@ Because our `merge` depends upon one `repartitionRequired` KStream (because of t
 
 Because the two repartition topics will contain exactly the same data (the source being the same), the optimizer will replace both by a unique one, and replug the graph around it.
 
-The optimizer handles `merge()` in a specific way. If it wasn't the case, the new `OptimizableRepartitionNode` would place itself just after the MAP (before the MERGE), and that would totally mess up the Topology and results (I think).
+The optimizer handles `merge()` in a specific way. If it wasn't the case, the new `OptimizableRepartitionNode` would place itself after the MAP and before the MERGE, and that would totally mess up the Topology and results (I think).
 
 # Future Optimizations
 
