@@ -261,7 +261,7 @@ If we look carefully, we'll notice we don't even have a `Processor` in there! (n
 
 This is probably something that can be automatically optimized away when optimizations are on (it does not do it right now).
 
-This lead to the question: which optimizations are possible, are going to be possible, and how Kafka Streams does them?
+This lead to the question: which optimizations are possible, are going to be possible, and how Kafka Streams finds them?
 
 # StreamThreads & Backpressure
 
@@ -301,7 +301,7 @@ Using the Processor API, we optimized right away our topology. But we're humans,
 
 Kafka Streams won't optimize our Topology if we go straight to the low-level API. Optimizations are only enabled when writing with the high-level DSL.
 
-Optimization must be declared when we `build()` the Topology, not in the general `KafkaStreams` config, otherwise that won't do a thing.
+Optimization must be enabled when we `build()` the Topology, not in the general `KafkaStreams` config, otherwise that won't do a thing.
 
 ```kotlin
 val sb = StreamsBuilder()
@@ -311,11 +311,11 @@ val topo = sb.build(Properties().apply {
 })
 ```
 
-Every call to the high-level DSLs creates a `StreamsGraphNode` and add different metadata, according to the function called, to the state of the parents etc.
+Every call to the high-level DSLs creates a `StreamsGraphNode` and adds different metadata, according to the function called, to the state of the parents etc.
 
-For instance, when we do a `merge()`, this adds a `StreamsGraphNode` whose parents are the 2 original incoming KStreams `StreamsGraphNode`s. It also flags this new node as a _mergeNode_ and as _repartitionRequired_ if one of the original incoming KStreams already required repartitioning. When we're going to build the Topology, this node is going to be converted to a simple Processor with 2 parents, letting data pass through it, to its child.
+For instance, when we do a `merge()`, this adds a `StreamsGraphNode` whose parents are the 2 original incoming KStreams `StreamsGraphNode`s. It also flags this new node as a _mergeNode_ and as _repartitionRequired_ if one of the original incoming KStreams already required repartitioning. When we to build the Topology, each merge node is going to be converted to a Processor with 2 parents, that will let data pass through (to its child).
 
-But before that, Kafka Streams will try to optimize it and more globally, its Logical Plan. To do this, it relies on the medata we're talking about.
+Before that, Kafka Streams will try to optimize its Logical Plan (the `StreamsGraphNode`s) before building the Physical Plan (the Processors). To do this, it relies on the medata we're talking about.
 
 ## StreamsBuilder to Topology
 
@@ -856,4 +856,4 @@ Despite a few subtleties (value-changing after key-changing) and exceptions we c
 
 We have to be careful because this can change the topology of the internal topics. Thus, a simple dependency upgrade can change which internal topic is used and maybe alter the behavior of the application if we are doing a rolling-upgrade. (Not sure of the impact and the strategy to adapt: big-bang release?).
 
-Finally, as Kafka Streams developers, we should always check the Topology, to understand what's going on, and try to see if we can find manual optimizations in this global picture.
+Finally, as Kafka Streams developers, we should always check the Topology, to understand what's going on, see what the Optimizations are doing, and check if we can make manual optimizations in this global picture.
