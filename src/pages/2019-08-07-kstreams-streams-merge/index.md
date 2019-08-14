@@ -203,7 +203,7 @@ Here is an simple object diagram of the link between our friends:
 
 - Kafka Streams runs a `Topology`.
 
-* When we don't use the high-level DSL, we directly build a `Topology` (_the physical plan_, that's exactly what Kafka Streams will run) that forwards calls to a `InternalTopologyBuilder`: this is the latter that contains all the data about the real topology undernealth.
+* When we don't use the high-level DSL, we directly build a `Topology` (_the physical plan_, that's exactly what Kafka Streams will run) that forwards calls to a `InternalTopologyBuilder`: this is the latter that contains all the data about the real topology underneath.
 
 - When we use the high-level DSL, we pass through the `StreamsBuilder` (_the Logical Plan_, that's going to be converted to a physical plan) that forwards calls to a `InternalStreamsBuilder`. When we ask to `build()` the StreamsBuilder, it converts its abstraction to a `Topology`.
 
@@ -362,7 +362,7 @@ sb.table("topic", Materialized.with(Serdes.String(), Serdes.String())
 
 ## 2. Key Changing & Repartition Required Operations
 
-When we use `selectKey`, `map`, `flatMap`, `transform`, `flatTransform` or `groupBy(KeyValueMapper)` (does a `selectKey`), the resulting `KStream` is always flagged as `repartitionRequired`, and the undernealth `StreamsGraphNode` is marked as `keyChanging` (`KStream` is an abstraction over the Logical Plan, the `StreamsGraphNode`s).
+When we use `selectKey`, `map`, `flatMap`, `transform`, `flatTransform` or `groupBy(KeyValueMapper)` (does a `selectKey`), the resulting `KStream` is always flagged as `repartitionRequired`, and the underneath `StreamsGraphNode` is marked as `keyChanging` (`KStream` is an abstraction over the Logical Plan, the `StreamsGraphNode`s).
 
 `repartitionRequired` on the `KStream` is used to _mark_ the downstream KStreams that they belong to a graph where repartition is required by some parent. `keyChanging` will be used by the optimizer (it works with `StreamsGraphNode`s, not with `KStream` which is only a DSL-abstraction for humans).
 
