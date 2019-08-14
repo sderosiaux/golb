@@ -1,6 +1,6 @@
 ---
 title: "Kafka Streams: Topology and Optimizations"
-description: "Kafka Streams has a high-level DSL to work with, but offer more power with its low-level DSL. In the latest versions, we can enable automatic optimizations: they can greatly help you, but you should understand at what cost."
+description: "Kafka Streams has a high-level DSL to work with, but offers more power with its low-level DSL. In the latest versions, we can enable automatic optimizations: they can greatly help you, but we should understand at what cost."
 date: "2019-08-07T12:00Z"
 is_blog: true
 path: "/articles/2019/08/07/kafka-streams-topology-and-optimizations/"
