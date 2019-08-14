@@ -13,7 +13,7 @@ background: 'image2.png'
 
 Working on an event-sourcing based project, we are processing different sources of events with many `KStream`s in the same application. We wanted to put the results of all of them in the same topic, still running a unique application and a single `KafkaStreams`. Of course I forgot about `merge()`, so I was wondering how would we do it.
 
-This lead me to learn more about the Processors and the Optimizations in Kafka Streams which is what I talk about here. I'll sprinkle that with best pratices and things-to-be-aware-of.
+This lead me to learn more about the Processors and the Optimizations in Kafka Streams which is what I talk about here. I'll sprinkle that with best practices and things-to-be-aware-of.
 
 A good blog about the optimizations in Kafka Streams is available on Confluent, by its authors: https://www.confluent.io/blog/optimizing-kafka-streams-applications
 
@@ -325,7 +325,7 @@ Right now, there are 2 kinds of optimizations:
 
 - KTable Source Topics: don't always build a `-changelog` topic if it can reuse the source topic, to avoid duplicating the source topic.
 
-- Repartition Operations: this is the meat. This will try to prevent repartition multiple times the same topic.
+- Repartition Operations: this is the meat. This will try to prevent repartitioning multiple times the same topic.
 
 ## 1. Source Topics as Changelog
 
