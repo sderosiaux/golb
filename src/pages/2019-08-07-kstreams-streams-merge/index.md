@@ -1,11 +1,12 @@
 ---
-title: "Kafka Streams: Topology and Optimizations"
-description: "Kafka Streams has a high-level DSL to work with, but offers more power with its low-level DSL. In the latest versions, we can enable automatic optimizations: they can greatly help you, but we should understand at what cost."
-date: "2019-08-07T12:00Z"
+title: 'Kafka Streams: Topology and Optimizations'
+description: 'Kafka Streams has a high-level DSL to work with, but offers more power with its low-level DSL. In the latest versions, we can enable automatic optimizations: they can greatly help you, but we should understand at what cost.'
+date: '2019-08-07T12:00Z'
 is_blog: true
-path: "/articles/2019/08/07/kafka-streams-topology-and-optimizations/"
-language: "en"
-tags: ['kafka', 'kstreams', 'topology', 'processor', 'optimization', 'streaming']
+path: '/articles/2019/08/07/kafka-streams-topology-and-optimizations/'
+language: 'en'
+tags:
+  ['kafka', 'kstreams', 'topology', 'processor', 'optimization', 'streaming']
 category: 'Data Engineering'
 background: 'image2.png'
 ---
@@ -30,10 +31,10 @@ Hopefully, `merge()` exists.
 
 ## With merge() and bonus
 
-`merge` is a stateless operator. It _merge_s 2 streams into one, with no particular ordering, it's not deterministic, it's not "one after the other".
+`merge` is a stateless operator. It \_merge_s 2 streams into one, with no particular ordering, it's not deterministic, it's not "one after the other".
 There is no synchronization between the 2 streams, one can never emit any event, it won't stop the merge to happen.
 
-*Note: in all the code examples, I simplify and don't display the `serde` parameters, it won't compile.*
+_Note: in all the code examples, I simplify and don't display the `serde` parameters, it won't compile._
 
 ```kotlin
 sb.stream("a")
@@ -49,6 +50,7 @@ val input = sb.stream("a")
 input.merge(input) // we reuse the reference
      .to("c")
 ```
+
 It doesn't work as expect: no duplication of data (not sure if this is expected (no) or a bug!).
 
 If we check the Topology, we can see our merge has only one source instead of 2 (it's a merge!):
@@ -85,6 +87,7 @@ Topologies:
     Sink: KSTREAM-SINK-0000000003 (topic: c)
       <-- KSTREAM-MERGE-0000000002
 ```
+
 [[float]]
 |![](2019-08-12-22-21-28.png)
 |![](2019-08-12-22-20-46.png)
@@ -110,6 +113,7 @@ sb.stream("a").merge(sb.stream("a")).to("c")
 ```
 
 This will crash at runtime:
+
 ```
 TopologyException: Invalid topology: Topic prices has already been registered by another source.
 ```
@@ -139,7 +143,7 @@ Whereas with the inline version, it works:
 stream.transform(() -> new DeduplicationTransformer<>(...), ...)
 ```
 
-About **immutability**, each call to `.filter`, `.map` etc. mutates the `Topology` behind. We are getting a new reference to a `KStream`, but all the `KStream`s share the same `Topology` behind. We can't neither use the same `StreamsBuilder` to build different topologies, because it also references the same `Topology`. 
+About **immutability**, each call to `.filter`, `.map` etc. mutates the `Topology` behind. We are getting a new reference to a `KStream`, but all the `KStream`s share the same `Topology` behind. We can't neither use the same `StreamsBuilder` to build different topologies, because it also references the same `Topology`.
 
 ## Naming the processors
 
@@ -177,6 +181,7 @@ Topologies:
     Sink: to-the-world (topic: c)
       <-- merging-sensors
 ```
+
 [[float]]
 |![](2019-08-12-23-00-54.png)
 |![](2019-08-12-23-01-11.png)
@@ -195,16 +200,12 @@ Here is an simple object diagram of the link between our friends:
 
 - Kafka Streams runs a `Topology`.
 
+* When we don't use the high-level DSL, we directly build a `Topology` (_the physical plan_, that's exactly what Kafka Streams will run) that forwards calls to a `InternalTopologyBuilder`: this is the latter that contains all the data about the real topology undernealth.
 
-- When we don't use the high-level DSL, we directly build a `Topology` (_the physical plan_, that's exactly what Kafka Streams will run) that forwards calls to a `InternalTopologyBuilder`: this is the latter that contains all the data about the real topology undernealth.
+- When we use the high-level DSL, we pass through the `StreamsBuilder` (_the Logical Plan_, that's going to be converted to a physical plan) that forwards calls to a `InternalStreamsBuilder`. When we ask to `build()` the StreamsBuilder, it converts its abstraction to a `Topology`.
 
-
-- When we use the high-level DSL, we pass through the `StreamsBuilder` (_the Logical Plan_, that's going to be converted to a physical plan) that forwards calls to a `InternalStreamsBuilder`. When we ask to `build()` the StreamsBuilder, it converts its abstraction to  a `Topology`.
-
-
-- A `Topology` talks about _Nodes_, _Processors_, _StateStores_ and Strings (to link Nodes children/parent by name).
-- A `Streams` is more abstract and talks about _StreamsGraphNodes_. One `StreamsGraphNode` can generate multiple Nodes and StateStores.
-
+* A `Topology` talks about _Nodes_, _Processors_, _StateStores_ and Strings (to link Nodes children/parent by name).
+* A `Streams` is more abstract and talks about _StreamsGraphNodes_. One `StreamsGraphNode` can generate multiple Nodes and StateStores.
 
 This abstraction allows Kafka Streams (the StreamsBuilder) to optimize what it's going to generate as Topology. The `StreamsGraphNode`s expose a lot of metadata for the optimizer to be able to optimize (move, merge, delete, replace) locally or globally the `StreamsGraphNode`s (without altering the behavior), before converting it to a Topology (which is dumb).
 
@@ -253,12 +254,11 @@ Topologies:
 
 ![](2019-08-12-23-24-17.png)
 
-If you look carefully, you'll notice we don't even have a `Processor` in there! (nit: actually the Source and Sink are ProcessorNodes) We had one when we were using the high-level DSL "KSTREAM-MERGE" (it was just a passthrough). Thanks to the Processor API, we can plug directly multiples Sources to a Sink.
+If we look carefully, we'll notice we don't even have a `Processor` in there! (nit: actually the Source and Sink are ProcessorNodes) We had one when we were using the high-level DSL "KSTREAM-MERGE" (it was just a passthrough). Thanks to the Processor API, we can plug directly multiples Sources to a Sink.
 
 This is probably something that can be automatically optimized away when optimizations are on (it does not do it right now).
 
 This lead to the question: which optimizations are possible, are going to be possible, and how Kafka Streams does them?
-
 
 # StreamThreads & Backpressure
 
@@ -270,11 +270,11 @@ The records are bufferized and sent downstream (to the `StreamTask`s), one by on
 
 ![](2019-08-10-21-41-13.png)
 
-Kafka Streams tries to fill its in-memory buffers from the `poll()` data (without committing offsets of course, until processing). If a partition buffer is full (slow processing) or if some topics are consumed way faster than other, then Kafka Streams will `pause()` (KafkaConsumer API) some partitions, to keep everyone on the same page (same time). This is the only place where there is some backpressure. If some error occurs in the stream processing, because the data are backed by Kafka, Kafka Streams will simply resume to the latest committed offset of the source topics. 
+Kafka Streams tries to fill its in-memory buffers from the `poll()` data (without committing offsets of course, until processing). If a partition buffer is full (slow processing) or if some topics are consumed way faster than other, then Kafka Streams will `pause()` (KafkaConsumer API) some partitions, to keep everyone on the same page (same time). This is the only place where there is some backpressure. If some error occurs in the stream processing, because the data are backed by Kafka, Kafka Streams will simply resume to the latest committed offset of the source topics.
 
 A Breadth-First approach will probably be worked on later in Kafka Streams, to allow for parallel processing. For instance, if doing IOs in a Streams, it's better to parallelize processing. It's naturally done at the partition level right now thanks to the Kafka partitionning model, but it could be finer. Check out [KAFKA-6034](https://issues.apache.org/jira/browse/KAFKA-6034).
 
-In reactive streams programming, operators tell their need/capability to their parents, to ensure they won't overflow, and the ask (consolidated by all other operators across) goes upstream until it reaches the sources. There, data are pushed or pulled upon demand when downstream is ready to accept more. The strategy of pull/push can vary over time ("I know you will ask me for more data soon, so I will directly push data to you from now on. But if you struggle with, I'll stop pushing and you'll go back to pull me data."), but that's another story. 
+In reactive streams programming, operators tell their need/capability to their parents, to ensure they won't overflow, and the ask (consolidated by all other operators across) goes upstream until it reaches the sources. There, data are pushed or pulled upon demand when downstream is ready to accept more. The strategy of pull/push can vary over time ("I know you will ask me for more data soon, so I will directly push data to you from now on. But if you struggle with, I'll stop pushing and you'll go back to pull me data."), but that's another story.
 
 ![](2019-08-12-21-47-47.png)
 
@@ -283,12 +283,12 @@ All that to say that's why we can have working topologies without sinks in Kafka
 ```kotlin
 sb.stream("a").print(Printed.toSysOut())
 ```
+
 ![](2019-08-10-19-09-42.png)
 
-Note that offsets will be properly committed to Kafka. So when we say Kafka Streams is _only_ for process "reading from topics and writing to topics", it's not entirely true. You can query webservices, save data into databases etc. without ever having to sink into a topic.
+Note that offsets will be properly committed to Kafka. So when we say Kafka Streams is _only_ for process "reading from topics and writing to topics", it's not entirely true. We can query webservices, save data into databases etc. without ever having to sink into a topic.
 
-It's not the right use-case. Doing so won't ensure exactly-once processing with the external systems (ensure there are idempotent!) because they are outside of Kafka scope, and you won't have a trace of your processing. This is why [Kafka Connect](https://docs.confluent.io/current/connect/index.html) exist.
-
+It's not the right use-case. Doing so won't ensure exactly-once processing with the external systems (ensure there are idempotent!) because they are outside of Kafka scope, and we won't have a trace of our processing. This is why [Kafka Connect](https://docs.confluent.io/current/connect/index.html) exist.
 
 # From Logical Plan To Optimized Logical Plan
 
@@ -379,7 +379,6 @@ sb.stream("a")
 
 - KStream + KTable: this will create a `-repartition` topic if the KStream is flagged as `repartitionRequired`. This topic will be the real source for the join.
 
-
 # The Optim1zer
 
 Let's dive a bit more into the repartition optimization, which is the biggest piece.
@@ -409,7 +408,7 @@ Each `OptimizableRepartitionNode` creates a new sub-topology, because we pass th
 ## Visualizing the Logical Plan: before and after
 
 Now that we know what is a `OptimizableRepartitionNode`, let's visualize them.
-Those structures are private in the code, it's different than what you get when you `.describe()` a `Topology`, which is the physical plan. Here, we're talking about the Logical Plan.
+Those structures are private in the code, it's different than what we get when we `.describe()` a `Topology`, which is the physical plan. Here, we're talking about the Logical Plan.
 
 Let's make Kafka Streams optimize our Logical Plan, by doing a `map()` (keyChanging operation) and a `join()`:
 
@@ -488,7 +487,7 @@ In the second version, "optimized", the filter is executed _after_ the repartiti
 
 Unfortunately, this means the repartition topic will contain **MORE** data than with the unoptimized version. Not good. Especially in my extreme case here, where my filter was a plain "don't let pass anything (`.filter { k, v -> false }`)", my repartition topic will actually contain everything instead of nothing.
 
-> We should always analyze our topology no matter if we use optimizations or not. 
+> We should always analyze our topology no matter if we use optimizations or not.
 
 What's the point of this optimization therefore? What I described here is not an optimization.
 But if we look at the global picture, it's more nuanced.
@@ -507,14 +506,12 @@ A few points here:
 
 - `c` topic is empty because we filter out all records (`.filter { k, v -> false }`).
 
-
-- In the *unoptimized* version
+* In the _unoptimized_ version
   - we have 2 internal topics
   - The repartition topic is always empty (thanks to our `filter()`).
   - The changelog topic contains 200 records, which is the number of distinct keys of `a`
 
-
-- In the *optimized* version
+- In the _optimized_ version
   - we have only 1 internal topic: the KTable can reuse its source topic `b` if it needs to rebuild its local state
     - This means it needs to consume 5,209 records to find out there are only 200 distinct keys
   - The repartition topic contains everything unfiltered at first (5,209), then is purged by Kafka Streams (because it knows it's temporary data, it deletes them after committing; see [KAFKA-6150 - Make Repartition Topics Transient](https://issues.apache.org/jira/browse/KAFKA-6150)).
@@ -529,7 +526,7 @@ Operators have a _selectivity_.
 - `filter*` have a selectivity between `0 ≤ s ≤ 1`, it depends upon the filter.
 - `flatMap*` and `*transform*` have an unknown selectivity. They can emit 0 or many items for one item in. But according to our use-case, we can know if it's fixed or dynamic.
 
-All that to say that when we do a `map(..).filter(..)`, what we want is generally `filter(..).map(..)` because we'll do less `map`ping with the second version, the selectivity of `filter` being generally less than 1: less records out. 
+All that to say that when we do a `map(..).filter(..)`, what we want is generally `filter(..).map(..)` because we'll do less `map`ping with the second version, the selectivity of `filter` being generally less than 1: less records out.
 
 It's a possible optimization Kafka Streams can apply, known as _Operator Reordering_, but it's not so straightforward.
 
@@ -591,6 +588,7 @@ root
                             KSTREAM-SINK-0000000017 (StreamSinkNode)
     KTABLE-SOURCE-0000000004 (TableSourceNode)
 ```
+
 A picture is worth a thousand words (we won't show the Physical Plan, no need):
 
 ![](2019-08-13-23-20-32.png)
@@ -622,7 +620,7 @@ val t = sb.stream("a")
 Simply by adding a `.mapValues` (a _value-changing_ operation) just after the a key-changing operation, the optimization won't apply.
 I'm not entirely sure why. At first, this looks dumb anyway. If I do a key-changing followed by a value-changing operation, it means I just need a `map()` or equivalent to do both at the same time. But in the grand scheme of things, where functions are everywhere, returning `KStream`s, this situation may happen (and could lead to an _operator fusion_ optimization!).
 
-Operations `*mapValues()` and `*transformValues()` are _value-changing_ operations. You can just change the value of the record, this will prevent any repartitioning (because the key stays as-is). It's a best practice to use them whenever possible.
+Operations `*mapValues()` and `*transformValues()` are _value-changing_ operations. We can just change the value of the record, this will prevent any repartitioning (because the key stays as-is). It's a best practice to use them whenever possible.
 
 ## Back to our merge()
 
@@ -655,7 +653,8 @@ Guozhang Wang added a lot of possible optimizations in [KAFKA-6034 - Streams DSL
 Below is a recap of what we can expect Kafka Streams will optimize in the future. But we shouldn't wait for the implementations to be in Kafka Streams. According to our use-cases, we can already apply them manually. It's just a bunch of generic or Kafka Streams specific patterns.
 
 ## Operator Separation and Fission
-To allow a better leveraging parallel processing power: split `stream.map(f∘g)` to `stream.map(f).map(g)`, then you can support different needs of parallelism for `f` and `g`.
+
+To allow a better leveraging parallel processing power: split `stream.map(f∘g)` to `stream.map(f).map(g)`, then we can support different needs of parallelism for `f` and `g`.
 
 Start by splitting the operation:
 
@@ -667,9 +666,9 @@ Then apply a fission for `f` and/or `g`
 
 This is what is done at the partition level in Kafka Streams thanks to Kafka, but it can be finer than that and work with multiple threads or fibers at the same time per partition.
 
-
 ## Operator Fusion / Scheduling / Batching
-Kafka Streams is using only the *Depth-First* strategy for now (one record traverse the whole topology at a time), but it could introduce the *Breath-First* strategy (which introduces some synchronization points):
+
+Kafka Streams is using only the _Depth-First_ strategy for now (one record traverse the whole topology at a time), but it could introduce the _Breath-First_ strategy (which introduces some synchronization points):
 
 - Send a batch of records to the first operator, then wait to collect
 - Send its results to the second operator
@@ -689,8 +688,8 @@ Source(1 to 1000)
 
 I'm not sure what it's going to be in Kafka Streams, but I would love to see a `mapAsync`.
 
-
 ## Redundancy Elimination
+
 If the same operator doing the same thing appears several times, try to factorize it and _broadcast_ the values downstream.
 
 ![](2019-08-12-14-19-39.png)
@@ -698,6 +697,7 @@ If the same operator doing the same thing appears several times, try to factoriz
 This is typically what is done with the key-changing operations that are reused:
 
 The following is not optimized (`map(f)` generates two distinct operators doing the same thing):
+
 ```kotlin
 val t = sb.stream("a")
 val f = { key: String, value: String -> KeyValue.pair(key, value) }
@@ -708,19 +708,23 @@ t.map(f).filter { k, v -> true }.to("c")
 ![](2019-08-12-16-37-23.png)
 
 ## Multi-Join Operator Reordering
+
 Re-order the join ordering based on join selectivity and cost, like the Operator Reordering optimization.
 
 ## State Sharing / Join operator sharing
+
 Share results of all `s1.join(s2)` in the code, like `s1.join(s2).join(stream3)` could reuse it.
 
 ![](2019-08-12-14-58-02.png)
 
 ## Cogroup aggregations
-[KIP-150 - Cogroup](https://cwiki.apache.org/confluence/display/KAFKA/KIP-150+-+Kafka-Streams+Cogroup): cogroup multiple aggregates
-  - into a new entity `CogroupedKStream` to reduce creation of unnecessary objects. (unfortunately in stand-by it seems)
 
+[KIP-150 - Cogroup](https://cwiki.apache.org/confluence/display/KAFKA/KIP-150+-+Kafka-Streams+Cogroup): cogroup multiple aggregates
+
+- into a new entity `CogroupedKStream` to reduce creation of unnecessary objects. (unfortunately in stand-by it seems)
 
 ## Disable logging and reuse sink topic when changelog = sink topic
+
 As raised in [KAFKA-6035](https://issues.apache.org/jira/browse/KAFKA-6035), when we build an aggregate and sink it directly, we're going to create a `-changelog` topic that will contain exactly the data of the output topic:
 
 ```kotlin
@@ -765,13 +769,13 @@ root
     KSTREAM-SOURCE-0000000000 (StreamSourceNode)
         KSTREAM-MAP-0000000001 (ProcessorGraphNode)
             KSTREAM-BRANCH-0000000002 (ProcessorGraphNode)
-                
+
                 KSTREAM-BRANCHCHILD-0000000003 (ProcessorGraphNode)
                     KSTREAM-SOURCE-0000000008 (OptimizableRepartitionNode)
                         KSTREAM-AGGREGATE-0000000005 (StatefulProcessorNode)
                             KTABLE-TOSTREAM-0000000009 (ProcessorGraphNode)
                                 KSTREAM-SINK-0000000010 (StreamSinkNode)
-                
+
                 KSTREAM-BRANCHCHILD-0000000004 (ProcessorGraphNode)
                     KSTREAM-SOURCE-0000000014 (OptimizableRepartitionNode)
                         KSTREAM-AGGREGATE-0000000011 (StatefulProcessorNode)
@@ -812,7 +816,7 @@ k.join(sb.table("b"), { x, y -> y }).to("c")
 k.groupByKey().count().toStream().to("d")
 ```
 
-According to what you put between the keyChanging node and the `OptimizableRepartitionNode` children, you can get the error. I'm sure this error will soon be gone! :-) (this is 2.3)
+According to what we put between the keyChanging node and the `OptimizableRepartitionNode` children, we can get the error. I'm sure this error will soon be gone! :-) (this is 2.3)
 
 ## merge() working only with optimization (!)
 
