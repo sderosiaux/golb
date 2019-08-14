@@ -122,6 +122,26 @@ export const pageQuery = graphql`
       }
     }
 
+    data1: markdownRemark(
+      frontmatter: {
+        path: {
+          eq: "/articles/2019/08/07/kafka-streams-topology-and-optimizations/"
+        }
+      }
+    ) {
+      ...ArticleFrontmatter
+    }
+    data2: markdownRemark(
+      frontmatter: {
+        path: {
+          eq: "/articles/2017/08/07/looking-at-kafka-s-consumers-offsets/"
+        }
+      }
+    ) {
+      ...ArticleFrontmatter
+    }
+    
+
     back1: markdownRemark(
       frontmatter: {
         path: { eq: "/articles/2018/08/15/types-never-commit-too-early-part1/" }
@@ -139,24 +159,7 @@ export const pageQuery = graphql`
     ) {
       ...ArticleFrontmatter
     }
-    data1: markdownRemark(
-      frontmatter: {
-        path: {
-          eq: "/articles/2017/08/07/looking-at-kafka-s-consumers-offsets/"
-        }
-      }
-    ) {
-      ...ArticleFrontmatter
-    }
-    data2: markdownRemark(
-      frontmatter: {
-        path: {
-          eq: "/articles/2017/03/02/serializing-data-efficiently-with-apache-avro-and-dealing-with-a-schema-registry/"
-        }
-      }
-    ) {
-      ...ArticleFrontmatter
-    }
+    
     back3: markdownRemark(
       frontmatter: {
         path: {

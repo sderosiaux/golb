@@ -5,6 +5,15 @@
   border-left: 7px solid rgb(2, 136, 209);
 }
 
+.float > .custom-block-body > p {
+  display: flex;
+  flex-direction: row;
+}
+
+.float > .custom-block-body > p > a {
+  flex: 1;
+}
+
 .custom-block-warn {
   margin: 20px 0;
   padding: 10px 20px 10px 20px;
@@ -75,4 +84,8 @@ article .gatsby-resp-image-link {
 
 .token.operator {
   background: transparent;
+}
+
+:not(pre) > code[class*="language-"] {
+  background: cornsilk;
 }
