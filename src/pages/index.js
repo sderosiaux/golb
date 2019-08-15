@@ -43,22 +43,24 @@ export default ({ location, data }) => {
       <div style={{ marginTop: 20 }}>
         <Centered>
           <h1>Hi!</h1>
+          <Bio />
+          <br />
           <h2>Where to go?</h2>
           <ul className={ulClassName}>
             <li>
               You're looking to read some articles about{' '}
-              <a href="/tags/scala">Scala</a>, <a href="/tags/java">Java</a>,{' '}
               <a href="/tags/kafka">Kafka</a>,{' '}
+              <a href="/tags/scala">Scala</a>, <a href="/tags/java">Java</a>,{' '}              
               <a href="/tags/reactjs">ReactJS</a> and more? Check below for a
-              selection, or just go to <a href="/articles">Articles</a> to list
+              selection, or just go to <a href="/articles" className="yellow">Articles</a> to list
               everything.
             </li>
             <li>
-              Stalker? Feel free to read <a href="/about-me">About Me</a>!
+              Stalker? Feel free to read <a href="/about-me" className="yellow">About Me</a>!
             </li>
             <li>
               If you think we fit and would like we work together, I would be
-              honored. <a href="/work-with-me">Work With Me</a>
+              honored. <a href="/work-with-me" className="yellow">Work With Me</a>
             </li>
           </ul>
         </Centered>

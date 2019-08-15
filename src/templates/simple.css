@@ -89,3 +89,7 @@
   background: white;
   color: #555;
 }
+
+a.yellow {
+  box-shadow: 0 5px 0 0 yellow !important;
+}
