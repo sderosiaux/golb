@@ -35,7 +35,7 @@ class Bio extends React.Component {
           }}
         />
         <p>
-          Software &amp; Data Engineer, I live in France. Enthousiast and eager
+          Freelance &amp; Software &amp; Data Engineer, I live in France. Enthousiast and eager
           to learn, I'm always seeking for challenges. Find out more{' '}
           <Link to="/about-me">about me</Link>.
         </p>

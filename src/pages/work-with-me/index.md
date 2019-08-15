@@ -10,10 +10,13 @@ description: 'What about working with me?'
 |
 |But I know that I love learning by myself and learning from others. I love teaching to others. I love making great stuff. I love open-source. I love understanding the business.
 |
-|I used to work on Hadoop clusters, dealing with the Data flow (Flume, Kafka), writing some Spark, and handling the analytics part.
-|I'm quite a fan of the Google Cloud Platform for everything now. From their databases, GCE for Virtual Machines, GKE for Kubernetes, or GAE, it can really answer to any needs nowadays.
+|I am a Freelance, so feel free to contact me.
 |
-|I'm fluent in Scala, and most of its ecosystem, still trying to wrap my mind around the humongous Category Theory. I still need to learn Haskell, and probably Eta to push the Functional Programming paradigm to its climax. But I'm also eager to learn Go and Rust for instance. We should never get stuck into one language, and get the vision of the other languages.
+|I'm used to work between Software Engineering and Data Engineering. I've worked on Hadoop clusters, dealing with the Data flow (Flume, Kafka), writing some Spark, and handling the analytics part. I'm also quite (more?) Software Engineering oriented because I love understanding and working on the business preoccupations, and I love coding with strongly typed languages.
+|
+|I'm quite a fan of the Google Cloud Platform for everything now. From their databases, GCE for Virtual Machines, GKE for Kubernetes, or GAE, it can really answer to any needs nowadays. I'm also an AWS Developer Certified ([SLJDGM31LNE1QPS1](https://aw.certmetrics.com/amazon/public/verification.aspx)).
+|
+|I'm fluent in Scala, and most of its ecosystem, still trying to wrap my mind around the humongous Category Theory. I still need to learn Haskell, and probably Eta to push the Functional Programming paradigm to its climax. But I'm also eager to learn Go and currently learning Rust. We should never get stuck into one language, and get the vision of the other languages.
 |
 |Because I also worked as a Front-end Engineer, I'm quite familiar with Javascript and its fast-paced environment (always trying to catch up). I love ReactJS & GraphQL (this is Gastby website). I use this skill to support the Front-end team and quickly develop POC myself when needed.
 |

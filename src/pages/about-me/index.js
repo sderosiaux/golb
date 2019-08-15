@@ -89,14 +89,17 @@ export default ({ location, data }) => {
             <strong>Data Engineer</strong> (Scala, Kafka, Spark, Hadoop, Google
             Cloud Platform). In 2018, I decided to be self-employed, doing{' '}
             <strong>freelance</strong> and consultant work mostly related to
-            data engineering, because I love data!
+            Kafka &amp; data engineering, because I love data! I also worked as
+            technical &amp; functional architect because I also love learning
+            the business part so I can make the link between different teams.
           </p>
           <p>
             Read more about <Link to="/work-with-me">how I work</Link> and
             checkout my{' '}
             <a href="https://www.linkedin.com/in/st%C3%A9phane-derosiaux/">
               LinkedIn
-            </a>.
+            </a>
+            .
           </p>
         </ColorfulCentered>
 
@@ -121,7 +124,8 @@ export default ({ location, data }) => {
             I love reading on the web. I saved most of what I read here:{' '}
             <a href="https://github.com/sderosiaux/every-single-day-i-tldr">
               sderosiaux/every-single-day-i-tldr
-            </a>. More than 3000 links, yikes.
+            </a>
+            . More than 3000 links, yikes.
           </Block>
         </Blocks>
 
@@ -142,7 +146,8 @@ export default ({ location, data }) => {
             <p lang="en" dir="ltr">
               So, Sunday evening Twitter: which five books have influenced you
               the most? (In terms of shaping your worldview.)
-            </p>&mdash; Patrick Collison (@patrickc){' '}
+            </p>
+            &mdash; Patrick Collison (@patrickc){' '}
             <a href="https://twitter.com/patrickc/status/929862403763798016">
               13 novembre 2017
             </a>
@@ -153,7 +158,8 @@ export default ({ location, data }) => {
           Seriously,{' '}
           <a href="https://twitter.com/patrickc/status/929862403763798016">
             checkout this tweet
-          </a>. Thanks to both of them, I keep adding books to my{' '}
+          </a>
+          . Thanks to both of them, I keep adding books to my{' '}
           <a href="http://amzn.eu/iOQIowS">Books I Will Read list</a> when I
           stumbled upon some interesting references. I still have around 80
           books still to buy and read! One book at a time. You can{' '}
@@ -166,7 +172,8 @@ export default ({ location, data }) => {
             I'm fluent in French (native) and English (I guess so).
           </Block>
           <Block cover={data.hike}>
-            I love running and travelling to hike and find geocaches all over the world.
+            I love running and travelling to hike and find geocaches all over
+            the world.
           </Block>
           <Block cover={data.ddr}>
             I love old games, fitness, DDR (and Stepmania!), cooking (paleo!)
@@ -176,10 +183,10 @@ export default ({ location, data }) => {
 
         <Blocks>
           <Block fluid={data.photo} fullWidth={true}>
-            <div style={{ height: 10 }} /> {/* HACK! */}
-            I love <strong>photography</strong>. I have a reflex since a few
-            years, and I love playing with Adobe Lightroom to make the best of
-            my photos. You can check some of my <em>work</em> on{' '}
+            <div style={{ height: 10 }} /> {/* HACK! */}I love{' '}
+            <strong>photography</strong>. I have a reflex since a few years, and
+            I love playing with Adobe Lightroom to make the best of my photos.
+            You can check some of my <em>work</em> on{' '}
             <a href="https://www.instagram.com/sderosiaux">Instagram</a>.
           </Block>
         </Blocks>
