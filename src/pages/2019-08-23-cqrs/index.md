@@ -5,20 +5,30 @@ date: '2019-08-23T12:00Z'
 is_blog: false
 path: '/articles/2019/08/23/cqrs/'
 language: 'en'
-tags: ['cqrs', 'event sourcing', 'kafka', 'architecture']
+tags:
+  [
+    'cqrs',
+    'event sourcing',
+    'kafka',
+    'architecture',
+    'ddd',
+    'events',
+    'cdc',
+    'distributed systems',
+  ]
 category: 'Data Engineering'
 background: ''
 ---
 
 I'm working on a new project intended to replace a large —too large— monolith.
 
-To adapt to the evolving needs of the **business** (Customer Orders), boost the **Time To Market**, improve **traceability** and **communication** between teams, we settled in using a CQRS asynchronous architecture (but *without* Event Sourcing).
+To adapt to the evolving needs of the **business** (Customer Orders), boost the **Time To Market**, improve **traceability** and **communication** between teams, we settled in using a CQRS asynchronous architecture (but _without_ Event Sourcing).
 
-Long story short, it's not an easy task to "convert" everyone to the new way of thinking this imposes. Things people thought acquired must be re-questionned, re-challenged and new constraints arise (such as eventual consistency, or knowing if we should own a certain piece of data). I was *this* guy always saying "you can't do that", reminding the whys.
+Long story short, it's not an easy task to "convert" everyone to the new way of thinking this imposes. Things people thought acquired must be re-questionned, re-challenged and new constraints arise (such as eventual consistency, or knowing if we should own a certain piece of data). I was _this_ guy always saying "you can't do that", reminding the whys.
 
 This kind of architecture forces us to put strong constraints and have limitations most of us didn't have before (with a classic backend + DB). It's not always a bad thing: it **reveals** things. We learned a lot about the domains themselves, always questionning their separations and their responsabilities. It makes us **understand the business**.
 
-Here, I'll talk about a use-case where we ~~wanted~~ needed to expose *not*-eventually-consistent (aka strongly-consistent) data to other services. CQRS has not to be eventually-consistent, but in our case, it was (because asynchronous). I can see some of you frowning because we should *accept* eventual-consistency, it's part of the life. Agreed. But..
+Here, I'll talk about a use-case where we ~~wanted~~ needed to expose _not_-eventually-consistent (aka strongly-consistent) data to other services. CQRS has not to be eventually-consistent, but in our case, it was (because asynchronous). I can see some of you frowning because we should _accept_ eventual-consistency, it's part of the life. Agreed. But..
 
 TOC
 
@@ -36,7 +46,7 @@ Let's explain the consequences of it:
 
 The idea of CQRS is to enable an application (in the large sense) to work with different models:
 
-- One model it writes with: the write model, altered by *Commands* (more on this later)
+- One model it writes with: the write model, altered by _Commands_ (more on this later)
 - One or several models it and other applications read from (no read using the _write_ model)
 
 CQRS does not imply working with microservices, or a messaging infrastructure, or _Events_, or doing DDD in essence. It's just often use with those techniques for reasons.
@@ -48,7 +58,7 @@ CQRS does not imply working with microservices, or a messaging infrastructure, o
 
 CQRS allows us to scale our system independently: we _often_ have to handle way more reads than writes hence a different scalability.
 
-We want our reads to be accessed in **O(1)**: we don't want taking more time fetching an entity because it has more links to other entities: we want to avoid explosive JOINs. The solution is to precompute the result when data changes, *before* anyone request them. Doing so will also use less resources when a request occurs, will reduce the **latency** and make it **predictable** and stable on p999. We are trading *time* for *space*. More on this later.
+We want our reads to be accessed in **O(1)**: we don't want taking more time fetching an entity because it has more links to other entities: we want to avoid explosive JOINs. The solution is to precompute the result when data changes, _before_ anyone request them. Doing so will also use less resources when a request occurs, will reduce the **latency** and make it **predictable** and stable on p999. We are trading _time_ for _space_. More on this later.
 
 When we implement a Redis cache in order to avoid overloading the main database —taking writes— is the CQRS spirit.
 
@@ -60,9 +70,9 @@ This is because we think more about the responsabilities: who is mutating data, 
 
 #### Concurrency
 
-Technically, it can also *simplify* concurrency and locking (transactional databases) management, **by revealing them**.
+Technically, it can also _simplify_ concurrency and locking (transactional databases) management, **by revealing them**.
 
-When we are working with an asynchronous CQRS pattern, we often talk about data being eventually-consistent, data lifecycles, data ownerships, business requirements, and a lot about the modelization: the transactional boundaries of the entities and the invariants we should always have. Again, this is why CQRS is often DDD-oriented: data form **aggregates** which must be *very* carefully defined.
+When we are working with an asynchronous CQRS pattern, we often talk about data being eventually-consistent, data lifecycles, data ownerships, business requirements, and a lot about the modelization: the transactional boundaries of the entities and the invariants we should always have. Again, this is why CQRS is often DDD-oriented: data form **aggregates** which must be _very_ carefully defined. (more on this later)
 
 #### No "Read your own Writes" semantics
 
@@ -70,20 +80,24 @@ Stale data must be explicitely deal with. If we alter a resource (by sending a C
 
 When it's synchronous CQRS we can have this semantics: we write the two models into different tables, in the same transaction. It's always in-sync. CQRS is rarely synchronous because we want to work/scale with different resources, type of databases, use a messaging infrastructure: we can rarely make a distributed transaction cross-resources (we could talk about XA or Sagas but... not now!).
 
-> CQRS is a pattern that strictly segregates the responsibility of handling commands from the responsibility of handling side-effect-free query/read access.
+> CQRS is a pattern that strictly segregates the responsibility of handling commands (mutations) from the responsibility of handling side-effect-free query/read access.
 
 ## It's not a one-fit-all solution
 
-We should consider implementing CQRS only in certain cases: 
+We should consider implementing CQRS only in certain cases:
 
 - We have changing business requirements _a lot_
 - The business doesn't know exactly where it's heading
-- We must collaborate a lot with other teams (ie: other bounded contexts)
+- We have scalability issues
+- We collaborate with other teams (ie: other bounded contexts)
+- Multiple users compete to alter the same resources
 - We are orchestrating other services around us
 - What's going on in our domain will affect them or vice-versa
 - Our domain is write-oriented, we don't read our own data, other applications do
 
 The overhead can be tremendous and unnecessary if we want to expose a simple API working solo or whose the scope is clearly defined.
+
+Even if we **want** to implement a CQRS architecture, the team (developers & business) will need to bypass the **fear of changes**, to follow a **learning curve**, to **bend their minds**, then **adapt** how they used to work.
 
 ## AKF Scale Cube
 
@@ -103,7 +117,6 @@ In short, 3 axis:
 - Y: **organizational**: we should have independent services to handle different domains: they are responsible of their own data (à la DDD)
 - Z: **high-level sharding**: we should segment similar things (per resource_id, per geography), per use-case, into their own infra
 
-
 ## Commands / Writes: side-effects
 
 So the _thing_ that causes writes to the _write_ model is called a `Command`. It's a generic term to design what we always worked with: something to change the state of the system (an update of any kind).
@@ -115,10 +128,12 @@ So the _thing_ that causes writes to the _write_ model is called a `Command`. It
 - A `Command` can be a simple function call.
 
 All those concepts are orthogonal to what a `Command` is. We _command_ some state to change in some way.
-A `Command` is an *intent* (and not a fact) and causes *side-effects* (on a resource). It is directed to a particular destination (not broadcast) and defined in term of the consumer domain (the *co-domain*).
+A `Command` is an _intent_ (and not a fact) and causes _side-effects_ (on a resource). It is directed to a particular destination (not broadcast) and defined in term of the consumer domain (the _co-domain_).
 It's generally defined as `VerbSomething`: `CreateOrder`, `ShipProduct`, `ComputePrice`, `GiveMoney`. We'll see later the symmetry with Events defined like `OrderCreated` (again, Events are outside of CQRS scope but they play nicely along).
 
-A `Command` is *behavior-centric* and not *data-centric*. It is about the intent to change something, it does not map to the format of a resource (like DTOs in an API). It can contain data that will help to process the intent but that's it.
+A `Command` is _behavior-centric_ and not _data-centric_. It is about the intent to change something, it does not map to the format of a resource (like DTOs in an API). It can contain data that will help to process the intent but that's it.
+
+We also talk about `task-based` systems and not `resource-based` systems. The Writes part doesn't accept new resources or patch of existing resources: they accept tasks aka Commands. It could have been named TQRS :-).
 
 #### Flow
 
@@ -126,7 +141,7 @@ The flow of handling a `Command` is always the same:
 
 - If async, it saves it into a messaging infrastructure and returns OK to the caller (can't do much more)
 
-- When handling it —sync or async— according to its form (API, message, function call), call the right *Command Handler* (a function)
+- When handling it —sync or async— according to its form (API, message, function call), call the right _Command Handler_ (a function)
 - This handler must determine if it's possible to process it:
   - It retrieves the current state (from a database or using Event Sourcing)
   - It uses some business rules to know if it can grant or deny the `Command` on the state
@@ -138,7 +153,7 @@ The flow of handling a `Command` is always the same:
 
 ![](2019-08-25-18-02-45.png)
 
-`Commands` should follow a *fire & forget* principle: we should not expect any result from a `Command` except "OK" or "KO". A `Command` is just an *ask*. The processing can be synchronous or asynchronous, we're not supposed to get the result asap. The result will come later from the read part.
+`Commands` should follow a _fire & forget_ principle: we should not expect any result from a `Command` except "OK" or "KO". A `Command` is just an _ask_. The processing can be synchronous or asynchronous, we're not supposed to get the result asap. The result will come later from the read part.
 
 A Command Handler must contain business logic to be able to deny instantly a Command or not. For instance, to handle a `CancelOrderCommand`:
 
@@ -211,7 +226,7 @@ Also, the Reads Database can be scary, because:
 
 #### Free of side-effects
 
-Having multiple databases imposes a strong constraint: the Reads Databases must handle **only reads**, not writes. They are not the source of truth. 
+Having multiple databases imposes a strong constraint: the Reads Databases must handle **only reads**, not writes. They are not the source of truth.
 
 There is no synchronization between them and the Writes Database. Reads Databases cannot create side-effects on the Writes Database.
 Due to denormalization, it could be even impossible to find back the original record (if we don't keep all the necessary info, the PK etc. because we don't need them)
@@ -222,7 +237,7 @@ When you query an API (a `GET` or some GraphQL Query): you don't expect to mutat
 
 As stated before, those who use the Reads part could deal with stale data.
 
-When we send a `Command` to be processed, its processing *can* be done asynchronously (no result, Fire & Forget), and the updates of the Reads Database will be asynchronous (except if it's the same database but that's rare?).
+When we send a `Command` to be processed, its processing _can_ be done asynchronously (no result, Fire & Forget), and the updates of the Reads Database will be asynchronous (except if it's the same database but that's rare?).
 
 Example:
 
@@ -234,42 +249,105 @@ Example:
 - T4: The Product Service responds to the Reads Service which can updates its Reads Database (v2).
 
 Et voilà, in T3, despite the previous update happening before in T2 (in absolute time), the Reads Service sent the old version of the Order (v1) because it was not up-to-date yet.
-This is why CQRS does not have the "Read your own Writes" semantics and why we must always think about eventual consistency when we talk with the external systems.
+This is why CQRS does not have the "Read your own Writes" semantics and why we must always think about eventual consistency when external systems talk with us.
 
-The **version** we just introduced is mandatory to have in such system. This represents a logical time, to help us understand how the flow progresses and make decisions. It's actually part of the Writes Model and will be propagated into the whole system (events if any, reads models...).
+The **version** we just introduced is mandatory to have in such system. This represents a logical time, to help us understand how the flow progresses and make decisions. It's part of the Writes Model and is propagated into the whole system (events if any, reads models...).
 
 There are techniques to help external systems fetching the version they expect, more on that later.
 
-#### Scaling
+If we want a strong consistency between our Writes and Reads database, they need to be updated atomically (and that's rarely possile due to the heterogeneous systems used). Even so, if we do that, we'll lose the **Availability** provided by relying on different systems (CAP theorem, we can be CP or AP under failures, not Consistent and Available at the same time).
 
+By clearly separating both systems, the Reads part works independently of the Writes part: different lifecycles, different deployments, different constraints, different SLAs.
 
-- Scale read and write differently
-    - If we want consistency (write and read updated atomically), we lose Availability (CAP)
+#### A different set of features
 
-#### Features for reads
+The Reads Service can provide way more features than the Writes service. The actors and use-cases are not the same for both sides.
 
-Provide caching, encryption, authentication, scaling
-SSE
-Websockets
-Optimistic
+Such features can be:
 
-#### Ways to build the Read Model
+- Authentication
+- Caching
+- Encryption
+- Rate Limiting
+- Limited Retention
+- Elastic Scaling
+- Replication & LB
+- Sharding
+- SSE or Websockets for realtime updates (push)
 
-It's easy to change and test new technologies
+When we have the same database for writes & reads, we are mixing different concerns together.
 
-sync: same database, two tables, transactions
+- Let's say we have a e-commerce website displaying the carts & orders to the customers using one Reads Service. The traffic is heavy (customer facing), the Reads Service is replicated or sharded, rely on caching, do websockets.
+- On the other side, we have the employees of the company, with their own admin applications, who need to see and update the orders to prepare them, package them, update the delivery states etc. They don't need fancy features, the traffic is not heavy, the processes are slow. They just need an uptime of 99.999% because it's part of their job.
 
-synchro database: postgresql => couchbase
-dual writes: CAREFUL!
+Both Reads Service have different SLAs (one can be "down", not the other), features, models (the admin Reads Service will provide more internal details, hidden from the customers Reads Service).
 
-- events
-  - CDC
+#### How to build a Reads Service
 
+As developers, we love testing new technologies, new databases, new systems. The marvellous idea of splitting how we write of how we read gives us what we need to fulfill this love.
 
-The Serving layer could hide a lambda architecture: RT views + batch views
+Nothing is easier than creating a new Reads Service (with its distinct Reads Database) and test it in parallel of the existing flow. If we work with events, we just subscribed to them and build the new model. If we work without events, then we probably have a synchronization program from a database we can alter or duplicate to write into our new system.
 
+Moreover, each Reads Service can be written in any language, to answer more precisely to the use-cases and technologies used by the readers.
+
+Here is a list of techniques to build such service:
+
+- Dual writes
+  - in code, when we write to database X with our (lovely) ORM (or not), we add code or abstraction to also write to Y
+  - we must use a transaction or what's appropriate to ensure atomicity/consistency between them
+- Database sync:
+  - a batch that copy and transform the data every N minutes
+  - an "almost-realtime" background service that poll changes every N minutes
+- Change Data Capture (CDC)
+  - it derives database changes into an event-stream
+  - it relies on the replication log to act as events emitted by the database; then we can do some stream processing upon them
+  - it's one of the great usage of [Kafka Connect](https://docs.confluent.io/current/connect/index.html) with [Debezium](https://debezium.io/) (PostgreSQL, MySQL)
+- Events
+  - we subscribe to the existing events (published on original state change) and build our Reads state from them (we can replay them from the past) to any database
+  - we can also create a distributed auto-sharded database with Kafka Streams and its Interactive Queries.
+- Hides a Lambda Architecture
+  - a realtime view merged with a batch view
+
+The best way is by relying events from a pubsub system. Inherently, they already decouple the publishers from the consumers. It's another reason why CQRS is often associated with events.
 
 ## The link with DDD
+
+Until now, we barely talked about DDD, which is very often linked to CQRS (but not mandatory). Why?
+
+We said we have `Commands` whose handlers check for business requirements, if ok, update the "state" and save it into the Writes Database.
+
+In DDD, this state is contained in what we call an **Aggregate**. It's a tree of entities (with an entity root) which is self-contained, autonomous, and always consistent from an exterior and business point-of-view. An aggregate must ensure transactional boundaries within its entities: from the exterior, you can never see an aggregate "half-formed", "half-transformed", "half-valid". You can't access the entities directly: everything goes through the Aggregate (to control the consistency). The business invariance rules are always respected (eg: "an Order can't be delivrable if it's not payed yet" (ok, it depends but you get the idea!)).
+
+[[info]]
+|In DDD, _Entity_ has a special meaning. It's an object defined by its unique identity and not by its attributes, like `User(userId)`. `Color(r,g,b)` is not an entity, its attributes define it, it's a _Value Object_, it's immutable, it can be shared.
+
+The aggregate is typically an **immutable** and **side-effects free** class in OOP with all the business related code (contrary to a DTO, which is often anemic, ie: without business logic). It does not depend upon any serialization framework, it does not have any annotations etc. It's a plain, simple, reusable code the business should understand because it's using their words: this is the **Ubiquitous Language**. Using the same language reduce confusion and misunderstanding because we don't translate implicitely (and loosely) between the "technical" and "business" sides.
+
+So when we send a `Command`:
+
+- a CommandHandler handles it
+- it looks for the Aggregate the `Command` is talking about
+  - a `Command` is generally about an existing resource, but it can also request to create one: `CreateOrderCommand`
+- it checks some business rules to see if it's valid
+- it calls the necessary functions on the Aggregate.
+  - Each of these functions return the new state of the Aggregate.
+- the ending state of the Aggregate is persisted into the Writes Database.
+
+In a complex domains, DDD makes us structure our `Commands` and `Events` in a business way, comprehensible by everyone. DDD helps finding boundaries, limit responsabilities, and make the different parts of the system maintainable because "making sense". Such systems doesn't grow organically by the only will of the developers.
+
+#### Finding Commands & Aggregates
+
+A popular practice to find the **Aggregates** and their **Commands** is to do an _Event Storming_ workshop with developers & business people.
+
+By looking for all the possible events our domain must deal with, we can regroup them and form aggregates containing related events. From this, we make cohesive subdomains emerge, we form **Entities**, **Aggregates**, and agree upon the **Ubiquitous Language**.
+
+![Event Storming Guide - https://www.boldare.com/blog/event-storming-guide/](2019-08-26-16-08-55.png)
+
+Another technique is the [_Domain Story Telling_](https://domainstorytelling.org/). We think of a user scenario. We draw it displaying the artefacts and persons involved in the flow (requests from where, who, where it goes, validated by who, where, who reacts, who sends stuff etc.). There are 4 items: actors, work items (documents, exchanges), activities (verb), (comments).
+
+![](2019-08-26-16-06-13.png)
+
+And if you are curious, you can also check the [_Business Model Canvas_](https://en.wikipedia.org/wiki/Business_Model_Canvas).
 
 ## Hide the ugly: API Gateway
 
@@ -278,15 +356,19 @@ From the outside, it's possible to ignore if an application uses CQRS internally
 
 api gateway to hide write/reads apis
 
+An explicitly and purposefully defined interface designed to be invoked over a network that enables software developers to get programmatic access to data and functionality within an organization in a controlled and comfortable way.
+
+- Hide technology infrastructure
+- Documentation, backwards compatibility, versioning
+- Can also be more technical: message-level transformation, complex routing, network resilience/fallbacks, and aggregation of responses.
+
+- Share existing APIs on certain terms
+- Authentication, rate limiting, metrics collection, other policy enforcement
+- NO BUSINESS LOGIC
 
 # Events
 
-
-
-
-
 ![clever-age.com](2019-08-23-21-53-35.png)
-
 
 ![](2019-08-23-18-36-30.png)
 
@@ -295,17 +377,18 @@ api gateway to hide write/reads apis
 - First-class citizen
 - Found by event-storming
 - Decrease coupling: anyone can interpret them as wanted
- - Invert the control flow (less coupling, more autonomy)
- - Intentless (contrary to Commands), Anonymous, used for broadcast only
- - Fire & Forget (don't expect anything)
+- Invert the control flow (less coupling, more autonomy)
+- Intentless (contrary to Commands), Anonymous, used for broadcast only
+- Fire & Forget (don't expect anything)
 - Defined in the **producer domain**
-    - Whereas a "Message" is defined in the **consumer domain: a p2p construct, you know the target; just like an API call, except it's asynchronous**
+  - Whereas a "Message" is defined in the **consumer domain: a p2p construct, you know the target; just like an API call, except it's asynchronous**
 - Emitted upon a successful or failed operation
 - "Smart endpoints, dumb pipes" (martin fowler)
-    - Endpoints are microservices, pipes is kafka-like: NOT like an ESB
-    - Smart endpoints are probably stateful (persistence, state machines)
+  - Endpoints are microservices, pipes is kafka-like: NOT like an ESB
+  - Smart endpoints are probably stateful (persistence, state machines)
 - Important here: Emitted by aggregates (after they received a Command)
-    - We save the state into the events
+
+  - We save the state into the events
 
 - Not always produced by a Command: time flows (scheduler)
 - 1 Commands can generate multiple events
@@ -317,10 +400,10 @@ api gateway to hide write/reads apis
 ## Internal VS External
 
 - "External models" are often denormalized (contains names, address etc. not only ID)
-    - Easier to consume and use (no need to understand dependencies)
+  - Easier to consume and use (no need to understand dependencies)
 - "Internal models" contains only IDs.
-    - Useful when the models (referenced by the IDs) often change
-    - Have a "Translator Service" (or several) to consolidate the event and make it "external"
+  - Useful when the models (referenced by the IDs) often change
+  - Have a "Translator Service" (or several) to consolidate the event and make it "external"
 
 ## Projecting Events
 
@@ -332,7 +415,11 @@ If our repository don't build the state from the events: we are not sourcing fro
 
 ## Event-Carried State Transfer
 
+Not Event Notification.
+Not Event Sourcing.
+
 Contrary to Event-Sourcing, here, we use:
+
 - Event-carried state transfer": Difficult to find the good balance: what to put in the event? if not enough: the emitter will probably be queried by all the consumers (to consolidate their state): Network overhead! requests overhead! or you just put the whole aggregate into the event. ⇒ Eventual Consistency is happening because data are replicated asynchronously
 
 Why? => Explain + Schema
@@ -344,26 +431,26 @@ Why? => Explain + Schema
 ## Communicating with Legacy & New Systems
 
 During a migration, "Legacy view", a new "View"
-Don't share the consolidator (views) between services: each should build its own read models 
+Don't share the consolidator (views) between services: each should build its own read models
 
 ## What if we need to expose it?
 
 Never read write model
+
 - Internal
 - No coupling
 - Scalability: different of reads
-Don't turn your write model into a read model without noticing.
-Don't publish events containing your write model (state) otherwise you just did it.
+  Don't turn your write model into a read model without noticing.
+  Don't publish events containing your write model (state) otherwise you just did it.
 
 If we want to ensure we read the latest data
+
 - why?
 - business rules?
 - wrong domain separation?
 - need Command, maybe sagas?
 
-
 Saga: a state machine, events driven (choregraphy) or orchestrated (orchestrator)., outside of aggregates, reactive, have side effects (create commands, send emails..) multi-service transactions, provide a rollback for each step
-
 
 ## ACLs to the rescue
 
@@ -376,7 +463,10 @@ Streaming processing
 Scalability
 Business evolution?
 
-
 RESTE::
 
 Query model with a blocking "entity_id/v3" until it's up to date, or timeout
+Sagas
+Vector Clock (complexity because distributed system)
+CRDTs
+Latency++
