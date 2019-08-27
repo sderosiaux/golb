@@ -357,7 +357,7 @@ class OrderRepository {
 
 Back to the `Command`, what is truly happening when we are dealing with Aggregates:
 
-- the *code* directs it to a Command Handler to handle it
+- the _code_ directs it to a Command Handler to handle it
 - it fetch for the Aggregate the `Command` is talking about
   - a `Command` can be about an existing resource, or can request to create one: `CreateOrderCommand`
 - it checks some business rules to see if it the Command fits the business rules at this point
@@ -367,9 +367,9 @@ Back to the `Command`, what is truly happening when we are dealing with Aggregat
 
 In a complex domains, DDD makes us structure our `Commands` and `Events` in a business way, comprehensible by everyone understanding the domain. DDD helps finding boundaries, limit responsabilities, and make the different parts of the system maintainable because "making sense". Such systems doesn't grow organically by the only will of the developers.
 
-#### Finding Commands & Aggregates
+#### Finding Commands & Aggregates & More
 
-A popular practice to find the **Aggregates** and their **Commands** is to do an [_Event Storming_](https://en.wikipedia.org/wiki/Event_storming) workshop with developers, business people and experts.
+A popular practice to find the **Aggregates** and their **Commands** (and **Events**, and more..) is to do an [_Event Storming_](https://en.wikipedia.org/wiki/Event_storming) workshop with developers, business people and experts.
 
 By looking for all the possible events our domain must deal with, we can regroup them and form aggregates containing related events. From this, we make cohesive subdomains emerge (things belonging together), we form **Entities**, **Aggregates**, and agree upon the **Ubiquitous Language**.
 
@@ -383,14 +383,24 @@ If you are curious, you can also check the [_Business Model Canvas_](https://en.
 
 # Events
 
+It's not mandatory to broadcast Events with CQRS. It's just a _natural_ way of working with it.
+Events are emitted when _Aggregates_ are updated. They are broadcast to "who wants to hear". It's very useful to make systems reactive and independants.
+
+```scala
+case class OrderCreated(orderId: OrderId, items: List[LineItem], customer: Customer)
+case class OrderLineAdded(orderId: OrderId, item: LineItem)
+case class OrderCancelled(orderId: OrderId, reason: Option[String])
+...
+```
+
 ![clever-age.com](2019-08-23-21-53-35.png)
 
 ![](2019-08-23-18-36-30.png)
 
 ## Raison d'être
 
-- First-class citizen
-- Found by event-storming
+Where we have events, they often become _first-class citizen_. It means everything is built around them: the business logic, the dependencies ("we need X and Y before doing Z").
+
 - Decrease coupling: anyone can interpret them as wanted
 - Invert the control flow (less coupling, more autonomy)
 - Intentless (contrary to Commands), Anonymous, used for broadcast only
