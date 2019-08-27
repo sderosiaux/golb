@@ -7,7 +7,7 @@ path: "/articles/2018/08/19/dealing-with-kafka-and-async-executions/"
 language: "en"
 tags: ['scala', 'cats', 'cats-effect', 'async']
 category: 'Scala'
-background: '1_6_3xV73zP7QSOK5pdNoadw.jpeg'
+background: ''
 ---
 
 TOC

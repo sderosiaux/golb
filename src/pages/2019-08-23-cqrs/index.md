@@ -17,10 +17,10 @@ tags:
     'distributed systems',
   ]
 category: 'Data Engineering'
-background: ''
+background: null
 ---
 
-I'm working on a new project intended to replace a large —too large— monolith.
+I'm working on a new project intended to replace a large —too large— monolith that created ramifications and introduce coupling in the whole company.
 
 To adapt to the evolving needs of the **business** (Customer Orders), boost the **Time To Market**, improve **traceability** and **communication** between teams, we settled in using a CQRS asynchronous architecture (but _without_ Event Sourcing).
 
@@ -231,7 +231,7 @@ Having multiple databases imposes a strong constraint: the Reads Databases must 
 There is no synchronization between them and the Writes Database. Reads Databases cannot create side-effects on the Writes Database.
 Due to denormalization, it could be even impossible to find back the original record (if we don't keep all the necessary info, the PK etc. because we don't need them)
 
-When you query an API (a `GET` or some GraphQL Query): you don't expect to mutate the data, same thing here.
+When we query an API (a `GET` or some GraphQL Query): we don't expect to mutate the data, same thing here.
 
 #### Eventual Consistency
 
@@ -320,7 +320,7 @@ In DDD, this state is contained in what we call an **Aggregate**. It's a tree of
 
 ![](2019-08-26-21-31-53.png)
 
-An aggregate must ensure transactional boundaries within its entities: from the exterior, you can never see an aggregate "half-formed", "half-transformed", "half-valid". You can't access the entities directly: everything must reference the Aggregate only (for it to control the consistency). The business invariance rules are always respected (eg: "an Order can't be 'delivrable' if it's not payed yet" (ok, it depends but you get the idea!)).
+An aggregate must ensure transactional boundaries within its entities: from the exterior, we can never see an aggregate "half-formed", "half-transformed", "half-valid". We can't access the entities directly: everything must reference the Aggregate only (for it to control the consistency). The business invariance rules are always respected (eg: "an Order can't be 'delivrable' if it's not payed yet" (ok, it depends but we get the idea!)).
 
 [[info]]
 |In DDD, _Entity_ has a special meaning. It's an object defined by its unique identity and not by its attributes, like `User(userId)`. `Color(r,g,b)` is not an entity, its attributes define it, it's a _Value Object_, it's immutable, it can be shared.
@@ -384,7 +384,9 @@ If you are curious, you can also check the [_Business Model Canvas_](https://en.
 # Events
 
 It's not mandatory to broadcast Events with CQRS. It's just a _natural_ way of working with it.
-Events are emitted when _Aggregates_ are updated. They are broadcast to "who wants to hear". It's very useful to make systems reactive and independants.
+Events are emitted when _Aggregates_ are updated. They are broadcast to "who wants to hear" (others and itself). It's very useful to make systems reactive and independants.
+
+Here is a list of events:
 
 ```scala
 case class OrderCreated(orderId: OrderId, items: List[LineItem], customer: Customer)
@@ -393,34 +395,114 @@ case class OrderCancelled(orderId: OrderId, reason: Option[String])
 ...
 ```
 
-![clever-age.com](2019-08-23-21-53-35.png)
+Now we can look _a_ more complete picture relying on CQRS, Aggregates, Events:
 
 ![](2019-08-23-18-36-30.png)
 
 ## Raison d'être
 
-Where we have events, they often become _first-class citizen_. It means everything is built around them: the business logic, the dependencies ("we need X and Y before doing Z").
+When we have events, they often become _first-class citizen_. It means everything is built around them: the business logic, the dependencies ("we need X and Y before doing Z").
 
-- Decrease coupling: anyone can interpret them as wanted
-- Invert the control flow (less coupling, more autonomy)
-- Intentless (contrary to Commands), Anonymous, used for broadcast only
-- Fire & Forget (don't expect anything)
-- Defined in the **producer domain**
-  - Whereas a "Message" is defined in the **consumer domain: a p2p construct, you know the target; just like an API call, except it's asynchronous**
-- Emitted upon a successful or failed operation
-- "Smart endpoints, dumb pipes" (martin fowler)
-  - Endpoints are microservices, pipes is kafka-like: NOT like an ESB
-  - Smart endpoints are probably stateful (persistence, state machines)
-- Important here: Emitted by aggregates (after they received a Command)
+As `Commands`, `Events` is a generic term which does not define its implementation but more its behavior and origins.
 
-  - We save the state into the events
+#### Just offer it
 
-- Not always produced by a Command: time flows (scheduler)
-- 1 Commands can generate multiple events
+An `Event` is a fact of the **past**. It's inherently immutable (we can't change the past right?).
+Unlike `Commands` which have a fixed destination, can contain their origin, are intentful, `Events` are the opposite: they are just broadcast to the world with a _fire & forget_ fashion, are **intentless**, and can be **anonymous**.
+Because we don't know who is listening, we can't hardcode who needs us (we just rely on the technical bus transporting the events): **this decreases coupling between systems**. We can create new systems listening without the emitting system to know and to care.
 
-- Ability to change/fix the model or bugs and recompute state (from the events)
-- A LOT of different types of events: http://verraes.net/2019/05/ddd-msg-arch/
-- "Standards": https://www.w3.org/TR/activitystreams-core/ or https://cloudevents.io/
+![](2019-08-27-20-26-30.png)
+
+This is where publish/subscribe systems like Kafka are useful, because they are this intermediate bus, keeping the events, dealing with the distribution to consumers that can be dynamically added or removed and so much more.
+
+Importantly, `Events` are defined in the **producer domain**. A `Command` (or a "Message" in a more general way) is defined in the **consumer domain** (we speak the language of the target, we give it an "order").
+
+#### Back to the Aggregates
+
+Events can be emitted by anything. When doing CQRS and DDD, they are mostly created by the Aggregates. When an Aggregate is altered, it emits one or more Events corresponding to the changes.
+Events can also be produced by something exterior such as a scheduler, when it depends upon time: "send this event X at the end of the hour".
+
+**This is where Event Sourcing occurs or not.**
+
+- We can decide to create the new state of the Aggregate by "playing" the event it has generated on the current state.
+- We can decide to update the state of the Aggregate independently of the event it has generated.
+
+Not Event-Sourcing:
+
+```scala
+def increment(state: State): (State, Event) {
+    val newState = state + 1
+    (newState, NumberWasIncremented(newState)
+}
+val (newState, event) = increment(5)
+```
+
+Event-Sourcing:
+
+```scala
+def increment(): Event { NumberWasIncremented(1) }
+def apply(state: State, e: Event): State = e match {
+    case NumberWasIncremented(x) => state + x
+}
+val newState = apply(5, increment())
+```
+
+The Event-Sourcing way can look over-engineered. We need one more function `apply` and pattern-matching. We have split the logic of event creation from event application.
+But in the global picture, we have more power, and it's easier to reason about.
+
+An event is lightweight, it is only about *what changed*. We can recreate an Aggregate from scratch by replaying all the Events of its life. We have more knowledge about what happened, we don't keep only the latest state or the snapshot between changes. We keep the changes themselves.
+
+We can also event replayed the events in different ways: this will form a different state. It's perfect when our model often changes: the events don't change but we "sink" them differently.
+
+![](2019-08-27-22-14-10.png)
+
+Working with CQRS and DDD, we tends to emit Events because they represent a business reality: something happened in the business! We may have existing use-cases to handle them, but we may discover new use-cases in the future. This is why we don't want to discard anything and we prefer to store all events: to process them later in a new manner we don't know yet (and for traceability and more reasons). **Events are gold**. Don't lose them.
+
+
+#### Smart Endpoints & Dumb Pipes
+
+Martin Fowler introduced the notions of "*Smart Endpoints, Dumb Pipes*". In short: don't put business logic in the transport mechanism. We must control _our_ business logic. We don't want some pipes to become a bottleneck (as ESBs become in large companies). The transport mechanism should stay dumb: it's there for the technical side, nothing more.
+
+> This reminds me of ReactJS where we talk about:
+> - Dumb Components: pure, render a piece of UI, logicless (a button, a calendar, a menu)
+> - Smart Components: dealing with data, having a state and some business logic.
+> <br /><br />
+> Smart Components rely on Dumb Components. We can change the implementation of a Smart Component just by changing which Dumb Components it is using: we don't change its logic.
+
+The systems publishing or consuming are smart: they handle the mappings, the conversions of domains etc. (using **Anti-Corruption Layers**, a DDD notion when different Bounded Contexts talk to each others). It's more scalable, generally easier to maintain because everyone has its own logic and asks. DIY.
+
+It's also common to let some state living in an ESB because we want to alter the behavior according to the past or some dynamic conditions. A *Smart Endpoint* will create and maintain its own private state. It's not the role of a "pipe" to do this.
+
+## Format & Semantics
+
+We understand why emitting events is nice, but is there a format we should follow? Is there a standard? What should we save into them? What about metadata? What if I don't do Event Sourcing but want to generate events, what are the differences? _Event_ is a simple word but has a huge semantics.
+
+Nothing is "official", but we can rely or take inspiration from those:
+
+- https://www.w3.org/TR/activitystreams-core/ + https://www.w3.org/TR/activitystreams-vocabulary/
+    - This provide a JSON-based syntax compatible with JSON-LD.
+        - A Context
+        - A Type of Activity
+        - An Actor
+        - An Object
+        - A potential Target
+        - ...
+
+- https://cloudevents.io/ + https://github.com/cloudevents/spec
+    - Probably more useful here and more complete, it provides SDKs in different languages, different serialization format (Json, Avro, Protobuf, ...) and _may_ ends up at the CNCF (Cloud Native Computing Foundation).
+
+
+About the semantics, [Mathias Verraes](http://verraes.net/) (a DDD expert) did a great job listing and explaning them. Here is a short extract:
+
+- Summary Event: conflate multiple events into one
+- Passage of Time Event: a scheduler emits events instead of commands "DayHasPassed"
+- Segregated Event Layers: convert events from one domain to another
+- Throttling events: only emit the latest event per time unit
+- Change Detection Events: produce a new Event only when a value from an Event Stream change
+- Fat Event: add redundant info to the Event to reduce complexity in the consumer
+- ...
+
+> Notice the last event: "Fat Event". We will use this strategy soon to embed the full state of the aggregate in the event itself.
 
 ## Internal VS External
 
