@@ -248,7 +248,7 @@ Example:
   - (It can react to the same event the Reads Service reacted to in T2)
 - T4: The Product Service responds to the Reads Service which can updates its Reads Database (v2).
 
-Et voilà, in T3, despite the previous update happening before in T2 (in absolute time), the Reads Service sent the old version of the Order (v1) because it was not up-to-date yet.
+Et voilà, in T3, despite the previous update happening before in T2 (in absolute time), the Reads Service sent the old version of the Order (v1) because it was not up-to-date yet. We can't know how long it will take for the system to converge.
 This is why CQRS does not have the "Read your own Writes" semantics and why we must always think about eventual consistency when external systems talk with us.
 
 The **version** we just introduced is mandatory to have in such system. This represents a logical time, to help us understand how the flow progresses and make decisions. It's part of the Writes Model and is propagated into the whole system (events if any, reads models...).
@@ -389,7 +389,7 @@ Events are emitted when _Aggregates_ are updated. They are broadcast to "who wan
 Here is a list of events:
 
 ```scala
-case class OrderCreated(orderId: OrderId, items: List[LineItem], customer: Customer)
+case class OrderCreated(orderId: OrderId, items: List[LineItem], customer: CustomerId)
 case class OrderLineAdded(orderId: OrderId, item: LineItem)
 case class OrderCancelled(orderId: OrderId, reason: Option[String])
 ...
@@ -450,7 +450,7 @@ val newState = apply(5, increment())
 The Event-Sourcing way can look over-engineered. We need one more function `apply` and pattern-matching. We have split the logic of event creation from event application.
 But in the global picture, we have more power, and it's easier to reason about.
 
-An event is lightweight, it is only about *what changed*. We can recreate an Aggregate from scratch by replaying all the Events of its life. We have more knowledge about what happened, we don't keep only the latest state or the snapshot between changes. We keep the changes themselves.
+An event is lightweight, it is only about _what changed_. We can recreate an Aggregate from scratch by replaying all the Events of its life. We have more knowledge about what happened, we don't keep only the latest state or the snapshot between changes. We keep the changes themselves.
 
 We can also event replayed the events in different ways: this will form a different state. It's perfect when our model often changes: the events don't change but we "sink" them differently.
 
@@ -458,20 +458,20 @@ We can also event replayed the events in different ways: this will form a differ
 
 Working with CQRS and DDD, we tends to emit Events because they represent a business reality: something happened in the business! We may have existing use-cases to handle them, but we may discover new use-cases in the future. This is why we don't want to discard anything and we prefer to store all events: to process them later in a new manner we don't know yet (and for traceability and more reasons). **Events are gold**. Don't lose them.
 
-
 #### Smart Endpoints & Dumb Pipes
 
-Martin Fowler introduced the notions of "*Smart Endpoints, Dumb Pipes*". In short: don't put business logic in the transport mechanism. We must control _our_ business logic. We don't want some pipes to become a bottleneck (as ESBs become in large companies). The transport mechanism should stay dumb: it's there for the technical side, nothing more.
+Martin Fowler introduced the notions of "_Smart Endpoints, Dumb Pipes_". In short: don't put business logic in the transport mechanism. We must control _our_ business logic. We don't want some pipes to become a bottleneck (as ESBs become in large companies). The transport mechanism should stay dumb: it's there for the technical side, nothing more.
 
 > This reminds me of ReactJS where we talk about:
+>
 > - Dumb Components: pure, render a piece of UI, logicless (a button, a calendar, a menu)
 > - Smart Components: dealing with data, having a state and some business logic.
-> <br /><br />
-> Smart Components rely on Dumb Components. We can change the implementation of a Smart Component just by changing which Dumb Components it is using: we don't change its logic.
+>   <br /><br />
+>   Smart Components rely on Dumb Components. We can change the implementation of a Smart Component just by changing which Dumb Components it is using: we don't change its logic.
 
 The systems publishing or consuming are smart: they handle the mappings, the conversions of domains etc. (using **Anti-Corruption Layers**, a DDD notion when different Bounded Contexts talk to each others). It's more scalable, generally easier to maintain because everyone has its own logic and asks. DIY.
 
-It's also common to let some state living in an ESB because we want to alter the behavior according to the past or some dynamic conditions. A *Smart Endpoint* will create and maintain its own private state. It's not the role of a "pipe" to do this.
+It's also common to let some state living in an ESB because we want to alter the behavior according to the past or some dynamic conditions. A _Smart Endpoint_ will create and maintain its own private state. It's not the role of a "pipe" to do this.
 
 ## Format & Semantics
 
@@ -480,37 +480,68 @@ We understand why emitting events is nice, but is there a format we should follo
 Nothing is "official", but we can rely or take inspiration from those:
 
 - https://www.w3.org/TR/activitystreams-core/ + https://www.w3.org/TR/activitystreams-vocabulary/
-    - This provide a JSON-based syntax compatible with JSON-LD.
-        - A Context
-        - A Type of Activity
-        - An Actor
-        - An Object
-        - A potential Target
-        - ...
+
+  - This provide a JSON-based syntax compatible with JSON-LD.
+    - A Context
+    - A Type of Activity
+    - An Actor
+    - An Object
+    - A potential Target
+    - ...
 
 - https://cloudevents.io/ + https://github.com/cloudevents/spec
-    - Probably more useful here and more complete, it provides SDKs in different languages, different serialization format (Json, Avro, Protobuf, ...) and _may_ ends up at the CNCF (Cloud Native Computing Foundation).
+  - More useful and more complete, CloudEvents provides a spec and SDKs in different languages, different serialization format (Json, Avro, Protobuf, ...) and _may_ ends up at the CNCF (Cloud Native Computing Foundation). It's serverless oriented, but an event is an event right?
 
+```json
+{
+  // CloudEvents metadata data goes here
+  "eventType": "order.line.added",
+  "eventID": "C1234-1234-1234",
+  "eventTime": "2019-08-08T14:48:09.769Z",
+  "eventTypeVersion": "1.0",
+  "source": "/orders",
+  "extensions": {},
+  "contentType": "application/json",
+  "cloudEventsVersion": "0.1",
+
+  // Custom event data goes here
+  "data": {
+    "orderId": "abc",
+    "item": { "reference": "prod123", "quantity": 12 }
+  }
+}
+```
 
 About the semantics, [Mathias Verraes](http://verraes.net/) (a DDD expert) did a great job listing and explaning them. Here is a short extract:
 
-- Summary Event: conflate multiple events into one
-- Passage of Time Event: a scheduler emits events instead of commands "DayHasPassed"
+- Summary Event: conflate multiple events into one (multiple `ItemAdded` into `ItemsAdded`)
+- Passage of Time Event: a scheduler emits events instead of commands `DayHasPassed`
 - Segregated Event Layers: convert events from one domain to another
 - Throttling events: only emit the latest event per time unit
-- Change Detection Events: produce a new Event only when a value from an Event Stream change
+- Change Detection Events: produce a new Event only when a value from an Event Stream change `PriceChanged`
 - Fat Event: add redundant info to the Event to reduce complexity in the consumer
 - ...
 
 > Notice the last event: "Fat Event". We will use this strategy soon to embed the full state of the aggregate in the event itself.
 
-## Internal VS External
+## Internal VS External Events
 
-- "External models" are often denormalized (contains names, address etc. not only ID)
-  - Easier to consume and use (no need to understand dependencies)
-- "Internal models" contains only IDs.
-  - Useful when the models (referenced by the IDs) often change
-  - Have a "Translator Service" (or several) to consolidate the event and make it "external"
+More about semantics and DDD: an event can be **internal** or **external**.
+
+- an internal event is produced and consumed by our domain (bounded context), it's private.
+- an external event is going to be consumed by other domains we don't control, it's public.
+  - our own application will consume external events from other parties.
+  - external events have a **schema** for people to know how to consume them. It is shared into a metadata service or some registry (or Excel..).
+
+Both types have different targets hence different constraints and usages.
+
+An internal event tends to be normalized and contains mostly references (IDs). It works with an internal model. We don't want to add useless info or repeat information we already have in other part of our system. The more references, the better it is to future developments. We'll be able to refactor our model without altering the events.
+
+External events, working with external models, are for public consumption. They are often denormalized (contain name, addresses, no versions, are simpler) to avoid consumers to understand dependencies.
+
+Exposing internal events to the exterior leads to complex architectures, difficult evolutions, lack of visibility, and blur the domains frontiers. If we do, **without noticing**, we are transforming our _internal_ event into an _external_ event. Therefore, this also transforms our internal model into an external model. We are introducing a strong coupling between us and the others services.
+
+That's the whole point of this article: why and how should we protect us from this.
 
 ## Projecting Events
 
@@ -564,6 +595,11 @@ Saga: a state machine, events driven (choregraphy) or orchestrated (orchestrator
 Or maybe an ACL to expose the write model as a "read"
 
 ## From Internal Events to External Events
+
+One solution is to do some stream processing to transform and consolidate (by calling other services) the event to make it _external_. It's a mix of _Fat Events_ and _Segregated Event Layers_.
+Here is an example of conversion from private (a bit complex to see a clear the difference) to public:
+
+![](2019-08-28-16-16-25.png)
 
 Transform internal to external events.
 Streaming processing
