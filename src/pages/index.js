@@ -127,13 +127,22 @@ export const pageQuery = graphql`
     data1: markdownRemark(
       frontmatter: {
         path: {
-          eq: "/articles/2019/08/07/kafka-streams-topology-and-optimizations/"
+          eq: "/articles/2019/08/29/cqrs-why-and-all-the-things-to-consider/"
         }
       }
     ) {
       ...ArticleFrontmatter
     }
     data2: markdownRemark(
+      frontmatter: {
+        path: {
+          eq: "/articles/2019/08/07/kafka-streams-topology-and-optimizations/"
+        }
+      }
+    ) {
+      ...ArticleFrontmatter
+    }
+    data3: markdownRemark(
       frontmatter: {
         path: {
           eq: "/articles/2017/08/07/looking-at-kafka-s-consumers-offsets/"
