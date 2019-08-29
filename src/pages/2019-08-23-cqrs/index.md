@@ -2,7 +2,7 @@
 title: 'CQRS: Protect the Write Model at all cost'
 description: ''
 date: '2019-08-23T12:00Z'
-is_blog: false
+is_blog: true
 path: '/articles/2019/08/23/cqrs/'
 language: 'en'
 tags:
@@ -204,7 +204,7 @@ We are denormalizing our original model to fit another model:
 - to a "lighter" model where we don't need all the data
 - to a "heavier" model where we're going to add lots of data we don't own
 
-This last point is important. It's common to **consolidate** our data when we update our Reads Database. We can JOIN other tables we own or query other applications to fetch data we don't own/can't compute (customer name, product description, VTAs..). We don't want to do this at query time: we want a predictable stable latency hence accesses in O(1).
+This last point is important. It's common to **consolidate** our data when we update our Reads Database (served by a *Reads Service*). We can JOIN other tables we own or query other applications to fetch data we don't own/can't compute (customer name, product description, VTAs..). We don't want to do this at query time: we want a predictable stable latency hence accesses in O(1).
 
 This consolidation/transformations is done when we need to update the database (when something changed), not at query-time. It means:
 
@@ -226,7 +226,7 @@ Also, the Reads Database can be scary, because:
 
 #### Free of side-effects
 
-Having multiple databases imposes a strong constraint: the Reads Databases must handle **only reads**, not writes. They are not the source of truth.
+Having multiple databases imposes a strong constraint: the Reads Services must handle **only reads**, not writes. They are not the source of truth.
 
 There is no synchronization between them and the Writes Database. Reads Databases cannot create side-effects on the Writes Database.
 Due to denormalization, it could be even impossible to find back the original record (if we don't keep all the necessary info, the PK etc. because we don't need them)
@@ -235,7 +235,7 @@ When we query an API (a `GET` or some GraphQL Query): we don't expect to mutate 
 
 #### Eventual Consistency
 
-As stated before, those who use the Reads part could deal with stale data.
+As stated before, those who use the Reads Service could deal with stale data.
 
 When we send a `Command` to be processed, its processing _can_ be done asynchronously (no result, Fire & Forget), and the updates of the Reads Database will be asynchronous (except if it's the same database but that's rare?).
 
@@ -255,9 +255,9 @@ The **version** we just introduced is mandatory to have in such system. This rep
 
 There are techniques to help external systems fetching the version they expect, more on that later.
 
-If we want a strong consistency between our Writes and Reads database, they need to be updated atomically (and that's rarely possile due to the heterogeneous systems used). Even so, if we do that, we'll lose the **Availability** provided by relying on different systems (CAP theorem, we can be CP or AP under failures, not Consistent and Available at the same time).
+If we want a strong consistency between our Writes and Reads databases, they need to be updated atomically (and that's rarely possile due to the heterogeneous systems used). Even so, if we do that, we'll lose the **Availability** provided by relying on different systems (CAP theorem, we can be CP or AP under failures, not Consistent and Available at the same time).
 
-By clearly separating both systems, the Reads part works independently of the Writes part: different lifecycles, different deployments, different constraints, different SLAs.
+By clearly separating both systems, the Reads Service works independently of the Writes Service: different lifecycles, different deployments, different constraints, different SLAs.
 
 #### A different set of features
 
@@ -405,8 +405,6 @@ When we have events, they often become _first-class citizen_. It means everythin
 
 As `Commands`, `Events` is a generic term which does not define its implementation but more its behavior and origins.
 
-#### Just offer it
-
 An `Event` is a fact of the **past**. It's inherently immutable (we can't change the past right?).
 Unlike `Commands` which have a fixed destination, can contain their origin, are intentful, `Events` are the opposite: they are just broadcast to the world with a _fire & forget_ fashion, are **intentless**, and can be **anonymous**.
 Because we don't know who is listening, we can't hardcode who needs us (we just rely on the technical bus transporting the events): **this decreases coupling between systems**. We can create new systems listening without the emitting system to know and to care.
@@ -417,30 +415,27 @@ This is where publish/subscribe systems like Kafka are useful, because they are 
 
 Importantly, `Events` are defined in the **producer domain**. A `Command` (or a "Message" in a more general way) is defined in the **consumer domain** (we speak the language of the target, we give it an "order").
 
-#### Back to the Aggregates
+## Projecting Events
 
-Events can be emitted by anything. When doing CQRS and DDD, they are mostly created by the Aggregates. When an Aggregate is altered, it emits one or more Events corresponding to the changes.
-Events can also be produced by something exterior such as a scheduler, when it depends upon time: "send this event X at the end of the hour".
+Events can be created by anything. When doing CQRS and DDD, they are mostly created by the Aggregates. When an Aggregate is altered, it emits one or more Events corresponding to the changes.
+Events can also be produced by something *exterior* such as a scheduler, when it depends upon time: "send this event X at the end of the hour".
 
-**This is where Event Sourcing occurs or not.**
+**This is where we have the choice of doing Event Sourcing or not.**
 
-- We can decide to create the new state of the Aggregate by "playing" the event it has generated on the current state.
-- We can decide to update the state of the Aggregate independently of the event it has generated.
-
-Not Event-Sourcing:
+- We can decide to update the state of the Aggregate *independently* of the event it has generated:
 
 ```scala
-def increment(state: State): (State, Event) {
+def increment(state: State): (State, Event) = {
     val newState = state + 1
-    (newState, NumberWasIncremented(newState)
+    (newState, NumberWasIncremented(1))
 }
 val (newState, event) = increment(5)
 ```
 
-Event-Sourcing:
+- We can decide to create the new state of the Aggregate by "playing" an event on the current state:
 
 ```scala
-def increment(): Event { NumberWasIncremented(1) }
+def increment(): Event = NumberWasIncremented(1)
 def apply(state: State, e: Event): State = e match {
     case NumberWasIncremented(x) => state + x
 }
@@ -448,17 +443,37 @@ val newState = apply(5, increment())
 ```
 
 The Event-Sourcing way can look over-engineered. We need one more function `apply` and pattern-matching. We have split the logic of event creation from event application.
-But in the global picture, we have more power, and it's easier to reason about.
+It's easier to reason about. When applying an event, we don't have to know where it comes from.
 
-An event is lightweight, it is only about _what changed_. We can recreate an Aggregate from scratch by replaying all the Events of its life. We have more knowledge about what happened, we don't keep only the latest state or the snapshot between changes. We keep the changes themselves.
+An event is lightweight, it is only about _what changed_. We can recreate an Aggregate from scratch by replaying all the Events of its life. We have more knowledge about what happened, we don't keep only the latest state or the snapshot between changes. We keep the changes themselves. A state, an aggregate, is a **projection of events**.
+We often have a function to replay everything at once, sometimes called a *calculator*, *reducer*, *replayer*:
+```scala
+def applyAll(initialState: State, events: List[Event]): State = {
+    events.foldLeft(initialState) { case (s, e) => apply(s, e) }
+}
+```
 
-We can also event replayed the events in different ways: this will form a different state. It's perfect when our model often changes: the events don't change but we "sink" them differently.
+One of the strength of doing Event Sourcing is that we can also replay the events in a different way: this will form a different state. It's perfect when our model often changes: the events don't change but we interpret them differently. This is useful when our model is dynamic because of a *business-ever-changing* mindset. Technology such as **Kafka** allows the consumers to replay past events (to rebuild their state/aggregates) and catch up the present (by resetting offsets).
 
 ![](2019-08-27-22-14-10.png)
 
-Working with CQRS and DDD, we tends to emit Events because they represent a business reality: something happened in the business! We may have existing use-cases to handle them, but we may discover new use-cases in the future. This is why we don't want to discard anything and we prefer to store all events: to process them later in a new manner we don't know yet (and for traceability and more reasons). **Events are gold**. Don't lose them.
+Working with CQRS and DDD, we tends to emit Events because they represent a business reality: something happened in the business! The past won't changed because we want to add new features. We can only **interpret the past**.
 
-#### Smart Endpoints & Dumb Pipes
+We may have existing use-cases to handle events, but we may discover new use-cases in the future. This is why we don't want to discard anything and we prefer to store all events: to process them later in a new manner we don't know yet (and for traceability and more reasons). **Events are gold**. Don't lose them.
+
+## Events does not mean Event Sourcing
+
+It's not because we are dealing with Events that we must do Event Sourcing.
+If we don't build our aggregate from the events: we are not sourcing from events, hence it's not event sourcing. QED.
+
+The logic of the Event Sourcing (or not) is hidden in an implementation of `AggregateRepository`.
+It's simply a specific way of reasoning.
+
+When we do Event Sourcing, instead of fetching the latest state from a database directly, we ask to an *Event Store* to get all the events about a particular aggregateId (hence Kafka is not a good choice for Event Store) and we replay them to build the latest state.
+
+There are strategies of snapshotting a state every X events to avoid having to replay 10000 events each time if the aggregates are massively updated. But that's for another article.
+
+## Smart Endpoints & Dumb Pipes
 
 Martin Fowler introduced the notions of "_Smart Endpoints, Dumb Pipes_". In short: don't put business logic in the transport mechanism. We must control _our_ business logic. We don't want some pipes to become a bottleneck (as ESBs become in large companies). The transport mechanism should stay dumb: it's there for the technical side, nothing more.
 
@@ -528,39 +543,82 @@ About the semantics, [Mathias Verraes](http://verraes.net/) (a DDD expert) did a
 
 More about semantics and DDD: an event can be **internal** or **external**.
 
-- an internal event is produced and consumed by our domain (bounded context), it's private.
-- an external event is going to be consumed by other domains we don't control, it's public.
+- an **internal** event is produced and consumed by our domain (bounded context), it's private.
+- an **external** event is going to be consumed by other domains we don't control, it's public.
   - our own application will consume external events from other parties.
   - external events have a **schema** for people to know how to consume them. It is shared into a metadata service or some registry (or Excel..).
 
 Both types have different targets hence different constraints and usages.
 
-An internal event tends to be normalized and contains mostly references (IDs). It works with an internal model. We don't want to add useless info or repeat information we already have in other part of our system. The more references, the better it is to future developments. We'll be able to refactor our model without altering the events.
+An **internal** event tends to be normalized and contains mostly references (IDs). It works with an internal model. We don't want to add useless info or repeat information we already have in other part of our system. The more references, the better it is to future developments. We'll be able to refactor our model without altering the events.
 
-External events, working with external models, are for public consumption. They are often denormalized (contain name, addresses, no versions, are simpler) to avoid consumers to understand dependencies.
+**External** events, working with external models, are for **public consumption**. They are often denormalized (contain name, addresses, no versions, are simpler) to avoid consumers to understand dependencies.
 
-Exposing internal events to the exterior leads to complex architectures, difficult evolutions, lack of visibility, and blur the domains frontiers. If we do, **without noticing**, we are transforming our _internal_ event into an _external_ event. Therefore, this also transforms our internal model into an external model. We are introducing a strong coupling between us and the others services.
+Exposing internal events to the exterior leads to complex architectures, difficult evolutions, lack of visibility, and blur the domains frontiers. If we do that, **without noticing**, we are transforming our _internal_ event into an _external_ event. Therefore, this also transforms our internal model into an external model. We are introducing a strong coupling between us and the others services.
 
 That's the whole point of this article: why and how should we protect us from this.
 
-## Projecting Events
-
-A state is a projection of events (event stream), it forms an aggregate.
-
-## Events does not mean Event Sourcing
-
-If our repository don't build the state from the events: we are not sourcing from events, hence it's not event sourcing. QED.
-
 ## Event-Carried State Transfer
 
-Not Event Notification.
-Not Event Sourcing.
+Sometimes, for performances and simplications, we want to include the state of the aggregate alongside its own events it generates when updated.
 
-Contrary to Event-Sourcing, here, we use:
+It can be delicate to know exactly what to put in the events. If we forget something or if it's not enough for the consumers to their work (internal or external), we can introduce network/request overhead and complexify their work. If the event is plain/nude (just what changed, without the latest state), they may need more info, and need to build their own state from all the past events (ie: act as a Reads Service) or request an existing Reads Service to do their work.
 
-- Event-carried state transfer": Difficult to find the good balance: what to put in the event? if not enough: the emitter will probably be queried by all the consumers (to consolidate their state): Network overhead! requests overhead! or you just put the whole aggregate into the event. ⇒ Eventual Consistency is happening because data are replicated asynchronously
+That leads to a few issues for consumers:
 
-Why? => Explain + Schema
+- they don't want do be stateful and replicate a state which already exists somewhere
+- they don't want to listen to all events to build the state (`OrderCreated`, `OrderItemsAdded`, `OrderShipped`, ... to build the `Order`) if they care only about one type of event (like `OrderShipped` to send an email, they need the whole content of the `Order` but `OrderShipped` could have only the `orderId`)
+- they want to query some Reads Service to get what is missing
+  - this introduces eventual-consistency: they may cannot accept it.
+
+![](2019-08-29-12-05-06.png)
+
+One solution is therefore to embed the state into the event itself.
+This is a **Event-Carried State Transfer**.
+
+Imagine 3 plain events:
+
+```json
+{ type: "OrderCreated", orderId: 1337, customer: "john" }
+{ type: "OrderLineAdded", orderId: 1337, item: { ref: "prodA", qty: 2 } }
+{ type: "OrderShipped", orderId: 1337 }
+```
+
+If our Email Service listens only to `OrderShipped` events, it don't have the items, it needs to query a Reads Service that may have not yet processed `OrderLineAdded` (lag, network issues). The email sent won't contain of items or worse, the Reads Service may not even know about the orderId 1337.
+
+One solution is to add a version on the events (each event increases the version of the aggregate it represents), then we can ask for the a specific version in the Reads Service:
+```json
+{ type: "OrderCreated", orderId: 1337, v: 1, customer: "john" }
+{ type: "OrderLineAdded", orderId: 1337, v: 2, item: { ref: "prodA", qty: 2 } }
+{ type: "OrderShipped", orderId: 1337, v: 3 }
+
+GET /reads/orders/1337?v=3
+```
+
+The Reads Service may then **block** until it gets the expected version or *timeouts* if this never happens.
+
+Another solution, avoiding a dependency, a network call and a blocking request is to use this *Event-Carried State Transfer* strategy:
+
+```json
+{ type: "OrderCreated", orderId: 1337, customer: "john",
+  state: { id: 1337, customer: "john", items: [], state: "CREATED" }
+}
+
+{ type: "OrderLineAdded", orderId: 1337, item: { ref: "prodA", qty: 2 },
+  state: { id: 1337, customer: "john", items: { ref: "prodA", qty: 2 } }, state: "CREATED" }
+
+{ type: "OrderShipped", orderId: 1337, 
+  state: { id: 1337, customer: "john", items: { ref: "prodA", qty: 2 }, state: "SHIPPED" } }
+}
+```
+
+![](2019-08-29-12-09-45.png)
+
+For consumers, it's now a brainless work.
+They just have to read the "state" field, which is always the same model (this is the `Order` **Write Model** here) to do their job.
+
+The overhead is now on the messaging infrastructure (the messages are bigger because the events now contain the whole state).
+Such events are okay for **internal consumption only** but not for external services, because we don't want to expose our Write Model. 
 
 # Protect the Write Model
 
