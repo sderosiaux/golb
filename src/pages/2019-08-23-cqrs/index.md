@@ -582,7 +582,7 @@ That's the whole point of this article: why and how should we protect us from th
 ## From Internal to External
 
 One solution is to do some stream processing to transform and consolidate (by calling other services) the event to make it _external_. It's a mix of _Fat Events_ and _Segregated Event Layers_.
-Here is an example of conversion from private (a bit complex to see a clear the difference) to public:
+Here is an example of conversion from private (a bit complex to see a clear difference) to public:
 
 ![](2019-08-28-16-16-25.png)
 
@@ -626,7 +626,7 @@ One solution is to add a version on the events (each event increases the version
 GET /reads/orders/1337?v=3
 ```
 
-The Reads Service may then **block** until it gets the expected version or *timeouts* if this never happens.
+The Reads Service may then **block** until it gets the expected version or *timeout* if this never happens.
 
 Another solution, avoiding a dependency, a network call and a blocking request is to use this *Event-Carried State Transfer* strategy (we put the state in the event):
 
@@ -652,7 +652,7 @@ The overhead is now on the messaging infrastructure (the messages are bigger bec
 
 # Protect the Write Model
 
-The above example is okay for **internal consumption only** but not for external services (like here, the Marketing Service), because we don't want to expose our Write Models. 
+The above example is okay for **internal consumption only** but not for external services (like here, the Marketing Service), because we don't want to expose our Write Model. 
 
 ## private _wm: WriteModel;
 
