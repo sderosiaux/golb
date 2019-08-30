@@ -179,7 +179,7 @@ There are a lot more things to know about `Commands`, I won't dive into them her
 
 - `Commands` processing should be idempotent
 - `Commands` can't use the Read side to grab data
-- `Commands` should be retried only for technical reasons, and never replayed for business reasons: the result could be different (eg: VTA changed since)
+- `Commands` should be retried only for technical reasons, and never replayed for business reasons: the result could be different (eg: VAT changed since)
 - `Commands` can be saved into a Command Bus for further processing
 
 > `Commands` are about managing side-effects in a system.
