@@ -403,7 +403,7 @@ If you are curious, you can also check the [_Business Model Canvas_](https://en.
 # Events
 
 It's not mandatory to broadcast Events with CQRS. It's just a _natural_ way of working with it.
-Events are emitted when _Aggregates_ are updated. They are broadcast to "who wants to hear" (others and itself). It's very useful to make systems reactive and independants.
+Events are emitted when _Aggregates_ are updated. They are broadcast to "who wants to hear" (others and itself). It's very useful to make systems reactive and independant.
 
 Here is a list of events:
 
@@ -414,7 +414,7 @@ case class OrderCancelled(orderId: OrderId, reason: Option[String])
 ...
 ```
 
-Now we can look _a_ more complete picture relying on CQRS, Aggregates, Events:
+Now we can look at _a_ more complete picture relying on CQRS, Aggregates, Events:
 
 ![](2019-08-23-18-36-30.png)
 
