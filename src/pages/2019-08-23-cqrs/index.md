@@ -27,7 +27,7 @@ To adapt to the evolving needs of the business, boost the **Time To Market**, im
 
 Long story short, it's not an easy task to "convert" everyone to the new way of thinking this imposes and convey the ideas. Things people thought acquired must be re-questionned, re-challenged and new constraints arise (such as eventual consistency, or knowing if we should own a certain piece of data). I was _this_ guy always saying "you can't do that", reminding the whys.
 
-CQRS (combined with DDD) forces us to put strong constraints and have limitations most of us didn't have before (with a classic backend + DB). It's not always a bad thing: it **reveals** things. We learned a lot about the domains themselves, always questionning their separations and their responsabilities. It makes us **understand the business**.
+CQRS (combined with DDD) forces us to put strong constraints and have limitations most of us didn't have before (with a classic backend + DB). It's not always a bad thing: it **reveals** things. We learned a lot about the domains themselves, always questionning their separations and their responsibilities. It makes us **understand the business**.
 
 Here, I'll talk about CQRS in general and its links with DDD and Event Sourcing. All started with a use-case where we ~~wanted~~ needed to expose _not_-eventually-consistent (aka strongly-consistent) data to other services. CQRS has not to be eventually-consistent, but in our case, it was (because asynchronous and highly available). I can see some of you frowning because we should _accept_ eventual-consistency, it's part of the life (and distributed systems). Agreed. But..
 
@@ -69,7 +69,7 @@ When we implement a Redis cache in order to avoid overloading the main database 
 
 Separating the write model from the read models helps us separating complex aspects of our domain (who needs what, who is responsible for what) and increase the flexibility of our solution. We can adapt more simply to **changing business requirements**.
 
-This is because we think more about the responsabilities: who is mutating data? what is the use-case? should we truly own this data? do we act on it? is this not the responsability of another application? who just need to read data? should it be strongly-consistent? etc. CQRS is often tied to **DDD** because of this way of thinking.
+This is because we think more about the responsibilities: who is mutating data? what is the use-case? should we truly own this data? do we act on it? is this not the responsibility of another application? who just need to read data? should it be strongly-consistent? etc. CQRS is often tied to **DDD** because of this way of thinking.
 
 #### Concurrency
 
