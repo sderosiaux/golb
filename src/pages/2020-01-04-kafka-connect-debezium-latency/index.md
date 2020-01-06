@@ -1,9 +1,9 @@
 ---
-title: 'Learnings from Kafka Connect - Debezium - PostgreSQL'
+title: 'Learnings from using Kafka Connect - Debezium - PostgreSQL'
 description: 'Using Debezium to ensure consistency between PostgreSQL and Kafka is nice, but what at what cost? Here is what we learned.'
 date: '2020-01-06T12:00Z'
 is_blog: true
-path: '/articles/2020/01/06/learnings-from-kafka-connect-debezium-postgresql/'
+path: '/articles/2020/01/06/learnings-from-using-kafka-connect-debezium-postgresql/'
 language: 'en'
 tags:
   [
