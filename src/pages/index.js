@@ -49,18 +49,27 @@ export default ({ location, data }) => {
           <ul className={ulClassName}>
             <li>
               You're looking to read some articles about{' '}
-              <a href="/tags/kafka">Kafka</a>,{' '}
-              <a href="/tags/scala">Scala</a>, <a href="/tags/java">Java</a>,{' '}              
-              <a href="/tags/reactjs">ReactJS</a> and more? Check below for a
-              selection, or just go to <a href="/articles" className="yellow">Articles</a> to list
-              everything.
+              <a href="/tags/kafka">Kafka</a>, <a href="/tags/scala">Scala</a>,{' '}
+              <a href="/tags/java">Java</a>, <a href="/tags/reactjs">ReactJS</a>{' '}
+              and more? Check below for a selection, or just go to{' '}
+              <a href="/articles" className="yellow">
+                Articles
+              </a>{' '}
+              to list everything.
             </li>
             <li>
-              Stalker? Feel free to read <a href="/about-me" className="yellow">About Me</a>!
+              Stalker? Feel free to read{' '}
+              <a href="/about-me" className="yellow">
+                About Me
+              </a>
+              !
             </li>
             <li>
               If you think we fit and would like we work together, I would be
-              honored. <a href="/work-with-me" className="yellow">Work With Me</a>
+              honored.{' '}
+              <a href="/work-with-me" className="yellow">
+                Work With Me
+              </a>
             </li>
           </ul>
         </Centered>
@@ -127,16 +136,17 @@ export const pageQuery = graphql`
     data1: markdownRemark(
       frontmatter: {
         path: {
-          eq: "/articles/2019/08/29/cqrs-why-and-all-the-things-to-consider/"
+          eq: "/articles/2020/01/06/learnings-from-kafka-connect-debezium-postgresql/"
         }
       }
     ) {
       ...ArticleFrontmatter
     }
+
     data2: markdownRemark(
       frontmatter: {
         path: {
-          eq: "/articles/2019/08/07/kafka-streams-topology-and-optimizations/"
+          eq: "/articles/2019/08/29/cqrs-why-and-all-the-things-to-consider/"
         }
       }
     ) {
@@ -145,13 +155,21 @@ export const pageQuery = graphql`
     data3: markdownRemark(
       frontmatter: {
         path: {
+          eq: "/articles/2019/08/07/kafka-streams-topology-and-optimizations/"
+        }
+      }
+    ) {
+      ...ArticleFrontmatter
+    }
+    data4: markdownRemark(
+      frontmatter: {
+        path: {
           eq: "/articles/2017/08/07/looking-at-kafka-s-consumers-offsets/"
         }
       }
     ) {
       ...ArticleFrontmatter
     }
-    
 
     back1: markdownRemark(
       frontmatter: {
@@ -170,7 +188,7 @@ export const pageQuery = graphql`
     ) {
       ...ArticleFrontmatter
     }
-    
+
     back3: markdownRemark(
       frontmatter: {
         path: {
