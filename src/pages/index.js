@@ -136,7 +136,7 @@ export const pageQuery = graphql`
     data1: markdownRemark(
       frontmatter: {
         path: {
-          eq: "/articles/2020/01/06/learnings-from-kafka-connect-debezium-postgresql/"
+          eq: "/articles/2020/01/06/learnings-from-using-kafka-connect-debezium-postgresql/"
         }
       }
     ) {
