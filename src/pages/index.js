@@ -36,7 +36,7 @@ export default ({ location, data }) => {
       fullWidth={true}
       cover={cover}
       title="Personal website of S. Derosiaux"
-      description="I talk mostly about Scala and Data Engineering!"
+      description="I talk mostly about Scala, Kafka, and Data Engineering!"
     >
       <Helmet title={siteTitle + ' | Home'} />
 
@@ -56,6 +56,11 @@ export default ({ location, data }) => {
                 Articles
               </a>{' '}
               to list everything.
+            </li>
+            <li>
+              Interested into Apache Kafka? I'm the CTO of{' '}
+              <a href="https://www.conduktor.io/">Conduktor</a>, a popular
+              Apache Kafka Desktop client widely used.
             </li>
             <li>
               Stalker? Feel free to read{' '}
