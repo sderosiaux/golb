@@ -43,7 +43,7 @@
     "lodash": "^4.17.11",
     "mdast-util-toc": "^2.1.0",
     "micromatch": "^3.1.10",
-    "prismjs": "^1.15.0",
+    "prismjs": "^1.25.0",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
     "react-emotion": "^9.2.10",
