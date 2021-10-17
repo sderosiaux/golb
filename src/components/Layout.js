@@ -156,6 +156,7 @@ export default class extends React.Component {
                 <script type="application/ld+json">
                   {JSON.stringify(jsonld)}
                 </script>
+                <script async src="https://cdn.splitbee.io/sb.js"></script>
                 <meta
                   httpEquiv="Content-Type"
                   content="text/html; charset=UTF-8"
