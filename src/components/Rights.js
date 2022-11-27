@@ -16,6 +16,6 @@ export default ({}) => (
       font-size: 16px;
     `}
   >
-    © Copyright 2018 · Stéphane Derosiaux · All Rights Reserved.
+    © Copyright 2018-2022 · Stéphane Derosiaux · All Rights Reserved.
   </div>
 )
